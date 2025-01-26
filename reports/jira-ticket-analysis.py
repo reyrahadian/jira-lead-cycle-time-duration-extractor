@@ -176,7 +176,7 @@ app.layout = html.Div([
         html.Div([
             # Bar Chart and Stage Tickets Section
             html.Div([
-                html.H2("Time Spent in Each Stage",
+                html.H2("Tickets Cycle Time",
                         style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
                 dcc.Graph(id='stages-bar-chart'),
                 # Stage Tickets Panel
@@ -305,6 +305,38 @@ app.layout = html.Div([
                     )
                 ], id='ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style=dict(CARD_STYLE, **{'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})),
+
+            # Defects Table - Moved above Sprint Tickets Table
+            html.Div([
+                html.H2("Defects Created During Sprint",
+                        style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+                dash_table.DataTable(
+                    id='defects-table',
+                    columns=[
+                        {'name': 'Key', 'id': 'ID'},
+                        {'name': 'Summary', 'id': 'Name'},
+                        {'name': 'Status', 'id': 'Stage'},
+                        {'name': 'Created Date', 'id': 'CreatedDate'},
+                        {'name': 'Story Points', 'id': 'StoryPoints'},
+                        {'name': 'Parent Type', 'id': 'ParentType'},
+                        {'name': 'Parent Name', 'id': 'ParentName'}
+                    ],
+                    style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                    style_cell={
+                        'textAlign': 'left',
+                        'minWidth': '100px',
+                        'maxWidth': '300px',
+                        'whiteSpace': 'normal'
+                    },
+                    page_size=10,
+                    style_header={
+                        'backgroundColor': COLORS['primary'],
+                        'color': 'white',
+                        'fontWeight': 'bold',
+                        'textAlign': 'left'
+                    }
+                )
+            ], style=CARD_STYLE),
 
             # Sprint Tickets Table
             html.Div([
@@ -919,6 +951,43 @@ def update_stage_ticket_details(selected_rows, table_data):
         f"Stage Duration Details for {selected_ticket}",
         style_conditional
     )
+
+@callback(
+    Output('defects-table', 'data'),
+    [Input('project-dropdown', 'value'),
+     Input('squad-dropdown', 'value'),
+     Input('sprint-dropdown', 'value')]
+)
+def update_defects_table(selected_project, selected_squad, selected_sprint):
+    if not selected_project or not selected_sprint:
+        return []
+
+    # First filter by project
+    filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
+
+    # Then filter by squad if selected
+    if selected_squad and 'Squad' in filtered_data.columns:
+        filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+
+    # Then filter by sprint
+    sprint_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
+    if sprint_data.empty:
+        return []
+
+    # Filter defects
+    defects = sprint_data[sprint_data['Type'].isin(['Bug', 'Defect'])]
+
+    # Sort by created date (newest first)
+    defects['CreatedDate'] = pd.to_datetime(defects['CreatedDate'])
+    defects = defects.sort_values('CreatedDate', ascending=False)
+
+    # Prepare table data
+    table_data = defects[[
+        'ID', 'Name', 'Stage', 'CreatedDate', 'StoryPoints',
+        'ParentType', 'ParentName'
+    ]].to_dict('records')
+
+    return table_data
 
 #------------------------------------------------------------------------------
 # Run the application
