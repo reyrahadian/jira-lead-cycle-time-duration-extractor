@@ -545,14 +545,18 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_
     stage_sums = sprint_data[stage_columns].sum()
     non_zero_stages = stage_sums[stage_sums > 0]
 
-    # Clean stage names for display
-    stage_names = non_zero_stages.index.str.replace('Stage ', '').str.replace(' days', '')
+    # Create DataFrame for the chart
+    chart_data = pd.DataFrame({
+        'Stage': non_zero_stages.index.str.replace('Stage ', '').str.replace(' days', ''),
+        'Days': non_zero_stages.values
+    })
 
     # Create bar chart with non-zero stages only
     fig = px.bar(
-        x=stage_names,
-        y=non_zero_stages.values,
-        labels={'x': 'Stage', 'y': 'Total Days'},
+        chart_data,
+        x='Stage',
+        y='Days',
+        labels={'Stage': 'Stage', 'Days': 'Total Days'},
         title=f'Time Spent in Each Stage - {selected_sprint}'
     )
 
@@ -797,7 +801,7 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
 
     ticket_data = ticket_data.iloc[0]
 
-    # Prepare stage duration data
+    # Prepare stage duration data following stage_columns order
     stage_data = []
     for col in stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
@@ -807,9 +811,6 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
                 'stage': stage_name,
                 'days': round(days, 1)
             })
-
-    # Sort by days spent (descending)
-    stage_data.sort(key=lambda x: x['days'], reverse=True)
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
@@ -858,7 +859,6 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
         style_conditional
     )
 
-# Add new callback for stage ticket details
 @callback(
     [Output('stage-ticket-details-container', 'style'),
      Output('stage-ticket-details-title', 'style'),
@@ -869,7 +869,6 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
      Input('stage-tickets-table', 'data')]
 )
 def update_stage_ticket_details(selected_rows, table_data):
-    # Return empty state if no selection or no data
     if not selected_rows or not table_data or len(selected_rows) == 0 or len(table_data) == 0:
         return (
             {'display': 'none'},
@@ -903,7 +902,7 @@ def update_stage_ticket_details(selected_rows, table_data):
 
     ticket_data = ticket_data.iloc[0]
 
-    # Prepare stage duration data
+    # Prepare stage duration data following stage_columns order
     stage_data = []
     for col in stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
@@ -913,9 +912,6 @@ def update_stage_ticket_details(selected_rows, table_data):
                 'stage': stage_name,
                 'days': round(days, 1)
             })
-
-    # Sort by days spent (descending)
-    stage_data.sort(key=lambda x: x['days'], reverse=True)
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
