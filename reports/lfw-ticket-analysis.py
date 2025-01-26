@@ -4,7 +4,17 @@ import matplotlib.pyplot as plt
 import plotly.express as px
 import json
 
-csv_filepath = "output1737863374557.csv"
+# Add these constants near the top of the file, after the imports
+STAGE_THRESHOLDS = {
+    'default': {'warning': 2, 'critical': 5},  # Default thresholds in days
+    'In Development': {'warning': 5, 'critical': 10},
+    'In Code Review': {'warning': 2, 'critical': 4},
+    'In PR Test': {'warning': 2, 'critical': 4},
+    'In SIT Test': {'warning': 3, 'critical': 6},
+    'In UAT Test': {'warning': 3, 'critical': 6}
+}
+
+csv_filepath = "output1737864602005.csv"
 jira_tickets = pd.read_csv(csv_filepath,delimiter=";")
 
 # Convert string representations of lists to actual lists and extract unique sprint names
@@ -64,6 +74,7 @@ app.layout = html.Div([
                 placeholder="Select a specific ticket"
             ),
         ]),
+        html.Div(id='sprint-goals'),
         html.H3(id='total-points'),
         html.H3(id='ticket-count')
     ]),
@@ -166,7 +177,8 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket):
 @callback(
     [Output('stage-tickets-table', 'data'),
      Output('selected-stage-title', 'children'),
-     Output('selected-stage-title', 'style')],
+     Output('selected-stage-title', 'style'),
+     Output('stage-tickets-table', 'style_data_conditional')],
     [Input('stages-bar-chart', 'clickData'),
      Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
@@ -174,11 +186,14 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket):
 )
 def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket):
     if not click_data or not selected_sprint:
-        return [], "No stage selected", {'display': 'none'}
+        return [], "No stage selected", {'display': 'none'}, []
 
     # Get the clicked stage name
     clicked_stage = click_data['points'][0]['x']
     stage_column = f"Stage {clicked_stage} days"
+
+    # Get thresholds for this stage
+    thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
     # Filter data for selected sprint
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
@@ -203,10 +218,43 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
         ascending=False
     ).to_dict('records')
 
+    # Define conditional styling
+    style_conditional = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(248, 248, 248)'
+        },
+        {
+            'if': {
+                'filter_query': f'{{days_in_stage}} >= {thresholds["critical"]}',
+                'column_id': 'days_in_stage'
+            },
+            'backgroundColor': '#ffcdd2',  # Light red
+            'color': '#c62828'  # Dark red
+        },
+        {
+            'if': {
+                'filter_query': f'{{days_in_stage}} >= {thresholds["warning"]} && {{days_in_stage}} < {thresholds["critical"]}',
+                'column_id': 'days_in_stage'
+            },
+            'backgroundColor': '#fff9c4',  # Light yellow
+            'color': '#f9a825'  # Dark yellow
+        },
+        {
+            'if': {
+                'filter_query': f'{{days_in_stage}} < {thresholds["warning"]}',
+                'column_id': 'days_in_stage'
+            },
+            'backgroundColor': '#c8e6c9',  # Light green
+            'color': '#2e7d32'  # Dark green
+        }
+    ]
+
     return (
         table_data,
         f"Tickets in {clicked_stage} Stage",
-        {'display': 'block', 'marginTop': '20px'}
+        {'display': 'block', 'marginTop': '20px'},
+        style_conditional
     )
 
 # Update the bar chart callback to make it clickable
@@ -240,7 +288,7 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket):
         "Stage Ready for PR Test days",
         "Stage Awaiting SIT Deployment days",
         "Stage In Sit days",
-        "Stage Ready for QA days",
+        #"Stage Ready for QA days",
         "Stage Ready for SIT Test days",
         "Stage In SIT Test days",
         "Stage Awaiting UAT Deployment days",
@@ -297,6 +345,47 @@ def update_ticket_options(selected_sprint, selected_types):
     ]
 
     return sorted(options, key=lambda x: x['value'])
+
+# Add new callback for sprint goals
+@callback(
+    Output('sprint-goals', 'children'),
+    [Input('sprint-dropdown', 'value')]
+)
+def update_sprint_goals(selected_sprint):
+    if not selected_sprint:
+        return "No sprint selected"
+
+    # Filter data for selected sprint
+    sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Get sprint goals if they exist
+    if 'SprintGoals' in sprint_data.columns:
+        # Get unique non-null sprint goals
+        goals = sprint_data['SprintGoals'].dropna().unique()
+        if len(goals) > 0:
+            # Split goals if they're in a single string
+            all_goals = []
+            for goal in goals:
+                if isinstance(goal, str):
+                    # Remove outer brackets and split by quotes
+                    if goal.startswith('['):
+                        # Split by quotes and take odd-indexed items (the actual goals)
+                        goal_items = [item for item in goal.strip('[]').split('"') if item and item not in ['-', ' ', '']]
+                    else:
+                        goal_items = [goal]
+                    # Add each non-empty goal to the list
+                    all_goals.extend([g.strip() for g in goal_items if g.strip()])
+
+            # Remove duplicates
+            unique_goals = list(set(all_goals))
+
+            if unique_goals:
+                return html.Div([
+                    html.H4("Sprint Goals:"),
+                    html.Ul([html.Li(goal) for goal in unique_goals])
+                ])
+
+    return "No sprint goals available"
 
 # Run the app
 if __name__ == '__main__':

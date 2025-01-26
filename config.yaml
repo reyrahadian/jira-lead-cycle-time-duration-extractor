@@ -8,7 +8,8 @@ Connection:
 
 
 JQL:
-    Query: project = "Lower Funnel Web" and sprint in (1651,1659)
+    #Query: project = "Lower Funnel Web" and sprint in (1651,1659)
+    Query: project = "Lower Funnel Web" and created >= -12w
     #Query: resolutiondate > -12w order by resolutiondate DESC
     #Query: key=DEV-197
     #Query: project in ("DEV1", "DEV2")
@@ -17,7 +18,7 @@ JQL:
 # Map field names to additional attributes to extract
 Attributes:
     Sprint: customfield_10020.name
-    SprintGoal: customfield_10020.goal
+    SprintGoals: customfield_10020.goal
     SprintStartDate: customfield_10020.startDate
     SprintEndDate: customfield_10020.endDate
     StoryPoints: customfield_10042
