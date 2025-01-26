@@ -245,7 +245,7 @@ app.layout = html.Div([
 
             # Combined Details Panel
             html.Div([
-                # Left side - Warning Tickets (moved from right)
+                # Left side - Warning Tickets
                 html.Div([
                     html.H2("Tickets Exceeding Stage Thresholds",
                             style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
@@ -254,9 +254,9 @@ app.layout = html.Div([
                         columns=[
                             {'name': 'Key', 'id': 'ID'},
                             {'name': 'Summary', 'id': 'Name'},
+                            {'name': 'Type', 'id': 'Type'},
                             {'name': 'Current Stage', 'id': 'Stage'},
                             {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                            {'name': 'Status', 'id': 'status_level'},
                             {'name': 'Story Points', 'id': 'StoryPoints'}
                         ],
                         style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
@@ -651,24 +651,18 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
                 days_in_stage = ticket[stage_days_col]
                 thresholds = STAGE_THRESHOLDS.get(current_stage, STAGE_THRESHOLDS['default'])
 
-                if days_in_stage >= thresholds['critical']:
-                    status_level = 'CRITICAL'
-                elif days_in_stage >= thresholds['warning']:
-                    status_level = 'WARNING'
-                else:
-                    continue
+                if days_in_stage >= thresholds['warning']:  # Include all tickets that exceed warning threshold
+                    warning_tickets.append({
+                        'ID': ticket['ID'],
+                        'Name': ticket['Name'],
+                        'Type': ticket['Type'],
+                        'Stage': current_stage,
+                        'days_in_stage': round(days_in_stage, 1),
+                        'StoryPoints': ticket['StoryPoints']
+                    })
 
-                warning_tickets.append({
-                    'ID': ticket['ID'],
-                    'Name': ticket['Name'],
-                    'Stage': current_stage,
-                    'days_in_stage': round(days_in_stage, 1),
-                    'status_level': status_level,
-                    'StoryPoints': ticket['StoryPoints']
-                })
-
-    # Sort by status level and days in stage
-    warning_tickets.sort(key=lambda x: (x['status_level'] != 'CRITICAL', -x['days_in_stage']))
+    # Sort by days in stage (descending)
+    warning_tickets.sort(key=lambda x: x['days_in_stage'], reverse=True)
     return warning_tickets
 
 @callback(
@@ -679,28 +673,39 @@ def update_warning_table_styles(data):
     if not data:
         return []
 
-    return [
+    style_conditional = [
         {
             'if': {'row_index': 'odd'},
             'backgroundColor': 'rgb(248, 248, 248)'
-        },
-        {
-            'if': {
-                'filter_query': '{status_level} = "CRITICAL"',
-                'column_id': 'status_level'
-            },
-            'backgroundColor': '#ffcdd2',
-            'color': '#c62828'
-        },
-        {
-            'if': {
-                'filter_query': '{status_level} = "WARNING"',
-                'column_id': 'status_level'
-            },
-            'backgroundColor': '#fff9c4',
-            'color': '#f9a825'
         }
     ]
+
+    # Add styling for each row based on its stage and days
+    for row in data:
+        stage = row['Stage']
+        days = row['days_in_stage']
+        thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
+
+        if days >= thresholds['critical']:
+            style_conditional.append({
+                'if': {
+                    'filter_query': f'{{Stage}} = "{stage}" && {{days_in_stage}} >= {thresholds["critical"]}',
+                    'column_id': 'days_in_stage'
+                },
+                'backgroundColor': '#ffcdd2',
+                'color': '#c62828'
+            })
+        else:
+            style_conditional.append({
+                'if': {
+                    'filter_query': f'{{Stage}} = "{stage}" && {{days_in_stage}} >= {thresholds["warning"]} && {{days_in_stage}} < {thresholds["critical"]}',
+                    'column_id': 'days_in_stage'
+                },
+                'backgroundColor': '#fff9c4',
+                'color': '#f9a825'
+            })
+
+    return style_conditional
 
 @callback(
     [Output('squad-dropdown', 'options'),
