@@ -11,7 +11,8 @@ STAGE_THRESHOLDS = {
     'In Code Review': {'warning': 2, 'critical': 4},
     'In PR Test': {'warning': 2, 'critical': 4},
     'In SIT Test': {'warning': 3, 'critical': 6},
-    'In UAT Test': {'warning': 3, 'critical': 6}
+    'In UAT Test': {'warning': 3, 'critical': 6},
+    'Awaiting Prod Deployment': {'warning': 10, 'critical': 20}
 }
 
 # Add these style constants after the imports
@@ -31,7 +32,7 @@ CARD_STYLE = {
     'background-color': COLORS['card']
 }
 
-csv_filepath = "output1737864602005.csv"
+csv_filepath = "output1737869397309.csv"
 jira_tickets = pd.read_csv(csv_filepath,delimiter=";")
 
 # Convert string representations of lists to actual lists and extract unique sprint names
@@ -48,6 +49,12 @@ for sprint_str in jira_tickets['Sprint'].dropna():
 
 # Convert to sorted list and print
 unique_sprints = sorted(list(unique_sprints))
+
+# After unique_sprints initialization, add:
+unique_projects = sorted(jira_tickets['Project'].unique())
+
+# After unique_projects initialization, add:
+unique_squads = sorted([squad for squad in jira_tickets['Squad'].unique() if pd.notna(squad)]) if 'Squad' in jira_tickets.columns else []
 
 # Initialize with empty list since it will be populated by callback
 unique_types = []
@@ -73,11 +80,32 @@ app.layout = html.Div([
             html.Div([
                 html.H2("Filters", style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
                 html.Div([
+                    html.Label("Project:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                    dcc.Dropdown(
+                        id='project-dropdown',
+                        options=[{'label': project, 'value': project} for project in unique_projects],
+                        value=unique_projects[0] if unique_projects else None,
+                        multi=False,
+                        style={'margin-bottom': '15px'}
+                    ),
+                ]),
+                html.Div([
+                    html.Label("Squad:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                    dcc.Dropdown(
+                        id='squad-dropdown',
+                        options=[],  # Will be populated by callback
+                        value=None,
+                        multi=False,
+                        placeholder="Select squad (optional)",
+                        style={'margin-bottom': '15px'}
+                    ),
+                ]),
+                html.Div([
                     html.Label("Sprint:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
                     dcc.Dropdown(
                         id='sprint-dropdown',
-                        options=[{'label': sprint, 'value': sprint} for sprint in unique_sprints],
-                        value=unique_sprints[0] if unique_sprints else None,
+                        options=[],  # Will be populated by callback
+                        value=None,
                         multi=False,
                         style={'margin-bottom': '15px'}
                     ),
@@ -155,6 +183,38 @@ app.layout = html.Div([
                 )
             ], style=CARD_STYLE),
 
+            # New Warning Tickets Table
+            html.Div([
+                html.H2("Tickets Exceeding Stage Thresholds",
+                        style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+                dash_table.DataTable(
+                    id='warning-tickets-table',
+                    columns=[
+                        {'name': 'Key', 'id': 'ID'},
+                        {'name': 'Summary', 'id': 'Name'},
+                        {'name': 'Current Stage', 'id': 'Stage'},
+                        {'name': 'Days in Stage', 'id': 'days_in_stage'},
+                        {'name': 'Status', 'id': 'status_level'},
+                        {'name': 'Story Points', 'id': 'StoryPoints'},
+                        {'name': 'Sprint', 'id': 'Sprint'}
+                    ],
+                    style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                    style_cell={
+                        'textAlign': 'left',
+                        'minWidth': '100px',
+                        'maxWidth': '300px',
+                        'whiteSpace': 'normal'
+                    },
+                    page_size=10,
+                    style_header={
+                        'backgroundColor': COLORS['primary'],
+                        'color': 'white',
+                        'fontWeight': 'bold',
+                        'textAlign': 'left'
+                    }
+                )
+            ], style=CARD_STYLE),
+
             # Sprint Tickets Table
             html.Div([
                 html.H2("Sprint Tickets",
@@ -199,14 +259,19 @@ app.layout = html.Div([
      Output('sprint-table', 'data')],
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
-     Input('ticket-dropdown', 'value')]
+     Input('ticket-dropdown', 'value'),
+     Input('squad-dropdown', 'value')]
 )
-def update_sprint_data(selected_sprint, selected_types, selected_ticket):
+def update_sprint_data(selected_sprint, selected_types, selected_ticket, selected_squad):
     if not selected_sprint:
         return "No sprint selected", "No tickets", []
 
     # Filter data for selected sprint
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in sprint_data.columns:
+        sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
 
     # Apply type filter if selected
     if selected_types and len(selected_types) > 0:
@@ -220,8 +285,28 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket):
     total_points = sprint_data['StoryPoints'].sum()
     ticket_count = len(sprint_data)
 
-    # Prepare table data
-    table_data = sprint_data.to_dict('records')
+    # Define type order
+    type_order = {
+        'Epic': 0,
+        'Story': 1,
+        'User Story': 1,  # In case both formats exist
+        'Task': 2,
+        'Sub-task': 2,    # Group with Tasks
+        'Bug': 3,
+        'Defect': 3,      # Group with Bugs
+    }
+
+    # Create a helper function to get the sort value for a type
+    def get_type_order(ticket_type):
+        return type_order.get(ticket_type, 999)  # Unknown types go last
+
+    # Sort the data by Type using the custom order, then by ID
+    sprint_data = sprint_data.copy()  # Create a copy to avoid SettingWithCopyWarning
+    sprint_data['type_order'] = sprint_data['Type'].apply(get_type_order)
+    sprint_data = sprint_data.sort_values(['type_order', 'ID'])
+
+    # Prepare table data (exclude the temporary type_order column)
+    table_data = sprint_data.drop(columns=['type_order']).to_dict('records')
 
     return (
         f"Total Story Points: {total_points:.0f}",
@@ -238,9 +323,10 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket):
     [Input('stages-bar-chart', 'clickData'),
      Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
-     Input('ticket-dropdown', 'value')]
+     Input('ticket-dropdown', 'value'),
+     Input('squad-dropdown', 'value')]
 )
-def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket):
+def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket, selected_squad):
     if not click_data or not selected_sprint:
         return [], "No stage selected", {'display': 'none'}, []
 
@@ -253,6 +339,10 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
 
     # Filter data for selected sprint
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in sprint_data.columns:
+        sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
 
     # Apply type filter if selected
     if selected_types and len(selected_types) > 0:
@@ -313,19 +403,45 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
         style_conditional
     )
 
+stage_columns = [
+    "Stage In Development days",
+    "Stage In Progress days",
+    "Stage Blocked days",
+    "Stage In Code Review days",
+    "Stage In PR Test days",
+    "Stage Ready for PR Test days",
+    "Stage Awaiting SIT Deployment days",
+    "Stage In Sit days",
+    #"Stage Ready for QA days",
+    "Stage Ready for SIT Test days",
+    "Stage In SIT Test days",
+    "Stage Awaiting UAT Deployment days",
+    "Stage Deployed to UAT days",
+    "Stage Ready for UAT Test days",
+    "Stage In UAT Test days",
+    "Stage In UAT days",
+    "Stage PO Review days",
+    "Stage Awaiting Prod Deployment days",
+]
+
 # Update the bar chart callback to make it clickable
 @callback(
     Output('stages-bar-chart', 'figure'),
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
-     Input('ticket-dropdown', 'value')]
+     Input('ticket-dropdown', 'value'),
+     Input('squad-dropdown', 'value')]
 )
-def update_bar_chart(selected_sprint, selected_types, selected_ticket):
+def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad):
     if not selected_sprint:
         return {}
 
     # Filter data for selected sprint
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in sprint_data.columns:
+        sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
 
     # Apply type filter if selected
     if selected_types and len(selected_types) > 0:
@@ -335,29 +451,8 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket):
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
-    days_columns = [
-        "Stage In Development days",
-        "Stage In Progress days",
-        "Stage Blocked days",
-        "Stage In Code Review days",
-        "Stage In PR Test days",
-        "Stage Ready for PR Test days",
-        "Stage Awaiting SIT Deployment days",
-        "Stage In Sit days",
-        #"Stage Ready for QA days",
-        "Stage Ready for SIT Test days",
-        "Stage In SIT Test days",
-        "Stage Awaiting UAT Deployment days",
-        "Stage Deployed to UAT days",
-        "Stage Ready for UAT Test days",
-        "Stage In UAT Test days",
-        "Stage In UAT days",
-        "Stage PO Review days",
-        "Stage Awaiting Prod Deployment days",
-    ]
-
     # Calculate sum of days for each stage
-    stage_sums = sprint_data[days_columns].sum()
+    stage_sums = sprint_data[stage_columns].sum()
 
     # Create bar chart using plotly express
     fig = px.bar(
@@ -377,30 +472,79 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket):
 
     return fig
 
-# Add callback to update ticket dropdown options
+# Replace the existing cascade callbacks with these updated versions:
 @callback(
-    Output('ticket-dropdown', 'options'),
-    [Input('sprint-dropdown', 'value'),
-     Input('type-dropdown', 'value')]
+    [Output('sprint-dropdown', 'options'),
+     Output('sprint-dropdown', 'value'),
+     Output('type-dropdown', 'options'),
+     Output('type-dropdown', 'value'),
+     Output('ticket-dropdown', 'options'),
+     Output('ticket-dropdown', 'value')],
+    [Input('project-dropdown', 'value'),
+     Input('squad-dropdown', 'value')]
 )
-def update_ticket_options(selected_sprint, selected_types):
-    if not selected_sprint:
-        return []
+def update_sprint_options(selected_project, selected_squad):
+    if not selected_project:
+        return [], None, [], [], [], None
 
-    # Filter data for selected sprint
-    sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+    # Filter data for selected project
+    filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
 
-    # Apply type filter if selected
-    if selected_types and len(selected_types) > 0:
-        sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in filtered_data.columns:
+        filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
 
-    # Create options with ticket ID and summary
-    options = [
+    # Get unique sprints for the filtered data
+    sprint_set = set()
+    for sprint_str in filtered_data['Sprint'].dropna():
+        if sprint_str.startswith('['):
+            sprints = sprint_str.strip('[]').replace('"', '').split('-')
+        else:
+            sprints = [sprint_str]
+        sprint_set.update(sprint.strip() for sprint in sprints)
+
+    # Convert to sorted list and create options
+    sprint_options = [{'label': sprint, 'value': sprint} for sprint in sorted(list(sprint_set))]
+
+    # Reset dependent filters
+    return sprint_options, None, [], [], [], None
+
+# Add callback for type dropdown
+@callback(
+    [Output('type-dropdown', 'options', allow_duplicate=True),
+     Output('type-dropdown', 'value', allow_duplicate=True),
+     Output('ticket-dropdown', 'options', allow_duplicate=True),
+     Output('ticket-dropdown', 'value', allow_duplicate=True)],
+    [Input('project-dropdown', 'value'),
+     Input('squad-dropdown', 'value'),
+     Input('sprint-dropdown', 'value')],
+    prevent_initial_call=True
+)
+def update_type_options(selected_project, selected_squad, selected_sprint):
+    if not selected_project or not selected_sprint:
+        return [], [], [], None
+
+    # Filter data for selected project
+    filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
+
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in filtered_data.columns:
+        filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+
+    # Filter for selected sprint
+    filtered_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Get unique types
+    types = sorted(filtered_data['Type'].unique())
+    type_options = [{'label': type_name, 'value': type_name} for type_name in types if pd.notna(type_name)]
+
+    # Get unique tickets
+    ticket_options = [
         {'label': f"{row['ID']} - {row['Name']}", 'value': row['ID']}
-        for _, row in sprint_data.iterrows()
+        for _, row in filtered_data.iterrows()
     ]
 
-    return sorted(options, key=lambda x: x['value'])
+    return type_options, [], ticket_options, None
 
 # Add new callback for sprint goals
 @callback(
@@ -443,26 +587,125 @@ def update_sprint_goals(selected_sprint):
 
     return "No sprint goals available"
 
-# Add callback to update type dropdown options based on selected sprint
+# Add new callback for warning tickets table
 @callback(
-    [Output('type-dropdown', 'options'),
-     Output('type-dropdown', 'value')],
-    [Input('sprint-dropdown', 'value')]
+    Output('warning-tickets-table', 'data'),
+    [Input('sprint-dropdown', 'value'),
+     Input('type-dropdown', 'value'),
+     Input('ticket-dropdown', 'value'),
+     Input('squad-dropdown', 'value')]
 )
-def update_type_options(selected_sprint):
+def update_warning_tickets(selected_sprint, selected_types, selected_ticket, selected_squad):
     if not selected_sprint:
-        return [], []
+        return []
 
     # Filter data for selected sprint
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
 
-    # Get unique types for the selected sprint
-    sprint_types = sorted(sprint_data['Type'].unique())
+    # Apply squad filter if selected
+    if selected_squad and 'Squad' in sprint_data.columns:
+        sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
 
-    # Create options list
-    options = [{'label': type_, 'value': type_} for type_ in sprint_types]
+    # Apply type filter if selected
+    if selected_types and len(selected_types) > 0:
+        sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
 
-    return options, []  # Reset selection when sprint changes
+    # Apply ticket filter if selected
+    if selected_ticket:
+        sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
+
+    warning_tickets = []
+
+    # Define valid stages from stage_columns
+    valid_stages = [col.replace('Stage ', '').replace(' days', '') for col in stage_columns]
+
+    # Check each ticket against thresholds for its current stage
+    for _, ticket in sprint_data.iterrows():
+        current_stage = ticket['Stage']
+        if current_stage and current_stage in valid_stages:
+            stage_days_col = f"Stage {current_stage} days"
+            if stage_days_col in ticket:
+                days_in_stage = ticket[stage_days_col]
+                thresholds = STAGE_THRESHOLDS.get(current_stage, STAGE_THRESHOLDS['default'])
+
+                if days_in_stage >= thresholds['critical']:
+                    status_level = 'CRITICAL'
+                elif days_in_stage >= thresholds['warning']:
+                    status_level = 'WARNING'
+                else:
+                    continue  # Skip tickets below warning threshold
+
+                warning_tickets.append({
+                    'ID': ticket['ID'],
+                    'Name': ticket['Name'],
+                    'Stage': current_stage,
+                    'days_in_stage': round(days_in_stage, 1),
+                    'status_level': status_level,
+                    'StoryPoints': ticket['StoryPoints'],
+                    'Sprint': ticket['Sprint']
+                })
+
+    # Sort by status_level (CRITICAL first) and then by days_in_stage
+    warning_tickets.sort(key=lambda x: (x['status_level'] != 'CRITICAL', -x['days_in_stage']))
+
+    return warning_tickets
+
+# Update the warning tickets table style
+@callback(
+    Output('warning-tickets-table', 'style_data_conditional'),
+    [Input('warning-tickets-table', 'data')]
+)
+def update_warning_table_styles(data):
+    if not data:
+        return []
+
+    return [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(248, 248, 248)'
+        },
+        {
+            'if': {
+                'filter_query': '{status_level} = "CRITICAL"',
+                'column_id': 'status_level'
+            },
+            'backgroundColor': '#ffcdd2',  # Light red
+            'color': '#c62828'  # Dark red
+        },
+        {
+            'if': {
+                'filter_query': '{status_level} = "WARNING"',
+                'column_id': 'status_level'
+            },
+            'backgroundColor': '#fff9c4',  # Light yellow
+            'color': '#f9a825'  # Dark yellow
+        }
+    ]
+
+# Add new callback for Squad dropdown
+@callback(
+    [Output('squad-dropdown', 'options'),
+     Output('squad-dropdown', 'value')],
+    [Input('project-dropdown', 'value')]
+)
+def update_squad_options(selected_project):
+    if not selected_project:
+        return [], None
+
+    # Filter data for selected project
+    project_data = jira_tickets[jira_tickets['Project'] == selected_project]
+
+    # Get unique squads for the selected project
+    if 'Squad' in project_data.columns:
+        squad_options = [
+            {'label': squad, 'value': squad}
+            for squad in sorted(project_data['Squad'].unique())
+            if pd.notna(squad)
+        ]
+    else:
+        squad_options = []
+
+    return squad_options, None
 
 # Run the app
 if __name__ == '__main__':

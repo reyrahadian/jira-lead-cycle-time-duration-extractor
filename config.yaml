@@ -9,11 +9,8 @@ Connection:
 
 JQL:
     #Query: project = "Lower Funnel Web" and sprint in (1651,1659)
-    Query: project = "Lower Funnel Web" and created >= -12w
-    #Query: resolutiondate > -12w order by resolutiondate DESC
-    #Query: key=DEV-197
-    #Query: project in ("DEV1", "DEV2")
-
+    #Query: project = "Lower Funnel Web" and created >= -12w
+    Query: project in( "Lower Funnel Web","Upper Funnel Web","Digital MECCA App") and created >= -12w
 
 # Map field names to additional attributes to extract
 Attributes:
@@ -41,6 +38,8 @@ Attributes:
     CreatedDate: created
     UpdatedDate: updated
     FixVersions: fixVersions.name
+    Project: project.name
+    Squad: customfield_10756.value
     #AggreagateTimeoriginalestimate: aggregatetimeoriginalestimate
     #AggreagateTimeestimate: aggregatetimeestimate
     #AggreagateTimespent: aggregatetimespent
