@@ -35,23 +35,31 @@ CARD_STYLE = {
 }
 
 stage_columns = [
+    "Stage Waiting for support days",
     "Stage In Development days",
     "Stage In Progress days",
     "Stage Blocked days",
     "Stage In Code Review days",
     "Stage In PR Test days",
     "Stage Ready for PR Test days",
+    "Stage Awaiting Deployment days",
     "Stage Awaiting SIT Deployment days",
     "Stage In Sit days",
     "Stage Ready for SIT Test days",
     "Stage In SIT Test days",
+    "Stage In Test days",
+    "Stage In QA days",
     "Stage Awaiting UAT Deployment days",
+    "Stage In Staging days",
     "Stage Deployed to UAT days",
     "Stage Ready for UAT Test days",
     "Stage In UAT Test days",
     "Stage In UAT days",
+    "Stage Pre-Production days",
     "Stage PO Review days",
     "Stage Awaiting Prod Deployment days",
+    "Stage Ready for Release days",
+    "Stage In Prod Test days"
 ]
 
 #------------------------------------------------------------------------------
@@ -533,13 +541,17 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
-    # Calculate stage sums
+    # Calculate stage sums and filter out zero values
     stage_sums = sprint_data[stage_columns].sum()
+    non_zero_stages = stage_sums[stage_sums > 0]
 
-    # Create bar chart
+    # Clean stage names for display
+    stage_names = non_zero_stages.index.str.replace('Stage ', '').str.replace(' days', '')
+
+    # Create bar chart with non-zero stages only
     fig = px.bar(
-        x=stage_sums.index.str.replace('Stage ', '').str.replace(' days', ''),
-        y=stage_sums.values,
+        x=stage_names,
+        y=non_zero_stages.values,
         labels={'x': 'Stage', 'y': 'Total Days'},
         title=f'Time Spent in Each Stage - {selected_sprint}'
     )
