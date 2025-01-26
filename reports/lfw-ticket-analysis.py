@@ -14,6 +14,23 @@ STAGE_THRESHOLDS = {
     'In UAT Test': {'warning': 3, 'critical': 6}
 }
 
+# Add these style constants after the imports
+COLORS = {
+    'primary': '#2c3e50',
+    'secondary': '#34495e',
+    'background': '#f8f9fa',
+    'card': '#ffffff',
+    'border': '#dee2e6'
+}
+
+CARD_STYLE = {
+    'padding': '20px',
+    'margin': '10px',
+    'border-radius': '8px',
+    'box-shadow': '0 2px 4px rgba(0,0,0,0.1)',
+    'background-color': COLORS['card']
+}
+
 csv_filepath = "output1737864602005.csv"
 jira_tickets = pd.read_csv(csv_filepath,delimiter=";")
 
@@ -40,101 +57,136 @@ app = Dash(__name__)
 
 # Create the layout
 app.layout = html.Div([
-    html.H1("Jira Tickets Analysis"),
-
-    # Sprint and Type Selection Dropdowns
+    # Header section
     html.Div([
-        html.H2("Sprint Analysis"),
-        html.Div([
-            html.Label("Sprint:"),
-            dcc.Dropdown(
-                id='sprint-dropdown',
-                options=[{'label': sprint, 'value': sprint} for sprint in unique_sprints],
-                value=unique_sprints[0] if unique_sprints else None,
-                multi=False
-            ),
-        ]),
-        html.Div([
-            html.Label("Ticket Type:"),
-            dcc.Dropdown(
-                id='type-dropdown',
-                options=[{'label': type_, 'value': type_} for type_ in unique_types],
-                value=[],
-                multi=True,
-                placeholder="Select ticket type(s)"
-            ),
-        ]),
-        html.Div([
-            html.Label("Specific Ticket:"),
-            dcc.Dropdown(
-                id='ticket-dropdown',
-                options=[],  # Will be populated based on sprint and type selection
-                value=None,
-                multi=False,
-                placeholder="Select a specific ticket"
-            ),
-        ]),
-        html.Div(id='sprint-goals'),
-        html.H3(id='total-points'),
-        html.H3(id='ticket-count')
+        html.H1("Jira Tickets Analysis Dashboard",
+                style={'color': COLORS['primary'], 'text-align': 'center', 'padding': '20px 0'}),
+        html.P("This dashboard provides insights into ticket progression across different stages and sprints.",
+               style={'text-align': 'center', 'color': COLORS['secondary'], 'margin-bottom': '20px'})
     ]),
 
-    # Bar Chart and Related Tickets
+    # Filters section
     html.Div([
-        html.H2("Time Spent in Each Stage"),
-        dcc.Graph(id='stages-bar-chart'),
-        html.H3("Tickets in Selected Stage", id='selected-stage-title', style={'display': 'none'}),
-        dash_table.DataTable(
-            id='stage-tickets-table',
-            columns=[
-                {'name': 'Key', 'id': 'ID'},
-                {'name': 'Summary', 'id': 'Name'},
-                {'name': 'Type', 'id': 'Type'},
-                {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                {'name': 'Story Points', 'id': 'StoryPoints'},
-                {'name': 'Fix Versions', 'id': 'FixVersions'},
-                {'name': 'Sprint', 'id': 'Sprint'}
-            ],
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'textAlign': 'left',
-                'minWidth': '100px',
-                'maxWidth': '300px',
-                'whiteSpace': 'normal'
-            },
-            page_size=10,
-            style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}],
-            style_header={'backgroundColor': 'rgb(230, 230, 230)', 'fontWeight': 'bold'}
-        )
-    ]),
+        html.Div([
+            html.H2("Filters", style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+            html.Div([
+                html.Label("Sprint:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                dcc.Dropdown(
+                    id='sprint-dropdown',
+                    options=[{'label': sprint, 'value': sprint} for sprint in unique_sprints],
+                    value=unique_sprints[0] if unique_sprints else None,
+                    multi=False,
+                    style={'margin-bottom': '15px'}
+                ),
+            ]),
+            html.Div([
+                html.Label("Ticket Type:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                dcc.Dropdown(
+                    id='type-dropdown',
+                    options=[{'label': type_, 'value': type_} for type_ in unique_types],
+                    value=[],
+                    multi=True,
+                    placeholder="Select ticket type(s)",
+                    style={'margin-bottom': '15px'}
+                ),
+            ]),
+            html.Div([
+                html.Label("Specific Ticket:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                dcc.Dropdown(
+                    id='ticket-dropdown',
+                    options=[],
+                    value=None,
+                    multi=False,
+                    placeholder="Select a specific ticket",
+                    style={'margin-bottom': '15px'}
+                ),
+            ]),
+        ], style=CARD_STYLE),
 
-    # Data Table
+        # Sprint Goals and Metrics
+        html.Div([
+            html.Div(id='sprint-goals', style={'margin-bottom': '20px'}),
+            html.Div([
+                html.Div(id='total-points', style={'font-size': '1.2em', 'margin-bottom': '10px'}),
+                html.Div(id='ticket-count', style={'font-size': '1.2em'})
+            ], style={'color': COLORS['secondary']})
+        ], style=CARD_STYLE),
+    ], style={'display': 'flex', 'flex-direction': 'column', 'gap': '20px', 'margin': '20px'}),
+
+    # Charts and Tables section
     html.Div([
-        html.H2("Sprint Tickets"),
-        dash_table.DataTable(
-            id='sprint-table',
-            columns=[
-                {'name': 'Key', 'id': 'ID'},
-                {'name': 'Summary', 'id': 'Name'},
-                {'name': 'Type', 'id': 'Type'},
-                {'name': 'Status', 'id': 'Stage'},
-                {'name': 'Story Points', 'id': 'StoryPoints'},
-                {'name': 'Fix Versions', 'id': 'FixVersions'},
-                {'name': 'Created', 'id': 'CreatedDate'},
-                {'name': 'Updated', 'id': 'UpdatedDate'},
-                {'name': 'Sprint', 'id': 'Sprint'}
-            ],
-            style_table={'overflowX': 'auto'},
-            style_cell={
-                'textAlign': 'left',
-                'minWidth': '100px',
-                'maxWidth': '300px',
-                'whiteSpace': 'normal'
-            },
-            page_size=10
-        )
-    ])
-])
+        # Bar Chart
+        html.Div([
+            html.H2("Time Spent in Each Stage",
+                    style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+            dcc.Graph(id='stages-bar-chart'),
+            html.H3("Tickets in Selected Stage",
+                    id='selected-stage-title',
+                    style={'display': 'none', 'color': COLORS['secondary']}),
+            dash_table.DataTable(
+                id='stage-tickets-table',
+                columns=[
+                    {'name': 'Key', 'id': 'ID'},
+                    {'name': 'Summary', 'id': 'Name'},
+                    {'name': 'Type', 'id': 'Type'},
+                    {'name': 'Days in Stage', 'id': 'days_in_stage'},
+                    {'name': 'Story Points', 'id': 'StoryPoints'},
+                    {'name': 'Fix Versions', 'id': 'FixVersions'},
+                    {'name': 'Sprint', 'id': 'Sprint'}
+                ],
+                style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                style_cell={
+                    'textAlign': 'left',
+                    'minWidth': '100px',
+                    'maxWidth': '300px',
+                    'whiteSpace': 'normal'
+                },
+                page_size=10,
+                style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}],
+                style_header={
+                    'backgroundColor': COLORS['primary'],
+                    'color': 'white',
+                    'fontWeight': 'bold',
+                    'textAlign': 'left'
+                }
+            )
+        ], style=CARD_STYLE),
+
+        # Sprint Tickets Table
+        html.Div([
+            html.H2("Sprint Tickets",
+                    style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+            dash_table.DataTable(
+                id='sprint-table',
+                columns=[
+                    {'name': 'Key', 'id': 'ID'},
+                    {'name': 'Summary', 'id': 'Name'},
+                    {'name': 'Type', 'id': 'Type'},
+                    {'name': 'Status', 'id': 'Stage'},
+                    {'name': 'Story Points', 'id': 'StoryPoints'},
+                    {'name': 'Fix Versions', 'id': 'FixVersions'},
+                    {'name': 'Created', 'id': 'CreatedDate'},
+                    {'name': 'Updated', 'id': 'UpdatedDate'},
+                    {'name': 'Sprint', 'id': 'Sprint'}
+                ],
+                style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                style_cell={
+                    'textAlign': 'left',
+                    'minWidth': '100px',
+                    'maxWidth': '300px',
+                    'whiteSpace': 'normal'
+                },
+                page_size=10,
+                style_header={
+                    'backgroundColor': COLORS['primary'],
+                    'color': 'white',
+                    'fontWeight': 'bold',
+                    'textAlign': 'left'
+                }
+            )
+        ], style=CARD_STYLE),
+    ], style={'margin': '20px'})
+], style={'backgroundColor': COLORS['background'], 'minHeight': '100vh', 'padding': '20px'})
 
 # Callbacks for updating total points, ticket count and table
 @callback(
