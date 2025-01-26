@@ -160,6 +160,8 @@ app.layout = html.Div([
                         {'name': 'Key', 'id': 'ID'},
                         {'name': 'Summary', 'id': 'Name'},
                         {'name': 'Type', 'id': 'Type'},
+                        {'name': 'Parent Type', 'id': 'ParentType'},
+                        {'name': 'Parent Name', 'id': 'ParentName'},
                         {'name': 'Days in Stage', 'id': 'days_in_stage'},
                         {'name': 'Story Points', 'id': 'StoryPoints'},
                         {'name': 'Fix Versions', 'id': 'FixVersions'},
@@ -192,6 +194,8 @@ app.layout = html.Div([
                     columns=[
                         {'name': 'Key', 'id': 'ID'},
                         {'name': 'Summary', 'id': 'Name'},
+                        {'name': 'Parent Type', 'id': 'ParentType'},
+                        {'name': 'Parent Name', 'id': 'ParentName'},
                         {'name': 'Current Stage', 'id': 'Stage'},
                         {'name': 'Days in Stage', 'id': 'days_in_stage'},
                         {'name': 'Status', 'id': 'status_level'},
@@ -225,6 +229,8 @@ app.layout = html.Div([
                         {'name': 'Key', 'id': 'ID'},
                         {'name': 'Summary', 'id': 'Name'},
                         {'name': 'Type', 'id': 'Type'},
+                        {'name': 'Parent Type', 'id': 'ParentType'},
+                        {'name': 'Parent Name', 'id': 'ParentName'},
                         {'name': 'Status', 'id': 'Stage'},
                         {'name': 'Story Points', 'id': 'StoryPoints'},
                         {'name': 'Fix Versions', 'id': 'FixVersions'},
@@ -359,7 +365,7 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
     stage_tickets['days_in_stage'] = stage_tickets[stage_column]
 
     # Prepare table data
-    table_data = stage_tickets[['ID', 'Name', 'Type', 'days_in_stage', 'StoryPoints', 'FixVersions', 'Sprint']].sort_values(
+    table_data = stage_tickets[['ID', 'Name', 'Type', 'ParentType', 'ParentName', 'days_in_stage', 'StoryPoints', 'FixVersions', 'Sprint']].sort_values(
         by='days_in_stage',
         ascending=False
     ).to_dict('records')
@@ -638,6 +644,8 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
                 warning_tickets.append({
                     'ID': ticket['ID'],
                     'Name': ticket['Name'],
+                    'ParentType': ticket['ParentType'],
+                    'ParentName': ticket['ParentName'],
                     'Stage': current_stage,
                     'days_in_stage': round(days_in_stage, 1),
                     'status_level': status_level,
