@@ -11,22 +11,22 @@ const pwd:string = args[5];
 fetch(`${domain}/rest/api/latest/search?jql=key%3D${id}&expand=changelog`, { // server
   method: 'GET',
   headers: {
-    'Authorization': `Bearer ${pwd}`
-    /*
+    //'Authorization': `Bearer ${pwd}`
+
     'Authorization': `Basic ${Buffer.from(
       username+":"+pwd
     ).toString('base64')}`
-    */,
+    ,
     'Accept': 'application/json'
   }
 })
   .then(response => {
     console.log(
-      `Response: ${response.status} ${response.statusText}`      
+      `Response: ${response.status} ${response.statusText}`
     );
     return response.text();
   })
-  .then(text => 
+  .then(text =>
     writeFile(id+'.json', text + '', (err) => {
       if (err) throw err;
     })

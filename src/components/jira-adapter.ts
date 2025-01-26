@@ -15,8 +15,8 @@ const configureGetOptions = (url: string, auth: Auth): any => {
   } else if (auth.username && auth.password) {
     // Handle Basic Auth
     const headers = {
-      //'Authorization': `Basic ${Buffer.from(auth.username + ':' + auth.password).toString('base64')}`, // server
-      'Authorization': `Bearer ${auth.password}`, // cloud
+      'Authorization': `Basic ${Buffer.from(auth.username + ':' + auth.password).toString('base64')}`, // server
+      //'Authorization': `Bearer ${auth.password}`, // cloud
     };
     Object.assign(options, { headers });
   }

@@ -250,8 +250,8 @@ const configureGetOptions = (url, auth) => {
     else if (auth.username && auth.password) {
         // Handle Basic Auth
         const headers = {
-            //'Authorization': `Basic ${Buffer.from(auth.username + ':' + auth.password).toString('base64')}`, // server
-            'Authorization': `Bearer ${auth.password}`, // cloud
+            'Authorization': `Basic ${Buffer.from(auth.username + ':' + auth.password).toString('base64')}`, // server
+            //'Authorization': `Bearer ${auth.password}`, // cloud
         };
         Object.assign(options, { headers });
     }
@@ -419,7 +419,7 @@ const populateStages = (issue) => {
         const rd = toChangelogRowDuration(toDate(i === 0 ? issue.fields.created : changelog[i - 1].created), toDate(row.created), row.fromValue);
         rowDurations.push(rd);
     }
-    // 4. 
+    // 4.
     //in progress & done: tailings
     if (changelog.length === 0) {
         const currentRd = toChangelogRowDuration(toDate(issue.fields.created), nowAt, issue.fields.status.name);
@@ -6037,7 +6037,7 @@ module.exports={
         "$data": {
             "type": "string",
             "anyOf": [
-                { "format": "relative-json-pointer" }, 
+                { "format": "relative-json-pointer" },
                 { "format": "json-pointer" }
             ]
         }
@@ -7873,7 +7873,7 @@ var crypto = require('crypto')
  * Valid keys.
  */
 
-var keys = 
+var keys =
   [ 'acl'
   , 'location'
   , 'logging'
@@ -7912,7 +7912,7 @@ module.exports.authorization = authorization
  * @param {Object} options
  * @return {String}
  * @api private
- */ 
+ */
 
 function hmacSha1 (options) {
   return crypto.createHmac('sha1', options.secret).update(options.message).digest('base64')
@@ -7921,8 +7921,8 @@ function hmacSha1 (options) {
 module.exports.hmacSha1 = hmacSha1
 
 /**
- * Create a base64 sha1 HMAC for `options`. 
- * 
+ * Create a base64 sha1 HMAC for `options`.
+ *
  * @param {Object} options
  * @return {String}
  * @api private
@@ -7935,10 +7935,10 @@ function sign (options) {
 module.exports.sign = sign
 
 /**
- * Create a base64 sha1 HMAC for `options`. 
+ * Create a base64 sha1 HMAC for `options`.
  *
  * Specifically to be used with S3 presigned URLs
- * 
+ *
  * @param {Object} options
  * @return {String}
  * @api private
@@ -7954,7 +7954,7 @@ module.exports.signQuery= signQuery
  * Return a string for sign() with the given `options`.
  *
  * Spec:
- * 
+ *
  *    <verb>\n
  *    <md5>\n
  *    <content-type>\n
@@ -7970,7 +7970,7 @@ module.exports.signQuery= signQuery
 function stringToSign (options) {
   var headers = options.amazonHeaders || ''
   if (headers) headers += '\n'
-  var r = 
+  var r =
     [ options.verb
     , options.md5
     , options.contentType
@@ -7986,7 +7986,7 @@ module.exports.stringToSign = stringToSign
  * for S3 presigned URLs
  *
  * Spec:
- * 
+ *
  *    <date>\n
  *    <resource>
  *
@@ -11344,11 +11344,11 @@ exports.ECKey = function(curve, key, isPublic)
 //      var y = key.slice(bytes+1);
 //      this.P = new ECPointFp(curve,
 //        curve.fromBigInteger(new BigInteger(x.toString("hex"), 16)),
-//        curve.fromBigInteger(new BigInteger(y.toString("hex"), 16)));      
+//        curve.fromBigInteger(new BigInteger(y.toString("hex"), 16)));
       this.P = curve.decodePointHex(key.toString("hex"));
     }else{
       if(key.length != bytes) return false;
-      priv = new BigInteger(key.toString("hex"), 16);      
+      priv = new BigInteger(key.toString("hex"), 16);
     }
   }else{
     var n1 = n.subtract(BigInteger.ONE);
@@ -11370,7 +11370,7 @@ exports.ECKey = function(curve, key, isPublic)
       if(!key || !key.P) return false;
       var S = key.P.multiply(priv);
       return Buffer.from(unstupid(S.getX().toBigInteger().toString(16),bytes*2),"hex");
-   }     
+   }
   }
 }
 
@@ -11812,7 +11812,7 @@ ECFieldElementFp.prototype.modReduce = function(x)
             {
                 u = u.multiply(this.getR());
             }
-            x = u.add(v); 
+            x = u.add(v);
         }
         while (x.compareTo(q) >= 0)
         {
@@ -13088,8 +13088,8 @@ var util = require('util')
   , net = require('net')
   , tls = require('tls')
   , AgentSSL = require('https').Agent
-  
-function getConnectionName(host, port) {  
+
+function getConnectionName(host, port) {
   var name = ''
   if (typeof host === 'string') {
     name = host + ':' + port
@@ -13098,7 +13098,7 @@ function getConnectionName(host, port) {
     name = host.host + ':' + host.port + ':' + (host.localAddress ? (host.localAddress + ':') : ':')
   }
   return name
-}    
+}
 
 function ForeverAgent(options) {
   var self = this
@@ -13116,7 +13116,7 @@ function ForeverAgent(options) {
     } else if (self.sockets[name].length < self.minSockets) {
       if (!self.freeSockets[name]) self.freeSockets[name] = []
       self.freeSockets[name].push(socket)
-      
+
       // if an error happens while we don't use the socket anyway, meh, throw the socket away
       var onIdleError = function() {
         socket.destroy()
@@ -13142,7 +13142,7 @@ ForeverAgent.prototype.createConnection = net.createConnection
 ForeverAgent.prototype.addRequestNoreuse = Agent.prototype.addRequest
 ForeverAgent.prototype.addRequest = function(req, host, port) {
   var name = getConnectionName(host, port)
-  
+
   if (typeof host !== 'string') {
     var options = host
     port = options.port
@@ -13171,7 +13171,7 @@ ForeverAgent.prototype.removeSocket = function(s, name, host, port) {
     delete this.sockets[name]
     delete this.requests[name]
   }
-  
+
   if (this.freeSockets[name]) {
     var index = this.freeSockets[name].indexOf(s)
     if (index !== -1) {
@@ -23032,8 +23032,8 @@ var validate = exports._validate = function(/*Any*/instance,/*Object*/schema,/*O
 			if(typeof instance != 'object' || instance instanceof Array){
 				errors.push({property:path,message:"an object is required"});
 			}
-			
-			for(var i in objTypeDef){ 
+
+			for(var i in objTypeDef){
 				if(objTypeDef.hasOwnProperty(i) && i != '__proto__' && i != 'constructor'){
 					var value = instance.hasOwnProperty(i) ? instance[i] : undefined;
 					// skip _not_ specified properties
@@ -49997,7 +49997,7 @@ function compare (a, b) {
 }
 
 function generateBase (httpMethod, base_uri, params) {
-  // adapted from https://dev.twitter.com/docs/auth/oauth and 
+  // adapted from https://dev.twitter.com/docs/auth/oauth and
   // https://dev.twitter.com/docs/auth/creating-signature
 
   // Parameter normalization
@@ -64888,7 +64888,7 @@ runAsync.cb = function (func, cb) {
     ArgumentOutOfRangeError = Rx.ArgumentOutOfRangeError;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -66251,7 +66251,7 @@ runAsync.cb = function (func, cb) {
     isArrayLike = Rx.helpers.isArrayLike;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -66501,7 +66501,7 @@ function createCbHandler(o, ctx, selector) {
  */
 Observable.fromCallback = function (fn, ctx, selector) {
   return function () {
-    typeof ctx === 'undefined' && (ctx = this); 
+    typeof ctx === 'undefined' && (ctx = this);
 
     var len = arguments.length, args = new Array(len)
     for(var i = 0; i < len; i++) { args[i] = arguments[i]; }
@@ -66551,7 +66551,7 @@ function createNodeHandler(o, ctx, selector) {
  */
 Observable.fromNodeCallback = function (fn, ctx, selector) {
   return function () {
-    typeof ctx === 'undefined' && (ctx = this); 
+    typeof ctx === 'undefined' && (ctx = this);
     var len = arguments.length, args = new Array(len);
     for(var i = 0; i < len; i++) { args[i] = arguments[i]; }
     return createNodeObservable(fn, ctx, selector, args);
@@ -66788,7 +66788,7 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
     checkDisposed = Rx.Disposable.checkDisposed;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -66992,7 +66992,7 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
               o.onCompleted();
             }
           );
-      return subscription;      
+      return subscription;
     };
 
     PausableBufferedObservable.prototype.pause = function () {
@@ -67968,7 +67968,7 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
     observableFromPromise = Observable.fromPromise;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -68601,7 +68601,7 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
     observableFromPromise = Observable.fromPromise;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -68660,10 +68660,10 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
     };
     return WhileEnumerable;
   }(Enumerable));
-  
+
   function enumerableWhile(condition, source) {
     return new WhileEnumerable(condition, source);
-  }  
+  }
 
    /**
    *  Returns an observable sequence that is the result of invoking the selector on the source sequence, without sharing subscriptions.
@@ -68677,7 +68677,7 @@ Observable.fromNodeCallback = function (fn, ctx, selector) {
   };
 
    /**
-   *  Determines whether an observable collection contains values. 
+   *  Determines whether an observable collection contains values.
    *
    * @example
    *  1 - res = Rx.Observable.if(condition, obs1);
@@ -69177,7 +69177,7 @@ observableProto.flatMapWithMaxConcurrent = observableProto.flatMapMaxConcurrent 
     isFunction = Rx.helpers.isFunction;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -69533,7 +69533,7 @@ observableProto.flatMapWithMaxConcurrent = observableProto.flatMapMaxConcurrent 
   function cloneArray(arr) { for(var a = [], i = 0, len = arr.length; i < len; i++) { a.push(arr[i]); } return a;}
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -71973,7 +71973,7 @@ var ObserveOnObservable = (function (__super__) {
       this.a = [];
       AbstractObserver.call(this);
     }
-    
+
     InnerObserver.prototype.next = function (x) { this.a.push(x); };
     InnerObserver.prototype.error = function (e) { this.o.onError(e);  };
     InnerObserver.prototype.completed = function () { this.o.onNext(this.a); this.o.onCompleted(); };
@@ -76305,7 +76305,7 @@ var ReactiveTest = Rx.ReactiveTest = {
     observableFromPromise = Observable.fromPromise;
 
   var errorObj = {e: {}};
-  
+
   function tryCatcherGen(tryCatchTarget) {
     return function tryCatcher() {
       try {
@@ -85716,7 +85716,7 @@ function _rmdirRecursiveSync(root) {
         if (!deferred) {
           deferred = true;
           dirs.push(dir);
-        }  
+        }
         dirs.push(file);
       } else {
         fs.unlinkSync(file);
@@ -85791,7 +85791,7 @@ function _prepareTmpFileRemoveCallback(name, fd, opts) {
       fs.closeSync(fdPath[0]);
     }
     catch (e) {
-      // under some node/windows related circumstances, a temporary file 
+      // under some node/windows related circumstances, a temporary file
       // may have not be created as expected or the file was already closed
       // by the user, in which case we will simply ignore the error
       if (e.errno != -_c.EBADF && e.errno != -_c.ENOENT) {
