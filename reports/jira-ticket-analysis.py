@@ -174,109 +174,137 @@ app.layout = html.Div([
 
         # Right column - Charts and Tables
         html.Div([
-            # Bar Chart
+            # Bar Chart and Stage Tickets Section
             html.Div([
                 html.H2("Time Spent in Each Stage",
                         style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
                 dcc.Graph(id='stages-bar-chart'),
-                html.H3("Tickets in Selected Stage",
-                        id='selected-stage-title',
-                        style={'display': 'none', 'color': COLORS['secondary']}),
-                dash_table.DataTable(
-                    id='stage-tickets-table',
-                    columns=[
-                        {'name': 'Key', 'id': 'ID'},
-                        {'name': 'Summary', 'id': 'Name'},
-                        {'name': 'Type', 'id': 'Type'},
-                        {'name': 'Parent Type', 'id': 'ParentType'},
-                        {'name': 'Parent Name', 'id': 'ParentName'},
-                        {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                        {'name': 'Story Points', 'id': 'StoryPoints'},
-                        {'name': 'Fix Versions', 'id': 'FixVersions'},
-                        {'name': 'Sprint', 'id': 'Sprint'}
-                    ],
-                    row_selectable='single',
-                    selected_rows=[],
-                    style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                    style_cell={
-                        'textAlign': 'left',
-                        'minWidth': '100px',
-                        'maxWidth': '300px',
-                        'whiteSpace': 'normal'
-                    },
-                    page_size=10,
-                    style_data_conditional=[{'if': {'row_index': 'odd'}, 'backgroundColor': 'rgb(248, 248, 248)'}],
-                    style_header={
-                        'backgroundColor': COLORS['primary'],
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'textAlign': 'left'
-                    }
-                )
+                # Stage Tickets Panel
+                html.Div([
+                    # Left side - Stage Tickets Table
+                    html.Div([
+                        html.H3("Tickets in Selected Stage",
+                                id='selected-stage-title',
+                                style={'display': 'none', 'color': COLORS['secondary']}),
+                        dash_table.DataTable(
+                            id='stage-tickets-table',
+                            columns=[
+                                {'name': 'Key', 'id': 'ID'},
+                                {'name': 'Summary', 'id': 'Name'},
+                                {'name': 'Type', 'id': 'Type'},
+                                {'name': 'Days in Stage', 'id': 'days_in_stage'},
+                                {'name': 'Story Points', 'id': 'StoryPoints'}
+                            ],
+                            row_selectable='single',
+                            selected_rows=[],
+                            style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                            style_cell={
+                                'textAlign': 'left',
+                                'minWidth': '100px',
+                                'maxWidth': '300px',
+                                'whiteSpace': 'normal'
+                            },
+                            page_size=10,
+                            style_header={
+                                'backgroundColor': COLORS['primary'],
+                                'color': 'white',
+                                'fontWeight': 'bold',
+                                'textAlign': 'left'
+                            }
+                        )
+                    ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+
+                    # Right side - Stage Duration Details for Stage Tickets
+                    html.Div([
+                        html.H3("Stage Duration Details",
+                                id='stage-ticket-details-title',
+                                style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
+                        dash_table.DataTable(
+                            id='stage-ticket-details-table',
+                            columns=[
+                                {'name': 'Stage', 'id': 'stage'},
+                                {'name': 'Days', 'id': 'days'}
+                            ],
+                            style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                            style_cell={
+                                'textAlign': 'left',
+                                'minWidth': '100px',
+                                'maxWidth': '300px',
+                                'whiteSpace': 'normal'
+                            },
+                            style_header={
+                                'backgroundColor': COLORS['primary'],
+                                'color': 'white',
+                                'fontWeight': 'bold',
+                                'textAlign': 'left'
+                            }
+                        )
+                    ], id='stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
             ], style=CARD_STYLE),
 
-            # Specific Ticket Details Table
+            # Combined Details Panel
             html.Div([
-                html.H2("Stage Duration Details",
-                        id='ticket-details-title',
-                        style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
-                dash_table.DataTable(
-                    id='ticket-details-table',
-                    columns=[
-                        {'name': 'Stage', 'id': 'stage'},
-                        {'name': 'Days', 'id': 'days'}
-                    ],
-                    style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                    style_cell={
-                        'textAlign': 'left',
-                        'minWidth': '100px',
-                        'maxWidth': '300px',
-                        'whiteSpace': 'normal'
-                    },
-                    style_header={
-                        'backgroundColor': COLORS['primary'],
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'textAlign': 'left'
-                    }
-                )
-            ], id='ticket-details-container', style=CARD_STYLE),
+                # Left side - Warning Tickets (moved from right)
+                html.Div([
+                    html.H2("Tickets Exceeding Stage Thresholds",
+                            style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+                    dash_table.DataTable(
+                        id='warning-tickets-table',
+                        columns=[
+                            {'name': 'Key', 'id': 'ID'},
+                            {'name': 'Summary', 'id': 'Name'},
+                            {'name': 'Current Stage', 'id': 'Stage'},
+                            {'name': 'Days in Stage', 'id': 'days_in_stage'},
+                            {'name': 'Status', 'id': 'status_level'},
+                            {'name': 'Story Points', 'id': 'StoryPoints'}
+                        ],
+                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                        style_cell={
+                            'textAlign': 'left',
+                            'minWidth': '100px',
+                            'maxWidth': '300px',
+                            'whiteSpace': 'normal'
+                        },
+                        page_size=10,
+                        style_header={
+                            'backgroundColor': COLORS['primary'],
+                            'color': 'white',
+                            'fontWeight': 'bold',
+                            'textAlign': 'left'
+                        },
+                        row_selectable='single',
+                        selected_rows=[],
+                    )
+                ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
-            # Warning Tickets Table
-            html.Div([
-                html.H2("Tickets Exceeding Stage Thresholds",
-                        style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
-                dash_table.DataTable(
-                    id='warning-tickets-table',
-                    columns=[
-                        {'name': 'Key', 'id': 'ID'},
-                        {'name': 'Summary', 'id': 'Name'},
-                        {'name': 'Parent Type', 'id': 'ParentType'},
-                        {'name': 'Parent Name', 'id': 'ParentName'},
-                        {'name': 'Current Stage', 'id': 'Stage'},
-                        {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                        {'name': 'Status', 'id': 'status_level'},
-                        {'name': 'Story Points', 'id': 'StoryPoints'},
-                        {'name': 'Sprint', 'id': 'Sprint'}
-                    ],
-                    style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                    style_cell={
-                        'textAlign': 'left',
-                        'minWidth': '100px',
-                        'maxWidth': '300px',
-                        'whiteSpace': 'normal'
-                    },
-                    page_size=10,
-                    style_header={
-                        'backgroundColor': COLORS['primary'],
-                        'color': 'white',
-                        'fontWeight': 'bold',
-                        'textAlign': 'left'
-                    },
-                    row_selectable='single',
-                    selected_rows=[],
-                )
-            ], style=CARD_STYLE),
+                # Right side - Stage Duration Details (moved from left)
+                html.Div([
+                    html.H2("Stage Duration Details",
+                            id='ticket-details-title',
+                            style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
+                    dash_table.DataTable(
+                        id='ticket-details-table',
+                        columns=[
+                            {'name': 'Stage', 'id': 'stage'},
+                            {'name': 'Days', 'id': 'days'}
+                        ],
+                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
+                        style_cell={
+                            'textAlign': 'left',
+                            'minWidth': '100px',
+                            'maxWidth': '300px',
+                            'whiteSpace': 'normal'
+                        },
+                        style_header={
+                            'backgroundColor': COLORS['primary'],
+                            'color': 'white',
+                            'fontWeight': 'bold',
+                            'textAlign': 'left'
+                        }
+                    )
+                ], id='ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+            ], style=dict(CARD_STYLE, **{'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})),
 
             # Sprint Tickets Table
             html.Div([
@@ -570,22 +598,24 @@ def update_sprint_goals(selected_sprint):
     if 'SprintGoals' in sprint_data.columns:
         goals = sprint_data['SprintGoals'].dropna().unique()
         if len(goals) > 0:
-            all_goals = []
-            for goal in goals:
-                if isinstance(goal, str):
-                    if goal.startswith('['):
-                        goal_items = [item for item in goal.strip('[]').split('"')
-                                    if item and item not in ['-', ' ', '']]
-                    else:
-                        goal_items = [goal]
-                    all_goals.extend([g.strip() for g in goal_items if g.strip()])
-
-            unique_goals = list(set(all_goals))
-            if unique_goals:
-                return html.Div([
-                    html.H4("Sprint Goals:"),
-                    html.Ul([html.Li(goal) for goal in unique_goals])
-                ])
+            # Get the last goal from the list
+            last_goal = goals[-1]
+            if isinstance(last_goal, str):
+                if last_goal.startswith('['):
+                    # Extract the last goal from the list format
+                    goal_items = [item.strip() for item in last_goal.strip('[]').split('"')
+                                if item and item not in ['-', ' ', '']]
+                    if goal_items:
+                        last_goal_item = goal_items[-1]
+                        return html.Div([
+                            html.H4("Sprint Goal:"),
+                            html.P(last_goal_item)
+                        ])
+                else:
+                    return html.Div([
+                        html.H4("Sprint Goal:"),
+                        html.P(last_goal)
+                    ])
 
     return "No sprint goals available"
 
@@ -631,13 +661,10 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
                 warning_tickets.append({
                     'ID': ticket['ID'],
                     'Name': ticket['Name'],
-                    'ParentType': ticket['ParentType'],
-                    'ParentName': ticket['ParentName'],
                     'Stage': current_stage,
                     'days_in_stage': round(days_in_stage, 1),
                     'status_level': status_level,
-                    'StoryPoints': ticket['StoryPoints'],
-                    'Sprint': ticket['Sprint']
+                    'StoryPoints': ticket['StoryPoints']
                 })
 
     # Sort by status level and days in stage
@@ -702,34 +729,24 @@ def update_squad_options(selected_project):
      Output('ticket-details-table', 'data'),
      Output('ticket-details-title', 'children'),
      Output('ticket-details-table', 'style_data_conditional')],
-    [Input('ticket-dropdown', 'value'),
-     Input('warning-tickets-table', 'selected_rows'),
-     Input('warning-tickets-table', 'data'),
-     Input('stage-tickets-table', 'selected_rows'),
-     Input('stage-tickets-table', 'data')]
+    [Input('warning-tickets-table', 'selected_rows'),
+     Input('warning-tickets-table', 'data')]
 )
-def update_ticket_details(selected_ticket, warning_selected_rows, warning_table_data,
-                         stage_selected_rows, stage_table_data):
-    ctx = callback_context
-    if not ctx.triggered:
+def update_ticket_details(warning_selected_rows, warning_table_data):
+    if not warning_selected_rows or not warning_table_data or len(warning_selected_rows) == 0:
         return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
 
-    # Determine which input triggered the callback
-    trigger_id = ctx.triggered[0]['prop_id'].split('.')[0]
-
-    if trigger_id == 'warning-tickets-table':
-        if not warning_selected_rows or not warning_table_data:
-            return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
+    try:
         selected_ticket = warning_table_data[warning_selected_rows[0]]['ID']
-    elif trigger_id == 'stage-tickets-table':
-        if not stage_selected_rows or not stage_table_data:
-            return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
-        selected_ticket = stage_table_data[stage_selected_rows[0]]['ID']
-    elif not selected_ticket:
+    except (IndexError, KeyError):
         return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
 
     # Filter data for selected ticket
-    ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket].iloc[0]
+    ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket]
+    if ticket_data.empty:
+        return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
+
+    ticket_data = ticket_data.iloc[0]
 
     # Prepare stage duration data
     stage_data = []
@@ -764,28 +781,134 @@ def update_ticket_details(selected_ticket, warning_selected_rows, warning_table_
                 'if': {
                     'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["critical"]}'
                 },
-                'backgroundColor': '#ffcdd2',  # Light red
-                'color': '#c62828'  # Dark red
+                'backgroundColor': '#ffcdd2',
+                'color': '#c62828'
             })
         elif days >= thresholds['warning']:
             style_conditional.append({
                 'if': {
                     'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["warning"]} && {{days}} < {thresholds["critical"]}'
                 },
-                'backgroundColor': '#fff9c4',  # Light yellow
-                'color': '#f9a825'  # Dark yellow
+                'backgroundColor': '#fff9c4',
+                'color': '#f9a825'
             })
         else:
             style_conditional.append({
                 'if': {
                     'filter_query': f'{{stage}} = "{stage}" && {{days}} < {thresholds["warning"]}'
                 },
-                'backgroundColor': '#c8e6c9',  # Light green
-                'color': '#2e7d32'  # Dark green
+                'backgroundColor': '#c8e6c9',
+                'color': '#2e7d32'
             })
 
     return (
         dict(CARD_STYLE, **{'display': 'block'}),
+        {'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'block'},
+        stage_data,
+        f"Stage Duration Details for {selected_ticket}",
+        style_conditional
+    )
+
+# Add new callback for stage ticket details
+@callback(
+    [Output('stage-ticket-details-container', 'style'),
+     Output('stage-ticket-details-title', 'style'),
+     Output('stage-ticket-details-table', 'data'),
+     Output('stage-ticket-details-title', 'children'),
+     Output('stage-ticket-details-table', 'style_data_conditional')],
+    [Input('stage-tickets-table', 'selected_rows'),
+     Input('stage-tickets-table', 'data')]
+)
+def update_stage_ticket_details(selected_rows, table_data):
+    # Return empty state if no selection or no data
+    if not selected_rows or not table_data or len(selected_rows) == 0 or len(table_data) == 0:
+        return (
+            {'display': 'none'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
+
+    try:
+        selected_ticket = table_data[selected_rows[0]]['ID']
+    except (IndexError, KeyError):
+        return (
+            {'display': 'none'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
+
+    # Filter data for selected ticket
+    ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket]
+    if ticket_data.empty:
+        return (
+            {'display': 'none'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
+
+    ticket_data = ticket_data.iloc[0]
+
+    # Prepare stage duration data
+    stage_data = []
+    for col in stage_columns:
+        stage_name = col.replace('Stage ', '').replace(' days', '')
+        days = ticket_data[col]
+        if days > 0:  # Only include stages where time was spent
+            stage_data.append({
+                'stage': stage_name,
+                'days': round(days, 1)
+            })
+
+    # Sort by days spent (descending)
+    stage_data.sort(key=lambda x: x['days'], reverse=True)
+
+    # Prepare conditional styling based on thresholds
+    style_conditional = [
+        {
+            'if': {'row_index': 'odd'},
+            'backgroundColor': 'rgb(248, 248, 248)'
+        }
+    ]
+
+    # Add threshold-based styling for each stage
+    for stage_entry in stage_data:
+        stage = stage_entry['stage']
+        days = stage_entry['days']
+        thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
+
+        if days >= thresholds['critical']:
+            style_conditional.append({
+                'if': {
+                    'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["critical"]}'
+                },
+                'backgroundColor': '#ffcdd2',
+                'color': '#c62828'
+            })
+        elif days >= thresholds['warning']:
+            style_conditional.append({
+                'if': {
+                    'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["warning"]} && {{days}} < {thresholds["critical"]}'
+                },
+                'backgroundColor': '#fff9c4',
+                'color': '#f9a825'
+            })
+        else:
+            style_conditional.append({
+                'if': {
+                    'filter_query': f'{{stage}} = "{stage}" && {{days}} < {thresholds["warning"]}'
+                },
+                'backgroundColor': '#c8e6c9',
+                'color': '#2e7d32'
+            })
+
+    return (
+        {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
         {'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'block'},
         stage_data,
         f"Stage Duration Details for {selected_ticket}",
