@@ -1,39 +1,51 @@
 Connection:
-    Domain: https://<your Jira domain>/ #Open Jira in your browser and see the domain name in the browser link, ie. jira.microsoft.com or microsoft.atlassian.net
-    Username: <email> #Use an email you use to access Jira. See https://jira.eurowag.com/secure/ViewProfile.jspa.
-    Password: <Jira API token> # is your Jira API Token. The token can be generated at https://id.atlassian.com/manage-profile/security/api-tokens
+    Domain: xxx
+    #Open Jira in your browser and see the domain name in the browser link, ie. jira.microsoft.com or microsoft.atlassian.net
+    Username: xxx
+    #Use an email you use to access Jira. See https://jira.eurowag.com/secure/ViewProfile.jspa.
+    Password: xxx
+    # is your Jira API Token. The token can be generated at https://id.atlassian.com/manage-profile/security/api-tokens
 
 
-JQL: 
-    Query: resolutiondate > -12w order by resolutiondate DESC
+JQL:
+    Query: project = "Lower Funnel Web" and sprint in (1651,1659)
+    #Query: resolutiondate > -12w order by resolutiondate DESC
     #Query: key=DEV-197
     #Query: project in ("DEV1", "DEV2")
-        
+
 
 # Map field names to additional attributes to extract
 Attributes:
-      Stage: status.name      
-      StatusCategory: status.statusCategory.name    
-      Level: priority.name
-      Labels: labels
-      Components: components.name
-      Version: fixVersions.last.name
-      VersionRelease: fixVersions.last.releaseDate
-      ParentId: parent.key
-      ParentName: parent.fields.summary
-      ParentType: parent.fields.issuetype.name
-      AssigneeName: assignee.displayName
-      LinksToOutwardKey: issuelinks.first.outwardIssue.key
-      LinksToInwardKey: issuelinks.first.inwardIssue.key     
-      Timeoriginalestimate: timeoriginalestimate    
-      Timeestimate: timeestimate
-      Timespent: timespent
-      AggreagateTimeoriginalestimate: aggregatetimeoriginalestimate
-      AggreagateTimeestimate: aggregatetimeestimate
-      AggreagateTimespent: aggregatetimespent
-      Workratio: workratio
-      #Environment: customfield_10081.last.value
-      #HierarchyProductItemName: customfield_18701.fields.summary
-      #HierarchyProductItemKey: customfield_18701.key
-      #HierarchyEpicType: customfield_21401.value
-      
+    Sprint: customfield_10020.name
+    SprintGoal: customfield_10020.goal
+    SprintStartDate: customfield_10020.startDate
+    SprintEndDate: customfield_10020.endDate
+    StoryPoints: customfield_10042
+    Stage: status.name
+    StatusCategory: status.statusCategory.name
+    Level: priority.name
+    Labels: labels
+    Components: components.name
+    Version: fixVersions.last.name
+    VersionRelease: fixVersions.last.releaseDate
+    ParentId: parent.key
+    ParentName: parent.fields.summary
+    ParentType: parent.fields.issuetype.name
+    AssigneeName: assignee.displayName
+    #LinksToOutwardKey: issuelinks.first.outwardIssue.key
+    #LinksToInwardKey: issuelinks.first.inwardIssue.key
+    Timeoriginalestimate: timeoriginalestimate
+    Timeestimate: timeestimate
+    Timespent: timespent
+    CreatedDate: created
+    UpdatedDate: updated
+    FixVersions: fixVersions.name
+    #AggreagateTimeoriginalestimate: aggregatetimeoriginalestimate
+    #AggreagateTimeestimate: aggregatetimeestimate
+    #AggreagateTimespent: aggregatetimespent
+    #Workratio: workratio
+    #Environment: customfield_10081.last.value
+    #HierarchyProductItemName: customfield_18701.fields.summary
+    #HierarchyProductItemKey: customfield_18701.key
+    #HierarchyEpicType: customfield_21401.value
+
