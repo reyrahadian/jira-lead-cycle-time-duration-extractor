@@ -66,7 +66,7 @@ stage_columns = [
 # Data Loading and Preprocessing
 #------------------------------------------------------------------------------
 
-csv_filepath = "output1737869397309.csv"
+csv_filepath = "output1738016730102.csv"
 jira_tickets = pd.read_csv(csv_filepath, delimiter=";")
 
 # Extract unique sprint names
@@ -687,29 +687,41 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
-    warning_tickets = []
-    valid_stages = [col.replace('Stage ', '').replace(' days', '') for col in stage_columns]
+    warning_tickets = {}  # Use dictionary to track unique tickets with their worst violation
 
     # Check each ticket against thresholds
     for _, ticket in sprint_data.iterrows():
-        current_stage = ticket['Stage']
-        if current_stage and current_stage in valid_stages:
-            stage_days_col = f"Stage {current_stage} days"
-            if stage_days_col in ticket:
-                days_in_stage = ticket[stage_days_col]
-                thresholds = STAGE_THRESHOLDS.get(current_stage, STAGE_THRESHOLDS['default'])
+        # Check all stage columns for threshold violations
+        max_threshold_ratio = 0  # Track the worst violation ratio
+        worst_stage = None
+        worst_days = 0
 
-                if days_in_stage >= thresholds['warning']:  # Include all tickets that exceed warning threshold
-                    warning_tickets.append({
-                        'ID': ticket['ID'],
-                        'Name': ticket['Name'],
-                        'Type': ticket['Type'],
-                        'Stage': current_stage,
-                        'days_in_stage': round(days_in_stage, 1),
-                        'StoryPoints': ticket['StoryPoints']
-                    })
+        for stage_col in stage_columns:
+            stage_name = stage_col.replace('Stage ', '').replace(' days', '')
+            days_in_stage = ticket[stage_col]
+            thresholds = STAGE_THRESHOLDS.get(stage_name, STAGE_THRESHOLDS['default'])
 
-    # Sort by days in stage (descending)
+            if days_in_stage >= thresholds['warning']:
+                # Calculate violation ratio (how many times over the warning threshold)
+                threshold_ratio = days_in_stage / thresholds['warning']
+                if threshold_ratio > max_threshold_ratio:
+                    max_threshold_ratio = threshold_ratio
+                    worst_stage = stage_name
+                    worst_days = days_in_stage
+
+        # Add ticket only if it had any violations
+        if worst_stage:
+            warning_tickets[ticket['ID']] = {
+                'ID': ticket['ID'],
+                'Name': ticket['Name'],
+                'Type': ticket['Type'],
+                'Stage': worst_stage,
+                'days_in_stage': round(worst_days, 1),
+                'StoryPoints': ticket['StoryPoints']
+            }
+
+    # Convert dictionary to list and sort by days in stage
+    warning_tickets = list(warning_tickets.values())
     warning_tickets.sort(key=lambda x: x['days_in_stage'], reverse=True)
     return warning_tickets
 
