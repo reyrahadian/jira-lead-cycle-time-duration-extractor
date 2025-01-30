@@ -243,6 +243,7 @@ app.layout = html.Div([
                                 {'name': 'Key', 'id': 'ID'},
                                 {'name': 'Summary', 'id': 'Name'},
                                 {'name': 'Type', 'id': 'Type'},
+                                {'name': 'Current Stage', 'id': 'Stage'},
                                 {'name': 'Days in Stage', 'id': 'days_in_stage'},
                                 {'name': 'Story Points', 'id': 'StoryPoints'}
                             ],
@@ -306,8 +307,8 @@ app.layout = html.Div([
                             {'name': 'Key', 'id': 'ID'},
                             {'name': 'Summary', 'id': 'Name'},
                             {'name': 'Type', 'id': 'Type'},
-                            {'name': 'Stage', 'id': 'Stage'},
-                            {'name': 'Days in Stage', 'id': 'days_in_stage'},
+                            {'name': 'Current Stage', 'id': 'Stage'},
+                            {'name': 'Exceeding Stages', 'id': 'exceeding_stages'},
                             {'name': 'Story Points', 'id': 'StoryPoints'}
                         ],
                         style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
@@ -519,7 +520,7 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
     stage_tickets['days_in_stage'] = stage_tickets[stage_column]
 
     # Prepare table data
-    table_data = stage_tickets[['ID', 'Name', 'Type', 'ParentType', 'ParentName', 'days_in_stage',
+    table_data = stage_tickets[['ID', 'Name', 'Type', 'ParentType', 'ParentName', 'Stage', 'days_in_stage',
                                'StoryPoints', 'FixVersions', 'Sprint']].sort_values(
         by='days_in_stage',
         ascending=False
@@ -711,7 +712,8 @@ def update_sprint_goals(selected_sprint):
     return "No sprint goals available"
 
 @callback(
-    Output('warning-tickets-table', 'data'),
+    [Output('warning-tickets-table', 'data'),
+     Output('warning-tickets-table', 'style_data_conditional')],
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
@@ -719,7 +721,7 @@ def update_sprint_goals(selected_sprint):
 )
 def update_warning_tickets(selected_sprint, selected_types, selected_ticket, selected_squad):
     if not selected_sprint:
-        return []
+        return [], []
 
     # Filter data
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
@@ -730,14 +732,13 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
-    warning_tickets = {}  # Use dictionary to track unique tickets with their worst violation
+    warning_tickets = {}  # Use dictionary to track unique tickets with their violations
 
     # Check each ticket against thresholds
     for _, ticket in sprint_data.iterrows():
-        # Check all stage columns for threshold violations
-        max_threshold_ratio = 0  # Track the worst violation ratio
-        worst_stage = None
-        worst_days = 0
+        # Track all stages exceeding thresholds
+        exceeding_stages = []
+        max_threshold_ratio = 0
 
         for stage_col in threshold_stage_columns:
             stage_name = stage_col.replace('Stage ', '').replace(' days', '')
@@ -749,33 +750,31 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
                 threshold_ratio = days_in_stage / thresholds['warning']
                 if threshold_ratio > max_threshold_ratio:
                     max_threshold_ratio = threshold_ratio
-                    worst_stage = stage_name
-                    worst_days = days_in_stage
 
-        # Add ticket only if it had any violations
-        if worst_stage:
+                # Add stage to exceeding stages list with days
+                exceeding_stages.append(f"{stage_name} ({days_in_stage:.1f}d)")
+
+        # Add ticket if it had any violations
+        if exceeding_stages:
             warning_tickets[ticket['ID']] = {
                 'ID': ticket['ID'],
                 'Name': ticket['Name'],
                 'Type': ticket['Type'],
-                'Stage': worst_stage,
-                'days_in_stage': round(worst_days, 1),
-                'StoryPoints': ticket['StoryPoints']
+                'Stage': ticket['Stage'],
+                'exceeding_stages': ', '.join(exceeding_stages),  # Join all exceeding stages
+                'StoryPoints': ticket['StoryPoints'],
+                '_threshold_ratio': max_threshold_ratio  # Used for sorting
             }
 
-    # Convert dictionary to list and sort by days in stage
+    # Convert dictionary to list and sort by the worst threshold violation
     warning_tickets = list(warning_tickets.values())
-    warning_tickets.sort(key=lambda x: x['days_in_stage'], reverse=True)
-    return warning_tickets
+    warning_tickets.sort(key=lambda x: x['_threshold_ratio'], reverse=True)
 
-@callback(
-    Output('warning-tickets-table', 'style_data_conditional'),
-    [Input('warning-tickets-table', 'data')]
-)
-def update_warning_table_styles(data):
-    if not data:
-        return []
+    # Remove the sorting key before returning
+    for ticket in warning_tickets:
+        del ticket['_threshold_ratio']
 
+    # Basic styling for alternating rows
     style_conditional = [
         {
             'if': {'row_index': 'odd'},
@@ -783,32 +782,7 @@ def update_warning_table_styles(data):
         }
     ]
 
-    # Add styling for each row based on its stage and days
-    for row in data:
-        stage = row['Stage']
-        days = row['days_in_stage']
-        thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
-
-        if days >= thresholds['critical']:
-            style_conditional.append({
-                'if': {
-                    'filter_query': f'{{Stage}} = "{stage}" && {{days_in_stage}} >= {thresholds["critical"]}',
-                    'column_id': 'days_in_stage'
-                },
-                'backgroundColor': '#ffcdd2',
-                'color': '#c62828'
-            })
-        else:
-            style_conditional.append({
-                'if': {
-                    'filter_query': f'{{Stage}} = "{stage}" && {{days_in_stage}} >= {thresholds["warning"]} && {{days_in_stage}} < {thresholds["critical"]}',
-                    'column_id': 'days_in_stage'
-                },
-                'backgroundColor': '#fff9c4',
-                'color': '#f9a825'
-            })
-
-    return style_conditional
+    return warning_tickets, style_conditional
 
 @callback(
     [Output('squad-dropdown', 'options'),
