@@ -15,7 +15,8 @@ STAGE_THRESHOLDS = {
     'In PR Test': {'warning': 2, 'critical': 4},
     'In SIT Test': {'warning': 3, 'critical': 6},
     'In UAT Test': {'warning': 3, 'critical': 6},
-    'Awaiting Prod Deployment': {'warning': 10, 'critical': 20}
+    'Awaiting Prod Deployment': {'warning': 10, 'critical': 20},
+    'Done': {'warning': 1000, 'critical': 1000}
 }
 
 COLORS = {
@@ -34,7 +35,46 @@ CARD_STYLE = {
     'background-color': COLORS['card']
 }
 
-stage_columns = [
+all_stage_columns = [
+    "Stage Open days",
+    "Stage In Development days",
+    "Stage In Progress days",
+    "Stage In Code Review days",
+    "Stage Ready for PR Test days",
+    "Stage In PR Test days",
+    "Stage Awaiting SIT Deployment days",
+    "Stage In Sit days",
+    "Stage Awaiting UAT Deployment days",
+    "Stage Ready for UAT Test days",
+    "Stage In UAT Test days",
+    "Stage Awaiting Prod Deployment days",
+    "Stage Rejected days",
+    "Stage Blocked days",
+    "Stage Ready for SIT Test days",
+    "Stage Failed Test days",
+    "Stage In UAT days",
+    "Stage Deployed to UAT days",
+    "Stage In Prod Test days",
+    "Stage Ready for Development days",
+    "Stage In SIT Test days",
+    "Stage Waiting for support days",
+    "Stage In Analysis days",
+    "Stage In QA days",
+    "Stage Backlog days",
+    "Stage Design Review days",
+    "Stage In PR days",
+    "Stage In Test days",
+    "Stage PO Review days",
+    "Stage Ready for Staging days",
+    "Stage In Staging days",
+    "Stage Ready for Release days",
+    "Stage Pre-Production days",
+    "Stage In Production days",
+    "Stage Done days",
+    "Stage Closed days"
+]
+
+threshold_stage_columns = [
     "Stage Waiting for support days",
     "Stage In Development days",
     "Stage In Progress days",
@@ -42,7 +82,7 @@ stage_columns = [
     "Stage In Code Review days",
     "Stage In PR Test days",
     "Stage Ready for PR Test days",
-    "Stage Awaiting Deployment days",
+    #"Stage Awaiting Deployment days",
     "Stage Awaiting SIT Deployment days",
     "Stage In Sit days",
     "Stage Ready for SIT Test days",
@@ -66,8 +106,11 @@ stage_columns = [
 # Data Loading and Preprocessing
 #------------------------------------------------------------------------------
 
-csv_filepath = "output1738016730102.csv"
-jira_tickets = pd.read_csv(csv_filepath, delimiter=";")
+csv_filepath = "output-static.csv"
+jira_tickets = pd.read_csv(csv_filepath, delimiter=",")
+
+# Find all columns containing 'days' (case insensitive)
+days_columns = [col for col in jira_tickets.columns if 'days' in col.lower()]
 
 # Extract unique sprint names
 unique_sprints = set()
@@ -263,7 +306,7 @@ app.layout = html.Div([
                             {'name': 'Key', 'id': 'ID'},
                             {'name': 'Summary', 'id': 'Name'},
                             {'name': 'Type', 'id': 'Type'},
-                            {'name': 'Current Stage', 'id': 'Stage'},
+                            {'name': 'Stage', 'id': 'Stage'},
                             {'name': 'Days in Stage', 'id': 'days_in_stage'},
                             {'name': 'Story Points', 'id': 'StoryPoints'}
                         ],
@@ -542,7 +585,7 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
     # Calculate stage sums and filter out zero values
-    stage_sums = sprint_data[stage_columns].sum()
+    stage_sums = sprint_data[threshold_stage_columns].sum()
     non_zero_stages = stage_sums[stage_sums > 0]
 
     # Create DataFrame for the chart
@@ -696,7 +739,7 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
         worst_stage = None
         worst_days = 0
 
-        for stage_col in stage_columns:
+        for stage_col in threshold_stage_columns:
             stage_name = stage_col.replace('Stage ', '').replace(' days', '')
             days_in_stage = ticket[stage_col]
             thresholds = STAGE_THRESHOLDS.get(stage_name, STAGE_THRESHOLDS['default'])
@@ -813,9 +856,13 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
 
     ticket_data = ticket_data.iloc[0]
 
-    # Prepare stage duration data following stage_columns order
+    # Create a dictionary to map stages to their order in all_stage_columns
+    stage_order = {stage.replace('Stage ', '').replace(' days', ''): idx
+                  for idx, stage in enumerate(all_stage_columns)}
+
+    # Prepare stage duration data using all_stage_columns
     stage_data = []
-    for col in stage_columns:
+    for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
@@ -823,6 +870,9 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
                 'stage': stage_name,
                 'days': round(days, 1)
             })
+
+    # Sort stage_data by the original order in all_stage_columns
+    stage_data = sorted(stage_data, key=lambda x: stage_order[x['stage']])
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
@@ -914,9 +964,13 @@ def update_stage_ticket_details(selected_rows, table_data):
 
     ticket_data = ticket_data.iloc[0]
 
-    # Prepare stage duration data following stage_columns order
+    # Create a dictionary to map stages to their order in all_stage_columns
+    stage_order = {stage.replace('Stage ', '').replace(' days', ''): idx
+                  for idx, stage in enumerate(all_stage_columns)}
+
+    # Prepare stage duration data using all_stage_columns
     stage_data = []
-    for col in stage_columns:
+    for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
@@ -924,6 +978,9 @@ def update_stage_ticket_details(selected_rows, table_data):
                 'stage': stage_name,
                 'days': round(days, 1)
             })
+
+    # Sort stage_data by the original order in all_stage_columns
+    stage_data = sorted(stage_data, key=lambda x: stage_order[x['stage']])
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
@@ -1014,4 +1071,4 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
 #------------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    app.run_server(debug=True)
+    app.run_server(debug=True, use_reloader=True)
