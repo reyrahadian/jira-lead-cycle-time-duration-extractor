@@ -8,7 +8,8 @@ import { JiraExtractor } from './index';
 import { convertYamlToJiraSettings } from './src/components/yaml-converter';
 
 const defaultYamlPath = 'config.yaml';
-const defaultOutputPath = `output${new Date().getTime()}.csv`;
+//const defaultOutputPath = `output${new Date().getTime()}.csv`;
+const defaultOutputPath = `output-static.csv`;
 
 const bar = new ProgressBar(chalk.cyan('  Extracting: [:bar] :percent | :eta seconds remaining'), {
   complete: '=',
@@ -112,7 +113,7 @@ const run = async function (cliArgs: any): Promise<void> {
     return;
   } catch (e) {
     console.log(e?.stack);
-    throw e;    
+    throw e;
   }
 };
 

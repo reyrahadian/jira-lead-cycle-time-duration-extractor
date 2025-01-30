@@ -324,9 +324,19 @@ app.layout = html.Div([
                             {'name': 'Type', 'id': 'Type'},
                             {'name': 'Priority', 'id': 'Priority'},
                             {'name': 'Current Stage', 'id': 'Stage'},
-                            {'name': 'Exceeding Stages', 'id': 'exceeding_stages'},
+                            {'name': 'Stages Exceeding Threshold', 'id': 'exceeding_stages'},
                             {'name': 'Story Points', 'id': 'StoryPoints'},
-                            {'name': 'Sprint', 'id': 'Sprint'}
+                            {'name': 'Sprint', 'id': 'Sprint'},
+                        ],
+                        style_data_conditional=[
+                            {
+                                'if': {
+                                    'column_id': 'Stage',
+                                    'filter_query': '{Stage} != "Done" && {Stage} != "Closed" && {Stage} != "Rejected"'
+                                },
+                                'backgroundColor': '#ffeb9c',  # Light yellow background
+                                'color': '#9c6500'  # Dark amber text
+                            }
                         ],
                         style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
                         style_cell={
