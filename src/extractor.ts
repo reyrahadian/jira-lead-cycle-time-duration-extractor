@@ -16,7 +16,7 @@ class JiraExtractor {
 
   constructor(config: JiraExtractorConfig) {
     this.config = config;
-    this.config.batchSize = 5; 
+    this.config.batchSize = 5;
   }
 
   async validate(): Promise<boolean> {
@@ -112,14 +112,14 @@ class JiraExtractor {
 
   toCSV(workItems: JiraWorkItem[]) {
     console.log(" Extracting to csv ..")
-    const SEP:string = ';';
+    const SEP:string = ',';
 
     let attributes = this.config.attributes || {};
     let stageNames:string[] = this.getStageNames(workItems);
     let stageHeaderStageNames:string[] = this.getHeaderStageNames(stageNames);
     let stageHeaderStageStartNames:string[] = this.getHeaderStageStartDateNames(stageNames);
     let stageRecurrenceNames:string[] = this.getHeaderStageRecurrenceNames(stageNames);
-    
+
 
 
     let headerArr:string[] = ["ID","Link","Name","Type"];
