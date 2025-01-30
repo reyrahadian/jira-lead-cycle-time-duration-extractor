@@ -10,7 +10,7 @@ Connection:
 JQL:
     #Query: project = "Lower Funnel Web" and sprint in (1651,1659)
     #Query: project = "Lower Funnel Web" and created >= -12w
-    Query: project in( "Lower Funnel Web","Upper Funnel Web","Digital MECCA App") and created >= -12w
+    Query: project in( "Lower Funnel Web","Upper Funnel Web","Digital MECCA App") and created >= -4w
 
 # Map field names to additional attributes to extract
 Attributes:
@@ -21,7 +21,7 @@ Attributes:
     StoryPoints: customfield_10042
     Stage: status.name
     StatusCategory: status.statusCategory.name
-    Level: priority.name
+    Priority: priority.name
     Labels: labels
     Components: components.name
     Version: fixVersions.last.name

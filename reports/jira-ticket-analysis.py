@@ -102,6 +102,19 @@ threshold_stage_columns = [
     "Stage In Prod Test days"
 ]
 
+# Define priority order mapping
+priority_order = {
+    'Highest': 0,
+    'P1': 1,
+    'High': 2,
+    'P2': 3,
+    'Medium': 4,
+    'P3': 5,
+    'Low': 6,
+    'P4': 7,
+    'N/A': 8  # For items without priority
+}
+
 #------------------------------------------------------------------------------
 # Data Loading and Preprocessing
 #------------------------------------------------------------------------------
@@ -221,7 +234,7 @@ app.layout = html.Div([
         html.Div([
             filters,
             sprint_metrics,
-        ], style={'width': '25%', 'padding': '10px'}),
+        ], style={'width': '20%', 'padding': '10px'}),
 
         # Right column - Charts and Tables
         html.Div([
@@ -243,9 +256,11 @@ app.layout = html.Div([
                                 {'name': 'Key', 'id': 'ID'},
                                 {'name': 'Summary', 'id': 'Name'},
                                 {'name': 'Type', 'id': 'Type'},
+                                {'name': 'Priority', 'id': 'Priority'},
                                 {'name': 'Current Stage', 'id': 'Stage'},
                                 {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                                {'name': 'Story Points', 'id': 'StoryPoints'}
+                                {'name': 'Story Points', 'id': 'StoryPoints'},
+                                {'name': 'Sprint', 'id': 'Sprint'}
                             ],
                             row_selectable='single',
                             selected_rows=[],
@@ -307,9 +322,11 @@ app.layout = html.Div([
                             {'name': 'Key', 'id': 'ID'},
                             {'name': 'Summary', 'id': 'Name'},
                             {'name': 'Type', 'id': 'Type'},
+                            {'name': 'Priority', 'id': 'Priority'},
                             {'name': 'Current Stage', 'id': 'Stage'},
                             {'name': 'Exceeding Stages', 'id': 'exceeding_stages'},
-                            {'name': 'Story Points', 'id': 'StoryPoints'}
+                            {'name': 'Story Points', 'id': 'StoryPoints'},
+                            {'name': 'Sprint', 'id': 'Sprint'}
                         ],
                         style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
                         style_cell={
@@ -367,7 +384,7 @@ app.layout = html.Div([
                     columns=[
                         {'name': 'Key', 'id': 'ID'},
                         {'name': 'Summary', 'id': 'Name'},
-                        {'name': 'Status', 'id': 'Stage'},
+                        {'name': 'Stage', 'id': 'Stage'},
                         {'name': 'Created Date', 'id': 'CreatedDate'},
                         {'name': 'Story Points', 'id': 'StoryPoints'},
                         {'name': 'Parent Type', 'id': 'ParentType'},
@@ -402,7 +419,7 @@ app.layout = html.Div([
                         {'name': 'Type', 'id': 'Type'},
                         {'name': 'Parent Type', 'id': 'ParentType'},
                         {'name': 'Parent Name', 'id': 'ParentName'},
-                        {'name': 'Status', 'id': 'Stage'},
+                        {'name': 'Stage', 'id': 'Stage'},
                         {'name': 'Story Points', 'id': 'StoryPoints'},
                         {'name': 'Fix Versions', 'id': 'FixVersions'},
                         {'name': 'Created', 'id': 'CreatedDate'},
@@ -476,15 +493,20 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket, selecte
         'Defect': 3,
     }
 
-    # Sort the data
+    # Create a copy and add the type order column
     sprint_data = sprint_data.copy()
-    sprint_data['type_order'] = sprint_data['Type'].apply(lambda x: type_order.get(x, 999))
-    sprint_data = sprint_data.sort_values(['type_order', 'ID'])
+    sprint_data['type_sort'] = sprint_data['Type'].map(lambda x: type_order.get(x, 999))
+
+    # Sort the data using the temporary column
+    sprint_data = sprint_data.sort_values(['type_sort', 'ID'])
+
+    # Convert to records and remove the temporary sorting column
+    sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
 
     return (
         f"Total Story Points: {total_points:.0f}",
         f"Total Tickets: {ticket_count}",
-        sprint_data.drop(columns=['type_order']).to_dict('records')
+        sprint_records
     )
 
 @callback(
@@ -519,12 +541,23 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
     stage_tickets = sprint_data[sprint_data[stage_column] > 0].copy()
     stage_tickets['days_in_stage'] = stage_tickets[stage_column]
 
-    # Prepare table data
-    table_data = stage_tickets[['ID', 'Name', 'Type', 'ParentType', 'ParentName', 'Stage', 'days_in_stage',
-                               'StoryPoints', 'FixVersions', 'Sprint']].sort_values(
-        by='days_in_stage',
-        ascending=False
-    ).to_dict('records')
+    # Add priority order column for sorting
+    if 'Priority' in stage_tickets.columns:
+        stage_tickets['priority_sort'] = stage_tickets['Priority'].map(lambda x: priority_order.get(x, 8))
+    else:
+        stage_tickets['priority_sort'] = 8
+
+    # Define columns to select
+    available_columns = ['ID', 'Name', 'Type', 'Priority', 'Stage', 'days_in_stage', 'StoryPoints', 'Sprint']
+
+    # Sort by priority first, then days in stage
+    stage_tickets = stage_tickets.sort_values(
+        by=['priority_sort', 'days_in_stage'],
+        ascending=[True, False]
+    )
+
+    # Convert to records and drop the sorting column
+    table_data = stage_tickets[available_columns].to_dict('records')
 
     # Define conditional styling
     style_conditional = [
@@ -712,8 +745,7 @@ def update_sprint_goals(selected_sprint):
     return "No sprint goals available"
 
 @callback(
-    [Output('warning-tickets-table', 'data'),
-     Output('warning-tickets-table', 'style_data_conditional')],
+    Output('warning-tickets-table', 'data'),
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
@@ -721,7 +753,7 @@ def update_sprint_goals(selected_sprint):
 )
 def update_warning_tickets(selected_sprint, selected_types, selected_ticket, selected_squad):
     if not selected_sprint:
-        return [], []
+        return []
 
     # Filter data
     sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
@@ -732,9 +764,7 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
-    warning_tickets = {}  # Use dictionary to track unique tickets with their violations
-
-    # Check each ticket against thresholds
+    warning_tickets = []
     for _, ticket in sprint_data.iterrows():
         # Track all stages exceeding thresholds
         exceeding_stages = []
@@ -756,33 +786,37 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
 
         # Add ticket if it had any violations
         if exceeding_stages:
-            warning_tickets[ticket['ID']] = {
+            # Get priority value from the available columns
+            priority = None
+            if 'Priority' in ticket and pd.notna(ticket['Priority']):
+                priority = str(ticket['Priority'])
+
+            if not priority or pd.isna(priority) or priority.lower() == 'nan':
+                priority = 'N/A'
+
+            ticket_data = {
                 'ID': ticket['ID'],
                 'Name': ticket['Name'],
                 'Type': ticket['Type'],
+                'Priority': priority,
                 'Stage': ticket['Stage'],
-                'exceeding_stages': ', '.join(exceeding_stages),  # Join all exceeding stages
+                'exceeding_stages': ', '.join(exceeding_stages),
                 'StoryPoints': ticket['StoryPoints'],
-                '_threshold_ratio': max_threshold_ratio  # Used for sorting
+                'Sprint': ticket['Sprint'],
+                '_threshold_ratio': max_threshold_ratio,
+                '_priority_order': priority_order.get(priority, 8)
             }
+            warning_tickets.append(ticket_data)
 
-    # Convert dictionary to list and sort by the worst threshold violation
-    warning_tickets = list(warning_tickets.values())
-    warning_tickets.sort(key=lambda x: x['_threshold_ratio'], reverse=True)
+    # Sort the list of dictionaries by priority first, then threshold ratio
+    warning_tickets.sort(key=lambda x: (x['_priority_order'], -x['_threshold_ratio']))
 
-    # Remove the sorting key before returning
+    # Remove sorting keys before returning
     for ticket in warning_tickets:
+        del ticket['_priority_order']
         del ticket['_threshold_ratio']
 
-    # Basic styling for alternating rows
-    style_conditional = [
-        {
-            'if': {'row_index': 'odd'},
-            'backgroundColor': 'rgb(248, 248, 248)'
-        }
-    ]
-
-    return warning_tickets, style_conditional
+    return warning_tickets
 
 @callback(
     [Output('squad-dropdown', 'options'),
