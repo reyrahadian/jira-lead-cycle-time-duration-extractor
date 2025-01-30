@@ -882,6 +882,9 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
     stage_data = []
     for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
+        # Skip the Open and Done stages
+        if stage_name in ['Open', 'Done']:
+            continue
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
             stage_data.append({
@@ -990,6 +993,9 @@ def update_stage_ticket_details(selected_rows, table_data):
     stage_data = []
     for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
+        # Skip the Open and Done stages
+        if stage_name in ['Open', 'Done']:
+            continue
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
             stage_data.append({
