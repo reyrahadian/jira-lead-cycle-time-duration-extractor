@@ -8,13 +8,37 @@ const toDate = (dateStr:string):Date => {
 export function round1dec(num:number){
   return num !== null ? Math.round(num * 10) / 10 : null;
 }
-  
+
 export function round2dec(num:number){
   return num !== null ? Math.round(num * 10) / 10 : null;
 }
 
 const dateDiffDays = (from:Date, to:Date):number => {
-  return (to.getTime() - from.getTime()) > 1*60 *1000 /* more than 1 min */ ? round2dec((to.getTime() - from.getTime()) / (24 * 3600 * 1000)) : null;
+  if ((to.getTime() - from.getTime()) <= 1*60*1000) { // less than 1 min
+    return null;
+  }
+
+  let businessDays = 0;
+  const current = new Date(from);
+  const end = new Date(to);
+
+  // Handle full days
+  while (current.getDate() < end.getDate() || current.getMonth() < end.getMonth() || current.getFullYear() < end.getFullYear()) {
+    const dayOfWeek = current.getDay();
+    if (dayOfWeek !== 0 && dayOfWeek !== 6) { // Skip weekends (0 = Sunday, 6 = Saturday)
+      businessDays++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  // Handle partial day
+  if (current.getDay() !== 0 && current.getDay() !== 6) { // If last day is a business day
+    const msInDay = 24 * 60 * 60 * 1000;
+    const partialDay = (end.getTime() - current.getTime()) / msInDay;
+    businessDays += partialDay;
+  }
+
+  return round2dec(businessDays);
 }
 
 const toChangelogRowDuration = (fromDateValue:Date, toDateValue:Date, fromValue:string): ChangelogRowDuration => {
@@ -47,10 +71,10 @@ const populateStages = (issue: JiraApiIssue):Map<string, DurationIntervals> => {
         const row: ChangelogRow = {
           fromValue: fromString,
           toValue: toString,
-          created: created        
+          created: created
         };
         changelog.push(row);
-      }      
+      }
     });
   });
 
@@ -67,7 +91,7 @@ const populateStages = (issue: JiraApiIssue):Map<string, DurationIntervals> => {
   }
 
 
-  // 4. 
+  // 4.
   //in progress & done: tailings
   if(changelog.length === 0){
     const currentRd:ChangelogRowDuration = toChangelogRowDuration(toDate(issue.fields.created), nowAt, issue.fields.status.name);
@@ -108,8 +132,8 @@ const populateStages = (issue: JiraApiIssue):Map<string, DurationIntervals> => {
         fromDates: new Array<Date>(nextDurationInterval.fromDate),
         toDates: new Array<Date>(nextDurationInterval.toDate),
         durationDays: nextDurationInterval.durationDays
-      }      
-    }    
+      }
+    }
     statusMap.set(status, newDurationIntervals);
   }
 
