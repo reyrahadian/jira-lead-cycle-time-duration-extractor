@@ -10,11 +10,11 @@ import json
 
 STAGE_THRESHOLDS = {
     'default': {'warning': 2, 'critical': 5},  # Default thresholds in days
-    'In Development': {'warning': 5, 'critical': 10},
-    'In Code Review': {'warning': 2, 'critical': 4},
-    'In PR Test': {'warning': 2, 'critical': 4},
-    'In SIT Test': {'warning': 3, 'critical': 6},
-    'In UAT Test': {'warning': 3, 'critical': 6},
+    'In Development': {'warning': 3, 'critical': 6},
+    'In Code Review': {'warning': 1, 'critical': 2},
+    'In PR Test': {'warning': 2, 'critical': 3},
+    'In SIT Test': {'warning': 2, 'critical': 3},
+    'In UAT Test': {'warning': 2, 'critical': 3},
     'Awaiting Prod Deployment': {'warning': 10, 'critical': 20},
     'Done': {'warning': 1000, 'critical': 1000}
 }
