@@ -659,12 +659,13 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_
 @callback(
     [Output('sprint-dropdown', 'options'),
      Output('sprint-dropdown', 'value'),
-     Output('type-dropdown', 'options'),
-     Output('type-dropdown', 'value'),
-     Output('ticket-dropdown', 'options'),
-     Output('ticket-dropdown', 'value')],
+     Output('type-dropdown', 'options', allow_duplicate=True),
+     Output('type-dropdown', 'value', allow_duplicate=True),
+     Output('ticket-dropdown', 'options', allow_duplicate=True),
+     Output('ticket-dropdown', 'value', allow_duplicate=True)],
     [Input('project-dropdown', 'value'),
-     Input('squad-dropdown', 'value')]
+     Input('squad-dropdown', 'value')],
+    prevent_initial_call=True
 )
 def update_sprint_options(selected_project, selected_squad):
     if not selected_project:
@@ -880,6 +881,7 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
 
     # Prepare stage duration data using all_stage_columns
     stage_data = []
+    total_days = 0
     for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
         # Skip the Open and Done stages
@@ -887,24 +889,36 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
             continue
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
+            total_days += days
             stage_data.append({
                 'stage': stage_name,
                 'days': round(days, 1)
             })
 
-    # Sort stage_data by the original order in all_stage_columns
-    stage_data = sorted(stage_data, key=lambda x: stage_order[x['stage']])
+    # Add total row
+    stage_data.append({
+        'stage': 'TOTAL',
+        'days': round(total_days, 1)
+    })
+
+    # Sort stage_data by the original order in all_stage_columns (excluding total row)
+    stage_data[:-1] = sorted(stage_data[:-1], key=lambda x: stage_order[x['stage']])
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
         {
             'if': {'row_index': 'odd'},
             'backgroundColor': 'rgb(248, 248, 248)'
+        },
+        {
+            'if': {'filter_query': '{stage} = "TOTAL"'},
+            'backgroundColor': '#e3f2fd',
+            'fontWeight': 'bold'
         }
     ]
 
     # Add threshold-based styling for each stage
-    for stage_entry in stage_data:
+    for stage_entry in stage_data[:-1]:  # Exclude total row from threshold styling
         stage = stage_entry['stage']
         days = stage_entry['days']
         thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
@@ -991,6 +1005,7 @@ def update_stage_ticket_details(selected_rows, table_data):
 
     # Prepare stage duration data using all_stage_columns
     stage_data = []
+    total_days = 0
     for col in all_stage_columns:
         stage_name = col.replace('Stage ', '').replace(' days', '')
         # Skip the Open and Done stages
@@ -998,24 +1013,36 @@ def update_stage_ticket_details(selected_rows, table_data):
             continue
         days = ticket_data[col]
         if days > 0:  # Only include stages where time was spent
+            total_days += days
             stage_data.append({
                 'stage': stage_name,
                 'days': round(days, 1)
             })
 
-    # Sort stage_data by the original order in all_stage_columns
-    stage_data = sorted(stage_data, key=lambda x: stage_order[x['stage']])
+    # Add total row
+    stage_data.append({
+        'stage': 'TOTAL',
+        'days': round(total_days, 1)
+    })
+
+    # Sort stage_data by the original order in all_stage_columns (excluding total row)
+    stage_data[:-1] = sorted(stage_data[:-1], key=lambda x: stage_order[x['stage']])
 
     # Prepare conditional styling based on thresholds
     style_conditional = [
         {
             'if': {'row_index': 'odd'},
             'backgroundColor': 'rgb(248, 248, 248)'
+        },
+        {
+            'if': {'filter_query': '{stage} = "TOTAL"'},
+            'backgroundColor': '#e3f2fd',
+            'fontWeight': 'bold'
         }
     ]
 
     # Add threshold-based styling for each stage
-    for stage_entry in stage_data:
+    for stage_entry in stage_data[:-1]:  # Exclude total row from threshold styling
         stage = stage_entry['stage']
         days = stage_entry['days']
         thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
