@@ -326,6 +326,7 @@ app.layout = html.Div([
                             {'name': 'Current Stage', 'id': 'Stage'},
                             {'name': 'Stages Exceeding Threshold', 'id': 'exceeding_stages'},
                             {'name': 'Story Points', 'id': 'StoryPoints'},
+                            {'name': 'Assignee', 'id': 'AssigneeName'},
                             {'name': 'Sprint', 'id': 'Sprint'},
                         ],
                         style_data_conditional=[
@@ -811,6 +812,7 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
                 'Type': ticket['Type'],
                 'Priority': priority,
                 'Stage': ticket['Stage'],
+                'AssigneeName': ticket['AssigneeName'],
                 'exceeding_stages': ', '.join(exceeding_stages),
                 'StoryPoints': ticket['StoryPoints'],
                 'Sprint': ticket['Sprint'],
