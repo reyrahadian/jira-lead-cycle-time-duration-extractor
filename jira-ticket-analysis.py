@@ -395,12 +395,14 @@ app.layout = html.Div([
                     columns=[
                         {'name': 'Key', 'id': 'ID'},
                         {'name': 'Summary', 'id': 'Name'},
+                        {'name': 'Priority', 'id': 'Priority'},
                         {'name': 'Stage', 'id': 'Stage'},
-                        {'name': 'Created Date', 'id': 'CreatedDate'},
-                        {'name': 'Story Points', 'id': 'StoryPoints'},
+                        {'name': 'Story Points', 'id': 'StoryPoints', 'type': 'numeric'},
                         {'name': 'Parent Type', 'id': 'ParentType'},
                         {'name': 'Parent Name', 'id': 'ParentName'}
                     ],
+                    sort_action='native',  # Enable native sorting
+                    sort_mode='multi',     # Allow sorting by multiple columns
                     style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
                     style_cell={
                         'textAlign': 'left',
@@ -431,12 +433,14 @@ app.layout = html.Div([
                         {'name': 'Parent Type', 'id': 'ParentType'},
                         {'name': 'Parent Name', 'id': 'ParentName'},
                         {'name': 'Stage', 'id': 'Stage'},
-                        {'name': 'Story Points', 'id': 'StoryPoints'},
+                        {'name': 'Story Points', 'id': 'StoryPoints', 'type': 'numeric'},
                         {'name': 'Fix Versions', 'id': 'FixVersions'},
                         {'name': 'Created', 'id': 'CreatedDate'},
                         {'name': 'Updated', 'id': 'UpdatedDate'},
                         {'name': 'Sprint', 'id': 'Sprint'}
                     ],
+                    sort_action='native',  # Enable native sorting
+                    sort_mode='multi',     # Allow sorting by multiple columns
                     style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
                     style_cell={
                         'textAlign': 'left',
@@ -1105,15 +1109,19 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
         return []
 
     # Filter defects
-    defects = sprint_data[sprint_data['Type'].isin(['Bug', 'Defect'])]
+    defects = sprint_data[sprint_data['Type'].isin(['Bug', 'Defect'])].copy()
 
-    # Sort by created date (newest first)
+    # Add priority order for sorting
+    defects['priority_sort'] = defects['Priority'].map(lambda x: priority_order.get(x, 8))
+
+    # Sort by priority first (using priority_order), then by created date
     defects['CreatedDate'] = pd.to_datetime(defects['CreatedDate'])
-    defects = defects.sort_values('CreatedDate', ascending=False)
+    defects = defects.sort_values(['priority_sort', 'CreatedDate'],
+                                ascending=[True, False])
 
-    # Prepare table data
+    # Prepare table data (exclude the sorting column)
     table_data = defects[[
-        'ID', 'Name', 'Stage', 'CreatedDate', 'StoryPoints',
+        'ID', 'Name', 'Priority', 'Stage', 'StoryPoints',
         'ParentType', 'ParentName'
     ]].to_dict('records')
 
