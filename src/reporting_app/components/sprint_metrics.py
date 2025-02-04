@@ -7,6 +7,9 @@ def create_sprint_metrics():
     sprint_metrics = html.Div([
         html.Div(id='sprint-goals', style={'margin-bottom': '20px'}),
         html.Div([
+            html.Div(id='sprint-dates', style={'font-size': '1.2em', 'margin-bottom': '10px', 'color': COLORS['secondary']})
+        ]),
+        html.Div([
             html.Div(id='total-points', style={'font-size': '1.2em', 'margin-bottom': '10px'}),
             html.Div(id='ticket-count', style={'font-size': '1.2em'})
         ], style={'color': COLORS['secondary']})

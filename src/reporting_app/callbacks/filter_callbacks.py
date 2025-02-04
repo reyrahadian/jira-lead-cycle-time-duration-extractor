@@ -138,19 +138,39 @@ def init_callbacks(app, jira_tickets):
 
     @callback(
         [Output('sprint-goals', 'children'),
+         Output('sprint-dates', 'children'),
          Output('total-points', 'children'),
-        Output('ticket-count', 'children')],
+         Output('ticket-count', 'children')],
         [Input('sprint-dropdown', 'value')]
     )
-    def update_sprint_goals(selected_sprint):
+    def update_sprint_info(selected_sprint):
         if not selected_sprint:
-            return "No sprint selected", "Total Points: 0", "Total Tickets: 0"
+            return "No sprint selected", "No sprint selected", "Total Points: 0", "Total Tickets: 0"
 
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+
         # Calculate total story points and ticket count
         total_points = sprint_data['StoryPoints'].sum()
         ticket_count = len(sprint_data)
 
+        # Get sprint dates
+        sprint_dates = "Sprint dates not available"
+        if not sprint_data.empty and 'SprintStartDate' in sprint_data.columns and 'SprintEndDate' in sprint_data.columns:
+            first_ticket = sprint_data.iloc[0]
+            start_date = first_ticket['SprintStartDate']
+            end_date = first_ticket['SprintEndDate']
+
+            if pd.notna(start_date) and pd.notna(end_date):
+                # Convert to datetime if they're strings
+                if isinstance(start_date, str):
+                    start_date = pd.to_datetime(start_date).strftime('%d %b %Y')
+                if isinstance(end_date, str):
+                    end_date = pd.to_datetime(end_date).strftime('%d %b %Y')
+
+                sprint_dates = f"Sprint Duration: {start_date} - {end_date}"
+
+        # Get sprint goals
+        goals_component = "No sprint goals available"
         if 'SprintGoals' in sprint_data.columns:
             goals = sprint_data['SprintGoals'].dropna().unique()
             if len(goals) > 0:
@@ -163,18 +183,14 @@ def init_callbacks(app, jira_tickets):
                                     if item and item not in ['-', ' ', '']]
                         if goal_items:
                             last_goal_item = goal_items[-1]
-                            return (html.Div([
+                            goals_component = html.Div([
                                 html.H4("Sprint Goal:"),
                                 html.P(last_goal_item)
-                            ]),
-                            f"Total Points: {total_points}",
-                            f"Total Tickets: {ticket_count}")
+                            ])
                     else:
-                        return (html.Div([
+                        goals_component = html.Div([
                             html.H4("Sprint Goal:"),
                             html.P(last_goal)
-                        ]),
-                        f"Total Points: {total_points}",
-                        f"Total Tickets: {ticket_count}")
+                        ])
 
-        return "No sprint goals available", f"Total Points: {total_points}", f"Total Tickets: {ticket_count}"
+        return goals_component, sprint_dates, f"Total Points: {total_points}", f"Total Tickets: {ticket_count}"
