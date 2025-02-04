@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
 import json
+import numpy as np
 
 #------------------------------------------------------------------------------
 # Constants and Configuration
@@ -115,12 +116,64 @@ priority_order = {
     'N/A': 8  # For items without priority
 }
 
+# Define valid components/keywords
+VALID_COMPONENTS = {
+    'BFF': 'BFF',
+    'FED': 'FED',
+    'SFCC': 'SFCC',
+    'XM': 'XM',
+    'SITECORE': 'Sitecore',
+    'CONTENTHUB': 'Content Hub'
+}
+
 #------------------------------------------------------------------------------
 # Data Loading and Preprocessing
 #------------------------------------------------------------------------------
 
 csv_filepath = "output-static.csv"
+# Read the CSV file
 jira_tickets = pd.read_csv(csv_filepath, delimiter=",")
+
+# Create CalculatedComponents column starting with existing Components
+jira_tickets['CalculatedComponents'] = jira_tickets['Components']
+
+# Function to extract components from title prefix
+def extract_components_from_title(title):
+    if pd.isna(title):
+        return set()
+
+    # Split the title by the first occurrence of '-' or '|'
+    parts = title.split(' - ', 1)
+    if len(parts) == 1:
+        parts = title.split('|', 1)
+
+    if len(parts) == 1:
+        return set()
+
+    # Process the prefix part
+    prefix = parts[0]
+    # Split by '|' and clean up each component
+    raw_components = {comp.strip().upper() for comp in prefix.split('|') if comp.strip()}
+
+    # Only keep valid components and map them to their standardized names
+    valid_components = {VALID_COMPONENTS[comp] for comp in raw_components
+                       if comp in VALID_COMPONENTS}
+    return valid_components
+
+# Update CalculatedComponents based on title prefix
+jira_tickets['TitleComponents'] = jira_tickets['Name'].apply(extract_components_from_title)
+
+# Merge existing components with title components
+jira_tickets['CalculatedComponents'] = jira_tickets.apply(
+    lambda row: ','.join(sorted(
+        set(filter(None, str(row['Components']).split(','))) | row['TitleComponents']
+    )) if pd.notna(row['Components']) or row['TitleComponents']
+    else '',
+    axis=1
+)
+
+# Drop the temporary TitleComponents column
+jira_tickets = jira_tickets.drop('TitleComponents', axis=1)
 
 # Find all columns containing 'days' (case insensitive)
 days_columns = [col for col in jira_tickets.columns if 'days' in col.lower()]
@@ -139,6 +192,14 @@ unique_sprints = sorted(list(unique_sprints))
 unique_projects = sorted(jira_tickets['Project'].unique())
 unique_squads = sorted([squad for squad in jira_tickets['Squad'].unique() if pd.notna(squad)]) if 'Squad' in jira_tickets.columns else []
 unique_types = []  # Will be populated by callback
+
+# Extract unique components
+unique_components = set()
+for components_str in jira_tickets['CalculatedComponents'].dropna():
+    if components_str:
+        components = components_str.split(',')
+        unique_components.update(comp.strip() for comp in components)
+unique_components = sorted(list(unique_components))
 
 #------------------------------------------------------------------------------
 # Initialize Dash App
@@ -200,6 +261,17 @@ filters = html.Div([
             value=[],
             multi=True,
             placeholder="Select ticket type(s)",
+            style={'margin-bottom': '15px'}
+        ),
+    ]),
+    html.Div([
+        html.Label("Components:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+        dcc.Dropdown(
+            id='components-dropdown',
+            options=[{'label': comp, 'value': comp} for comp in unique_components],
+            value=[],
+            multi=True,
+            placeholder="Select component(s)",
             style={'margin-bottom': '15px'}
         ),
     ]),
@@ -480,9 +552,10 @@ def create_jira_link(key):
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
-     Input('squad-dropdown', 'value')]
+     Input('squad-dropdown', 'value'),
+     Input('components-dropdown', 'value')]
 )
-def update_sprint_data(selected_sprint, selected_types, selected_ticket, selected_squad):
+def update_sprint_data(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
     if not selected_sprint:
         return "No sprint selected", "No tickets", []
 
@@ -496,6 +569,10 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket, selecte
     # Apply type filter if selected
     if selected_types and len(selected_types) > 0:
         sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+
+    # Apply components filter if selected
+    if selected_components and len(selected_components) > 0:
+        sprint_data = filter_by_components(sprint_data, selected_components)
 
     # Apply ticket filter if selected
     if selected_ticket:
@@ -544,9 +621,10 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket, selecte
      Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
-     Input('squad-dropdown', 'value')]
+     Input('squad-dropdown', 'value'),
+     Input('components-dropdown', 'value')]
 )
-def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket, selected_squad):
+def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
     if not click_data or not selected_sprint:
         return [], "No stage selected", {'display': 'none'}, []
 
@@ -562,6 +640,12 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
         sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
+
+    # Apply components filter if selected
+    if selected_components and len(selected_components) > 0:
+        sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
+            lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
+        )]
 
     # Get tickets that spent time in this stage
     stage_tickets = sprint_data[sprint_data[stage_column] > 0].copy()
@@ -632,9 +716,10 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
-     Input('squad-dropdown', 'value')]
+     Input('squad-dropdown', 'value'),
+     Input('components-dropdown', 'value')]
 )
-def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad):
+def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
     if not selected_sprint:
         return {}
 
@@ -644,6 +729,10 @@ def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_
         sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
     if selected_types and len(selected_types) > 0:
         sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+    if selected_components and len(selected_components) > 0:
+        sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
+            lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
+        )]
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
@@ -708,29 +797,69 @@ def update_sprint_options(selected_project, selected_squad):
 
     return sprint_options, None, [], [], [], None
 
+def parse_components(components_str):
+    if pd.isna(components_str):
+        return set()
+
+    components = set()
+    if isinstance(components_str, str):
+        # Remove brackets and extra whitespace
+        cleaned_str = components_str.replace('[', '').replace(']', '').strip()
+
+        # First split by comma if present
+        for part in cleaned_str.split(','):
+            # Then split by hyphen if present
+            subparts = part.split('-')
+            components.update(comp.strip('"').strip("'").strip() for comp in subparts if comp.strip())
+    elif isinstance(components_str, (list, np.ndarray)):
+        for comp in components_str:
+            if pd.notna(comp):
+                # Handle potential hyphenated values in array elements
+                subparts = str(comp).split('-')
+                components.update(part.strip('"').strip("'").strip() for part in subparts if part.strip())
+
+    return components
+
 @callback(
     [Output('type-dropdown', 'options', allow_duplicate=True),
      Output('type-dropdown', 'value', allow_duplicate=True),
      Output('ticket-dropdown', 'options', allow_duplicate=True),
-     Output('ticket-dropdown', 'value', allow_duplicate=True)],
+     Output('ticket-dropdown', 'value', allow_duplicate=True),
+     Output('components-dropdown', 'options'),
+     Output('components-dropdown', 'value')],
     [Input('project-dropdown', 'value'),
      Input('squad-dropdown', 'value'),
-     Input('sprint-dropdown', 'value')],
+     Input('sprint-dropdown', 'value'),
+     Input('type-dropdown', 'value')],
     prevent_initial_call=True
 )
-def update_type_options(selected_project, selected_squad, selected_sprint):
+def update_type_and_components_options(selected_project, selected_squad, selected_sprint, selected_types):
     if not selected_project or not selected_sprint:
-        return [], [], [], None
+        return [], [], [], None, [], []
 
     # Filter data
     filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
+
+    # Apply squad filter if selected
     if selected_squad and 'Squad' in filtered_data.columns:
         filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+
+    # Apply sprint filter
     filtered_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
+
+    # Apply type filter for components only
+    components_data = filtered_data.copy()
+    if selected_types and len(selected_types) > 0:
+        components_data = filtered_data[filtered_data['Type'].isin(selected_types)]
 
     # Get unique types
     types = sorted(filtered_data['Type'].unique())
     type_options = [{'label': type_name, 'value': type_name} for type_name in types if pd.notna(type_name)]
+
+    # Preserve selected types if they're still valid
+    valid_types = [t['value'] for t in type_options]
+    preserved_types = selected_types if selected_types else []
+    preserved_types = [t for t in preserved_types if t in valid_types]
 
     # Get unique tickets
     ticket_options = [
@@ -738,7 +867,15 @@ def update_type_options(selected_project, selected_squad, selected_sprint):
         for _, row in filtered_data.iterrows()
     ]
 
-    return type_options, [], ticket_options, None
+    # Get unique components based on filtered data
+    unique_components = set()
+    for components_str in components_data['CalculatedComponents'].dropna():
+        components = parse_components(components_str)
+        unique_components.update(components)
+
+    component_options = [{'label': comp, 'value': comp} for comp in sorted(list(unique_components))]
+
+    return type_options, preserved_types, ticket_options, None, component_options, []
 
 @callback(
     Output('sprint-goals', 'children'),
@@ -779,9 +916,10 @@ def update_sprint_goals(selected_sprint):
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
-     Input('squad-dropdown', 'value')]
+     Input('squad-dropdown', 'value'),
+     Input('components-dropdown', 'value')]
 )
-def update_warning_tickets(selected_sprint, selected_types, selected_ticket, selected_squad):
+def update_warning_tickets(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
     if not selected_sprint:
         return []
 
@@ -791,6 +929,10 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
         sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
     if selected_types and len(selected_types) > 0:
         sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+    if selected_components and len(selected_components) > 0:
+        sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
+            lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
+        )]
     if selected_ticket:
         sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
@@ -1130,9 +1272,10 @@ def update_stage_ticket_details(selected_rows, table_data):
     Output('defects-table', 'data'),
     [Input('project-dropdown', 'value'),
      Input('squad-dropdown', 'value'),
-     Input('sprint-dropdown', 'value')]
+     Input('sprint-dropdown', 'value'),
+     Input('components-dropdown', 'value')]
 )
-def update_defects_table(selected_project, selected_squad, selected_sprint):
+def update_defects_table(selected_project, selected_squad, selected_sprint, selected_components):
     if not selected_project or not selected_sprint:
         return []
 
@@ -1142,6 +1285,12 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
     # Then filter by squad if selected
     if selected_squad and 'Squad' in filtered_data.columns:
         filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+
+    # Then filter by components if selected
+    if selected_components and len(selected_components) > 0:
+        filtered_data = filtered_data[filtered_data['CalculatedComponents'].apply(
+            lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
+        )]
 
     # Then filter by sprint
     sprint_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
@@ -1155,7 +1304,8 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
     defects['priority_sort'] = defects['Priority'].map(lambda x: priority_order.get(x, 8))
 
     # Sort by priority first (using priority_order), then by created date
-    defects['CreatedDate'] = pd.to_datetime(defects['CreatedDate'])
+    # Fix the datetime parsing warning by specifying utc=True
+    defects['CreatedDate'] = pd.to_datetime(defects['CreatedDate'], utc=True)
     defects = defects.sort_values(['priority_sort', 'CreatedDate'],
                                 ascending=[True, False])
 
@@ -1169,6 +1319,19 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
     table_data['ID'] = table_data['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
 
     return table_data.to_dict('records')
+
+def filter_by_components(data, selected_components):
+    if not selected_components or len(selected_components) == 0:
+        return data
+
+    def check_components(components_str):
+        if pd.isna(components_str) or components_str == 'nan':
+            return False
+
+        components = parse_components(components_str)
+        return any(comp in components for comp in selected_components)
+
+    return data[data['CalculatedComponents'].apply(check_components)]
 
 #------------------------------------------------------------------------------
 # Run the application
