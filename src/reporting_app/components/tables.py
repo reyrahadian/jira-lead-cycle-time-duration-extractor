@@ -12,7 +12,7 @@ def create_tables():
                     html.H2("Tickets Exceeding Stage Thresholds",
                             style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
                     dash_table.DataTable(
-                        id='warning-tickets-table',
+                        id='tickets-exceeding-threshold-table',
                         columns=[
                             {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                             {'name': 'Summary', 'id': 'Name'},
@@ -57,10 +57,10 @@ def create_tables():
                 # Right side - Stage Duration Details (moved from left)
                 html.Div([
                     html.H2("Stage Duration Details",
-                            id='ticket-details-title',
+                            id='tickets-exceeding-threshold-details-title',
                             style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
                     dash_table.DataTable(
-                        id='ticket-details-table',
+                        id='tickets-exceeding-threshold-details-table',
                         columns=[
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
@@ -79,7 +79,7 @@ def create_tables():
                             'textAlign': 'left'
                         }
                     )
-                ], id='ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], id='tickets-exceeding-threshold-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style=dict(CARD_STYLE, **{'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})),
 
         # Defects Table Section

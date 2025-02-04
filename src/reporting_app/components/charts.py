@@ -8,16 +8,16 @@ def create_charts():
         html.Div([  # Wrap everything in a Div
             html.H2("Tickets Cycle Time",
                     style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
-            dcc.Graph(id='stages-bar-chart'),
+            dcc.Graph(id='tickets-in-stage-bar-chart'),
             # Stage Tickets Panel
             html.Div([
                 # Left side - Stage Tickets Table
                 html.Div([
                     html.H3("Tickets in Selected Stage",
-                            id='selected-stage-title',
+                            id='tickets-in-stage-title',
                             style={'display': 'none', 'color': COLORS['secondary']}),
                     dash_table.DataTable(
-                        id='stage-tickets-table',
+                        id='tickets-in-stage-table',
                         columns=[
                             {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                             {'name': 'Summary', 'id': 'Name'},
@@ -51,10 +51,10 @@ def create_charts():
                 # Right side - Stage Duration Details for Stage Tickets
                 html.Div([
                     html.H3("Stage Duration Details",
-                            id='stage-ticket-details-title',
+                            id='tickets-in-stage-ticket-details-title',
                             style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
                     dash_table.DataTable(
-                        id='stage-ticket-details-table',
+                        id='tickets-in-stage-ticket-details-table',
                         columns=[
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
@@ -73,7 +73,7 @@ def create_charts():
                             'textAlign': 'left'
                         }
                     )
-                ], id='stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], id='tickets-in-stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
         ], style=CARD_STYLE)
     ])

@@ -7,7 +7,7 @@ def init_callbacks(app, jira_tickets):
      Output('squad-dropdown', 'value')],
     [Input('project-dropdown', 'value')]
     )
-    def update_squad_options(selected_project):
+    def update_squad_dropdown_options(selected_project):
         if not selected_project:
             return [], None
 
@@ -34,7 +34,7 @@ def init_callbacks(app, jira_tickets):
         Input('squad-dropdown', 'value')],
         prevent_initial_call=True
     )
-    def update_sprint_options(selected_project, selected_squad):
+    def update_sprint_dropdown_options(selected_project, selected_squad):
         if not selected_project:
             return [], None, [], [], [], None
 
@@ -92,7 +92,7 @@ def init_callbacks(app, jira_tickets):
         Input('type-dropdown', 'value')],
         prevent_initial_call=True
     )
-    def update_type_and_components_options(selected_project, selected_squad, selected_sprint, selected_types):
+    def update_type_and_components_dropdown_options(selected_project, selected_squad, selected_sprint, selected_types):
         if not selected_project or not selected_sprint:
             return [], [], [], None, [], []
 
@@ -137,14 +137,19 @@ def init_callbacks(app, jira_tickets):
         return type_options, preserved_types, ticket_options, None, component_options, []
 
     @callback(
-        Output('sprint-goals', 'children'),
+        [Output('sprint-goals', 'children'),
+         Output('total-points', 'children'),
+        Output('ticket-count', 'children')],
         [Input('sprint-dropdown', 'value')]
     )
     def update_sprint_goals(selected_sprint):
         if not selected_sprint:
-            return "No sprint selected"
+            return "No sprint selected", "Total Points: 0", "Total Tickets: 0"
 
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        # Calculate total story points and ticket count
+        total_points = sprint_data['StoryPoints'].sum()
+        ticket_count = len(sprint_data)
 
         if 'SprintGoals' in sprint_data.columns:
             goals = sprint_data['SprintGoals'].dropna().unique()
@@ -158,14 +163,18 @@ def init_callbacks(app, jira_tickets):
                                     if item and item not in ['-', ' ', '']]
                         if goal_items:
                             last_goal_item = goal_items[-1]
-                            return html.Div([
+                            return (html.Div([
                                 html.H4("Sprint Goal:"),
                                 html.P(last_goal_item)
-                            ])
+                            ]),
+                            f"Total Points: {total_points}",
+                            f"Total Tickets: {ticket_count}")
                     else:
-                        return html.Div([
+                        return (html.Div([
                             html.H4("Sprint Goal:"),
                             html.P(last_goal)
-                        ])
+                        ]),
+                        f"Total Points: {total_points}",
+                        f"Total Tickets: {ticket_count}")
 
-        return "No sprint goals available"
+        return "No sprint goals available", f"Total Points: {total_points}", f"Total Tickets: {ticket_count}"
