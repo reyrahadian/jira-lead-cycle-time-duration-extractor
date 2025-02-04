@@ -253,7 +253,7 @@ app.layout = html.Div([
                         dash_table.DataTable(
                             id='stage-tickets-table',
                             columns=[
-                                {'name': 'Key', 'id': 'ID'},
+                                {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                                 {'name': 'Summary', 'id': 'Name'},
                                 {'name': 'Type', 'id': 'Type'},
                                 {'name': 'Priority', 'id': 'Priority'},
@@ -262,6 +262,7 @@ app.layout = html.Div([
                                 {'name': 'Story Points', 'id': 'StoryPoints'},
                                 {'name': 'Sprint', 'id': 'Sprint'}
                             ],
+                            markdown_options={'link_target': '_blank'},
                             row_selectable='single',
                             selected_rows=[],
                             style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
@@ -319,7 +320,7 @@ app.layout = html.Div([
                     dash_table.DataTable(
                         id='warning-tickets-table',
                         columns=[
-                            {'name': 'Key', 'id': 'ID'},
+                            {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                             {'name': 'Summary', 'id': 'Name'},
                             {'name': 'Type', 'id': 'Type'},
                             {'name': 'Priority', 'id': 'Priority'},
@@ -329,6 +330,7 @@ app.layout = html.Div([
                             {'name': 'Assignee', 'id': 'AssigneeName'},
                             {'name': 'Sprint', 'id': 'Sprint'},
                         ],
+                        markdown_options={'link_target': '_blank'},
                         style_data_conditional=[
                             {
                                 'if': {
@@ -393,7 +395,7 @@ app.layout = html.Div([
                 dash_table.DataTable(
                     id='defects-table',
                     columns=[
-                        {'name': 'Key', 'id': 'ID'},
+                        {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                         {'name': 'Summary', 'id': 'Name'},
                         {'name': 'Priority', 'id': 'Priority'},
                         {'name': 'Stage', 'id': 'Stage'},
@@ -401,6 +403,7 @@ app.layout = html.Div([
                         {'name': 'Parent Type', 'id': 'ParentType'},
                         {'name': 'Parent Name', 'id': 'ParentName'}
                     ],
+                    markdown_options={'link_target': '_blank'},
                     sort_action='native',  # Enable native sorting
                     sort_mode='multi',     # Allow sorting by multiple columns
                     style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
@@ -427,7 +430,7 @@ app.layout = html.Div([
                 dash_table.DataTable(
                     id='sprint-table',
                     columns=[
-                        {'name': 'Key', 'id': 'ID'},
+                        {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                         {'name': 'Summary', 'id': 'Name'},
                         {'name': 'Type', 'id': 'Type'},
                         {'name': 'Parent Type', 'id': 'ParentType'},
@@ -439,6 +442,7 @@ app.layout = html.Div([
                         {'name': 'Updated', 'id': 'UpdatedDate'},
                         {'name': 'Sprint', 'id': 'Sprint'}
                     ],
+                    markdown_options={'link_target': '_blank'},
                     sort_action='native',  # Enable native sorting
                     sort_mode='multi',     # Allow sorting by multiple columns
                     style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
@@ -464,6 +468,10 @@ app.layout = html.Div([
 #------------------------------------------------------------------------------
 # Callbacks
 #------------------------------------------------------------------------------
+
+# Helper function to create Jira URL
+def create_jira_link(key):
+    return f'https://mecca-brands.atlassian.net/browse/{key}'
 
 @callback(
     [Output('total-points', 'children'),
@@ -514,6 +522,9 @@ def update_sprint_data(selected_sprint, selected_types, selected_ticket, selecte
 
     # Sort the data using the temporary column
     sprint_data = sprint_data.sort_values(['type_sort', 'ID'])
+
+    # Convert ID column to markdown links
+    sprint_data['ID'] = sprint_data['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
 
     # Convert to records and remove the temporary sorting column
     sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
@@ -570,6 +581,9 @@ def update_stage_tickets(click_data, selected_sprint, selected_types, selected_t
         by=['priority_sort', 'days_in_stage'],
         ascending=[True, False]
     )
+
+    # Convert ID column to markdown links
+    stage_tickets['ID'] = stage_tickets['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
 
     # Convert to records and drop the sorting column
     table_data = stage_tickets[available_columns].to_dict('records')
@@ -832,6 +846,10 @@ def update_warning_tickets(selected_sprint, selected_types, selected_ticket, sel
     for ticket in warning_tickets:
         del ticket['_priority_order']
         del ticket['_threshold_ratio']
+
+    # Convert ID to markdown link in the ticket_data dictionary
+    for ticket in warning_tickets:
+        ticket['ID'] = f"[{ticket['ID']}]({create_jira_link(ticket['ID'])})"
 
     return warning_tickets
 
@@ -1119,13 +1137,16 @@ def update_defects_table(selected_project, selected_squad, selected_sprint):
     defects = defects.sort_values(['priority_sort', 'CreatedDate'],
                                 ascending=[True, False])
 
-    # Prepare table data (exclude the sorting column)
+    # Prepare table data with markdown links
     table_data = defects[[
         'ID', 'Name', 'Priority', 'Stage', 'StoryPoints',
         'ParentType', 'ParentName'
-    ]].to_dict('records')
+    ]].copy()
 
-    return table_data
+    # Convert ID column to markdown links
+    table_data['ID'] = table_data['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
+
+    return table_data.to_dict('records')
 
 #------------------------------------------------------------------------------
 # Run the application
