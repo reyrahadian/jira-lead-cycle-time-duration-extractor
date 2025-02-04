@@ -428,7 +428,7 @@ app.layout = html.Div([
                 html.H2("Sprint Tickets",
                         style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
                 dash_table.DataTable(
-                    id='sprint-table',
+                    id='sprint-tickets-table',
                     columns=[
                         {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
                         {'name': 'Summary', 'id': 'Name'},
@@ -476,7 +476,7 @@ def create_jira_link(key):
 @callback(
     [Output('total-points', 'children'),
      Output('ticket-count', 'children'),
-     Output('sprint-table', 'data')],
+     Output('sprint-tickets-table', 'data')],
     [Input('sprint-dropdown', 'value'),
      Input('type-dropdown', 'value'),
      Input('ticket-dropdown', 'value'),
