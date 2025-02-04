@@ -15,3 +15,4 @@ tmp
 output*.csv
 groupon
 
+__pycache__/
