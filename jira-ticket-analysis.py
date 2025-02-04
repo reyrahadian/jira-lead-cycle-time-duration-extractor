@@ -885,17 +885,37 @@ def update_squad_options(selected_project):
 )
 def update_ticket_details(warning_selected_rows, warning_table_data):
     if not warning_selected_rows or not warning_table_data or len(warning_selected_rows) == 0:
-        return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
+        return (
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
 
     try:
-        selected_ticket = warning_table_data[warning_selected_rows[0]]['ID']
+        # Extract the ID from the markdown link format
+        selected_ticket_link = warning_table_data[warning_selected_rows[0]]['ID']
+        selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
     except (IndexError, KeyError):
-        return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
+        return (
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
 
     # Filter data for selected ticket
     ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket]
     if ticket_data.empty:
-        return dict(CARD_STYLE, **{'display': 'none'}), {'display': 'none'}, [], "", []
+        return (
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
+            {'display': 'none'},
+            [],
+            "",
+            []
+        )
 
     ticket_data = ticket_data.iloc[0]
 
@@ -973,7 +993,7 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
             })
 
     return (
-        dict(CARD_STYLE, **{'display': 'block'}),
+        {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
         {'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'block'},
         stage_data,
         f"Stage Duration Details for {selected_ticket}",
@@ -992,7 +1012,7 @@ def update_ticket_details(warning_selected_rows, warning_table_data):
 def update_stage_ticket_details(selected_rows, table_data):
     if not selected_rows or not table_data or len(selected_rows) == 0 or len(table_data) == 0:
         return (
-            {'display': 'none'},
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
             {'display': 'none'},
             [],
             "",
@@ -1000,10 +1020,12 @@ def update_stage_ticket_details(selected_rows, table_data):
         )
 
     try:
-        selected_ticket = table_data[selected_rows[0]]['ID']
+        # Extract the ID from the markdown link format
+        selected_ticket_link = table_data[selected_rows[0]]['ID']
+        selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
     except (IndexError, KeyError):
         return (
-            {'display': 'none'},
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
             {'display': 'none'},
             [],
             "",
@@ -1014,7 +1036,7 @@ def update_stage_ticket_details(selected_rows, table_data):
     ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket]
     if ticket_data.empty:
         return (
-            {'display': 'none'},
+            {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
             {'display': 'none'},
             [],
             "",
