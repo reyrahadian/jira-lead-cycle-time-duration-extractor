@@ -166,6 +166,8 @@ def init_callbacks(app, jira_tickets):
                     subparts = str(comp).split('-')
                     components.update(part.strip('"').strip("'").strip() for part in subparts if part.strip())
 
+        return components
+
     def filter_by_components(data, selected_components):
         if not selected_components or len(selected_components) == 0:
             return data
