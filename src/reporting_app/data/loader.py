@@ -60,6 +60,24 @@ def process_components(jira_tickets):
 
     # Drop the temporary TitleComponents column
     jira_tickets = jira_tickets.drop('TitleComponents', axis=1)
+
+    # Add SFCC components based on COM- ticket prefix
+    def extract_sfcc_component(ticket_id):
+        if pd.isna(ticket_id):
+            return ''
+        if str(ticket_id).startswith('COM-'):
+            return 'SFCC'
+        return ''
+
+    # Add SFCC components to CalculatedComponents
+    jira_tickets['SFCCComponent'] = jira_tickets['ID'].apply(extract_sfcc_component)
+    jira_tickets['CalculatedComponents'] = jira_tickets.apply(
+        lambda row: ','.join(filter(None, [row['CalculatedComponents'], row['SFCCComponent']])),
+        axis=1
+    )
+
+    # Drop temporary column
+    jira_tickets = jira_tickets.drop('SFCCComponent', axis=1)
     return jira_tickets
 
 JIRA_TICKETS = load_data()
