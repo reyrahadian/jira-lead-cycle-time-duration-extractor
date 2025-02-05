@@ -1,5 +1,6 @@
 from dash import Input, Output, callback, html
 import pandas as pd
+from src.reporting_app.utils.sprint_utils import get_sprint_date_range
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -155,19 +156,8 @@ def init_callbacks(app, jira_tickets):
 
         # Get sprint dates
         sprint_dates = "Sprint dates not available"
-        if not sprint_data.empty and 'SprintStartDate' in sprint_data.columns and 'SprintEndDate' in sprint_data.columns:
-            first_ticket = sprint_data.iloc[0]
-            start_date = first_ticket['SprintStartDate']
-            end_date = first_ticket['SprintEndDate']
-
-            if pd.notna(start_date) and pd.notna(end_date):
-                # Convert to datetime if they're strings
-                if isinstance(start_date, str):
-                    start_date = pd.to_datetime(start_date).strftime('%d %b %Y')
-                if isinstance(end_date, str):
-                    end_date = pd.to_datetime(end_date).strftime('%d %b %Y')
-
-                sprint_dates = f"Sprint Duration: {start_date} - {end_date}"
+        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data)
+        sprint_dates = f"Sprint Duration: {sprint_start_date} - {sprint_end_date}"
 
         # Get sprint goals
         goals_component = "No sprint goals available"
