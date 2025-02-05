@@ -58,12 +58,15 @@ def calculate_tickets_duration_in_sprint(df):
         end_col = to_stage_end_date_column_name(stage)
         sprint_days_col = to_stage_in_sprint_duration_days_column_name(stage)
 
-        # Calculate overlapping days between stage period and sprint period
+        # Calculate overlapping days between stage period and sprint period, excluding weekends
         sprint_tickets[sprint_days_col] = sprint_tickets.apply(
-            lambda row: max(0, (
-                min(sprint_end_date, row[end_col]) -
-                max(sprint_start_date, row[start_col])
-            ).days) if pd.notna(row[start_col]) and pd.notna(row[end_col]) else 0,
+            lambda row: len([
+                d for d in pd.date_range(
+                    max(sprint_start_date, row[start_col]),
+                    min(sprint_end_date, row[end_col]),
+                    freq='D'
+                ) if d.weekday() < 5  # 0-4 are Monday-Friday
+            ]) if pd.notna(row[start_col]) and pd.notna(row[end_col]) else 0,
             axis=1
         )
 
