@@ -25,6 +25,8 @@ def init_callbacks(app, jira_tickets):
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        # Exclude tickets in Done or Closed stages
+        sprint_data = sprint_data[~sprint_data['Stage'].isin(['Done', 'Closed', 'Rejected'])]
         if selected_squad and 'Squad' in sprint_data.columns:
             sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
         if selected_types and len(selected_types) > 0:

@@ -3,8 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from src.reporting_app.config.constants import (
-    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS, COLORS
+    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
@@ -217,7 +216,7 @@ def init_callbacks(app, jira_tickets):
 
         # Create a dictionary to map stages to their order in all_stage_columns
         stage_order = {to_stage_name(stage): idx
-                    for idx, stage in enumerate(THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS)}
+                    for idx, stage in enumerate(THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS)}
 
         # Prepare stage duration data using all_stage_columns
         stage_data = []
