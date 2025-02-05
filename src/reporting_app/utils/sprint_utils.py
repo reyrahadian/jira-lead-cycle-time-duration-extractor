@@ -10,9 +10,9 @@ def get_sprint_date_range(df):
         if pd.notna(start_date) and pd.notna(end_date):
             # Convert to datetime if they're strings
             if isinstance(start_date, str):
-                start_date = pd.to_datetime(start_date).strftime('%d %b %Y')
+                start_date = pd.to_datetime(start_date)
             if isinstance(end_date, str):
-                end_date = pd.to_datetime(end_date).strftime('%d %b %Y')
+                end_date = pd.to_datetime(end_date)
 
                 return start_date, end_date
 

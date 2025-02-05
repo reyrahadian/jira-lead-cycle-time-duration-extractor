@@ -43,7 +43,7 @@ PRIORITY_ORDER = {
 }
 
 # Stage Columns
-ALL_STAGE_COLUMNS = [
+ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS = [
     "Stage Backlog days",
     "Stage Rejected days",
     "Stage Open days",
@@ -82,7 +82,7 @@ ALL_STAGE_COLUMNS = [
     "Stage Closed days"
 ]
 
-THRESHOLD_STAGE_COLUMNS = [
+THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS = [
     "Stage Waiting for support days",
     "Stage In Development days",
     "Stage In Progress days",
@@ -108,4 +108,8 @@ THRESHOLD_STAGE_COLUMNS = [
     "Stage Awaiting Prod Deployment days",
     "Stage Ready for Release days",
     "Stage In Prod Test days"
+]
+
+THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS = [
+    f"{stage.replace(' days', ' days in sprint')}" for stage in THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS
 ]

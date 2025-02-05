@@ -25,6 +25,8 @@ def create_tables():
                             {'name': 'Sprint', 'id': 'Sprint'},
                         ],
                         markdown_options={'link_target': '_blank'},
+                        sort_action='native',  # Enable native sorting
+                        sort_mode='multi',     # Allow sorting by multiple columns
                         style_data_conditional=[
                             {
                                 'if': {

@@ -157,7 +157,7 @@ def init_callbacks(app, jira_tickets):
         # Get sprint dates
         sprint_dates = "Sprint dates not available"
         sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data)
-        sprint_dates = f"Sprint Duration: {sprint_start_date} - {sprint_end_date}"
+        sprint_dates = f"Sprint Duration: {sprint_start_date.strftime('%d %b %Y')} - {sprint_end_date.strftime('%d %b %Y')}"
 
         # Get sprint goals
         goals_component = "No sprint goals available"

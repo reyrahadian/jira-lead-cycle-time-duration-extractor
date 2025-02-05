@@ -1,9 +1,23 @@
 import pandas as pd
-from src.reporting_app.config.constants import VALID_COMPONENTS
+from src.reporting_app.config.constants import (
+    VALID_COMPONENTS,
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS
+)
+from src.reporting_app.utils.stage_utils import (
+    to_stage_start_date_column_name
+)
 
 def load_data():
     csv_filepath = "output-static.csv"
-    return pd.read_csv(csv_filepath, delimiter=",")
+    jira_tickets = pd.read_csv(csv_filepath, delimiter=",")
+    jira_tickets['CreatedDate'] = pd.to_datetime(jira_tickets['CreatedDate'], utc=True)
+    jira_tickets['UpdatedDate'] = pd.to_datetime(jira_tickets['UpdatedDate'], utc=True)
+
+    for stage in ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS:
+        start_col = to_stage_start_date_column_name(stage)
+        jira_tickets[start_col] = pd.to_datetime(jira_tickets[start_col], utc=True, errors='coerce')
+
+    return jira_tickets
 
 def process_components(jira_tickets):
     # Create CalculatedComponents column starting with existing Components

@@ -3,10 +3,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from src.reporting_app.config.constants import (
-    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS,
-    ALL_STAGE_COLUMNS, COLORS
+    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
+    THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS, COLORS
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
+from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -23,9 +24,11 @@ def init_callbacks(app, jira_tickets):
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
         if selected_squad and 'Squad' in sprint_data.columns:
             sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
         if selected_types and len(selected_types) > 0:
+
             sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
             sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
@@ -35,12 +38,12 @@ def init_callbacks(app, jira_tickets):
             sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
         # Calculate stage sums and filter out zero values
-        stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS].sum()
+        stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].sum()
         non_zero_stages = stage_sums[stage_sums > 0]
 
         # Create DataFrame for the chart
         chart_data = pd.DataFrame({
-            'Stage': non_zero_stages.index.str.replace('Stage ', '').str.replace(' days', ''),
+            'Stage': to_stage_name(non_zero_stages.index),
             'Days': non_zero_stages.values
         })
 
@@ -79,11 +82,13 @@ def init_callbacks(app, jira_tickets):
             return [], "No stage selected", {'display': 'none'}, []
 
         clicked_stage = click_data['points'][0]['x']
-        stage_column = f"Stage {clicked_stage} days"
+        stage_name = to_stage_name(clicked_stage)
+        days_column_name = to_stage_in_sprint_duration_days_column_name(stage_name)
         thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
         if selected_squad and 'Squad' in sprint_data.columns:
             sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
         if selected_types and len(selected_types) > 0:
@@ -98,8 +103,8 @@ def init_callbacks(app, jira_tickets):
             )]
 
         # Get tickets that spent time in this stage
-        stage_tickets = sprint_data[sprint_data[stage_column] > 0].copy()
-        stage_tickets['days_in_stage'] = stage_tickets[stage_column]
+        stage_tickets = sprint_data[sprint_data[days_column_name] > 0].copy()
+        stage_tickets['days_in_stage'] = stage_tickets[days_column_name]
 
         # Add priority order column for sorting
         if 'Priority' in stage_tickets.columns:
@@ -167,10 +172,11 @@ def init_callbacks(app, jira_tickets):
         Output('tickets-in-stage-ticket-details-table', 'data'),
         Output('tickets-in-stage-ticket-details-title', 'children'),
         Output('tickets-in-stage-ticket-details-table', 'style_data_conditional')],
-        [Input('tickets-in-stage-table', 'selected_rows'),
+        [Input('sprint-dropdown', 'value'),
+        Input('tickets-in-stage-table', 'selected_rows'),
         Input('tickets-in-stage-table', 'data')]
     )
-    def update_stage_ticket_details(selected_rows, table_data):
+    def update_stage_ticket_details(selected_sprint, selected_rows, table_data):
         if not selected_rows or not table_data or len(selected_rows) == 0 or len(table_data) == 0:
             return (
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
@@ -193,9 +199,12 @@ def init_callbacks(app, jira_tickets):
                 []
             )
 
-        # Filter data for selected ticket
-        ticket_data = jira_tickets[jira_tickets['ID'] == selected_ticket]
+        # Process data for selected ticket
+        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
         if ticket_data.empty:
+
             return (
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
@@ -207,17 +216,14 @@ def init_callbacks(app, jira_tickets):
         ticket_data = ticket_data.iloc[0]
 
         # Create a dictionary to map stages to their order in all_stage_columns
-        stage_order = {stage.replace('Stage ', '').replace(' days', ''): idx
-                    for idx, stage in enumerate(ALL_STAGE_COLUMNS)}
+        stage_order = {to_stage_name(stage): idx
+                    for idx, stage in enumerate(THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS)}
 
         # Prepare stage duration data using all_stage_columns
         stage_data = []
         total_days = 0
-        for col in ALL_STAGE_COLUMNS:
-            stage_name = col.replace('Stage ', '').replace(' days', '')
-            # Skip the Open and Done stages
-            if stage_name in ['Open', 'Done']:
-                continue
+        for col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
+            stage_name = to_stage_name(col)
             days = ticket_data[col]
             if days > 0:  # Only include stages where time was spent
                 total_days += days
