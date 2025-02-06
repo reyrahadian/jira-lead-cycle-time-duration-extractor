@@ -185,10 +185,17 @@ def init_callbacks(app, jira_tickets):
        # Calculate total story points and ticket count
         total_points = int(sprint_data['StoryPoints'].sum())
         ticket_count = len(sprint_data)
+        # Calculate tickets in terminal states
+        terminal_states = ['Closed', 'Done', 'Resolved', 'Rejected']
+        completed_tickets = len(sprint_data[sprint_data['Stage'].isin(terminal_states)])
+        total_points_completed = int(sprint_data[sprint_data['Stage'].isin(terminal_states)]['StoryPoints'].sum())
         sprint_stats_component = html.Div([
             html.H4("Sprint Stats:"),
             html.P(f"Total Points: {total_points}"),
-            html.P(f"Total Tickets: {ticket_count}")
+            html.P(f"Total Tickets: {ticket_count}"),
+            html.H4("Sprint Outcomes:"),
+            html.P(f"Completed Points: {total_points_completed}"),
+            html.P(f"Completed Tickets: {completed_tickets}"),
         ])
 
         return goals_component, sprint_dates_component, sprint_stats_component
