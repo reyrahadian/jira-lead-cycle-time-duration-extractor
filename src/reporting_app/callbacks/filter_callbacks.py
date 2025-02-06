@@ -1,6 +1,9 @@
 from dash import Input, Output, callback, html
 import pandas as pd
+import numpy as np
 from src.reporting_app.utils.sprint_utils import get_sprint_date_range
+from src.reporting_app.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
+    COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -12,11 +15,11 @@ def init_callbacks(app, jira_tickets):
         if not selected_project:
             return [], None
 
-        project_data = jira_tickets[jira_tickets['Project'] == selected_project]
-        if 'Squad' in project_data.columns:
+        project_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
+        if COLUMN_NAME_SQUAD in project_data.columns:
             squad_options = [
                 {'label': squad, 'value': squad}
-                for squad in sorted(project_data['Squad'].unique())
+                for squad in sorted(project_data[COLUMN_NAME_SQUAD].unique())
                 if pd.notna(squad)
             ]
         else:
@@ -40,13 +43,13 @@ def init_callbacks(app, jira_tickets):
             return [], None, [], [], [], None
 
         # Filter data
-        filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
-        if selected_squad and 'Squad' in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
+        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
+            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
 
         # Get unique sprints
         sprint_set = set()
-        for sprint_str in filtered_data['Sprint'].dropna():
+        for sprint_str in filtered_data[COLUMN_NAME_SPRINT].dropna():
             if sprint_str.startswith('['):
                 sprints = sprint_str.strip('[]').replace('"', '').split('-')
             else:
@@ -98,22 +101,22 @@ def init_callbacks(app, jira_tickets):
             return [], [], [], None, [], []
 
         # Filter data
-        filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
+        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
 
         # Apply squad filter if selected
-        if selected_squad and 'Squad' in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
+            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
 
         # Apply sprint filter
-        filtered_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
+        filtered_data = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
 
         # Apply type filter for components only
         components_data = filtered_data.copy()
         if selected_types and len(selected_types) > 0:
-            components_data = filtered_data[filtered_data['Type'].isin(selected_types)]
+            components_data = filtered_data[filtered_data[COLUMN_NAME_TYPE].isin(selected_types)]
 
         # Get unique types
-        types = sorted(filtered_data['Type'].unique())
+        types = sorted(filtered_data[COLUMN_NAME_TYPE].unique())
         type_options = [{'label': type_name, 'value': type_name} for type_name in types if pd.notna(type_name)]
 
         # Preserve selected types if they're still valid
@@ -147,12 +150,12 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return "No sprint selected", "", ""
 
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
 
          # Get sprint goals
         goals_component = "No sprint goals available"
-        if 'SprintGoals' in sprint_data.columns:
-            goals = sprint_data['SprintGoals'].dropna().unique()
+        if COLUMN_NAME_SPRINT_GOALS in sprint_data.columns:
+            goals = sprint_data[COLUMN_NAME_SPRINT_GOALS].dropna().unique()
             if len(goals) > 0:
                 # Get the last goal from the list
                 last_goal = goals[-1]
@@ -183,12 +186,12 @@ def init_callbacks(app, jira_tickets):
         ])
 
        # Calculate total story points and ticket count
-        total_points = int(sprint_data['StoryPoints'].sum())
+        total_points = int(sprint_data[COLUMN_NAME_STORY_POINTS].sum())
         ticket_count = len(sprint_data)
         # Calculate tickets in terminal states
         terminal_states = ['Closed', 'Done', 'Resolved', 'Rejected']
-        completed_tickets = len(sprint_data[sprint_data['Stage'].isin(terminal_states)])
-        total_points_completed = int(sprint_data[sprint_data['Stage'].isin(terminal_states)]['StoryPoints'].sum())
+        completed_tickets = len(sprint_data[sprint_data[COLUMN_NAME_STAGE].isin(terminal_states)])
+        total_points_completed = int(sprint_data[sprint_data[COLUMN_NAME_STAGE].isin(terminal_states)][COLUMN_NAME_STORY_POINTS].sum())
         sprint_stats_component = html.Div([
             html.H4("Sprint Stats:"),
             html.P(f"Total Points: {total_points}"),

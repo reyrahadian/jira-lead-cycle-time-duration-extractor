@@ -3,7 +3,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from src.reporting_app.config.constants import (
-    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS
+    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS,
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
@@ -22,19 +23,19 @@ def init_callbacks(app, jira_tickets):
             return {}
 
         # Filter data
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        if selected_squad and 'Squad' in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
+        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
         if selected_types and len(selected_types) > 0:
 
-            sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
             sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
         if selected_ticket:
-            sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
         # Calculate stage sums and filter out zero values
         stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].sum()
@@ -86,12 +87,12 @@ def init_callbacks(app, jira_tickets):
         thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Filter data
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        if selected_squad and 'Squad' in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
+        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
         if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_ticket:
             sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
@@ -199,9 +200,9 @@ def init_callbacks(app, jira_tickets):
             )
 
         # Process data for selected ticket
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
+        ticket_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
         if ticket_data.empty:
 
             return (

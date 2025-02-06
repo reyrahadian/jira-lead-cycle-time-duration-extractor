@@ -6,8 +6,7 @@ STAGE_THRESHOLDS = {
     'In PR Test': {'warning': 2, 'critical': 3},
     'In SIT Test': {'warning': 2, 'critical': 3},
     'In UAT Test': {'warning': 2, 'critical': 3},
-    'Awaiting Prod Deployment': {'warning': 10, 'critical': 20},
-    'Done': {'warning': 1000, 'critical': 1000}
+    'Awaiting Prod Deployment': {'warning': 5, 'critical': 10}
 }
 
 # Colors
@@ -42,97 +41,158 @@ PRIORITY_ORDER = {
     'N/A': 8
 }
 
+COLUMN_NAME_ID = "ID"
+COLUMN_NAME_PROJECT = "Project"
+COLUMN_NAME_SPRINT = "Sprint"
+COLUMN_NAME_NAME = "Name"
+COLUMN_NAME_TYPE = "Type"
+COLUMN_NAME_SQUAD = "Squad"
+COLUMN_NAME_STORY_POINTS = "StoryPoints"
+COLUMN_NAME_SPRINT_GOALS = "SprintGoals"
+COLUMN_NAME_STAGE = "Stage"
+COLUMN_NAME_CREATED_DATE = "CreatedDate"
+COLUMN_NAME_UPDATED_DATE = "UpdatedDate"
+COLUMN_NAME_COMPONENTS = "Components"
+COLUMN_NAME_CALCULATED_COMPONENTS = "CalculatedComponents"
 # Stage Columns
+COLUMN_NAME_STAGE_BACKLOG_DAYS = "Stage Backlog days"
+COLUMN_NAME_STAGE_DELIVERY_BACKLOG_DAYS = "Stage Delivery Backlog days"
+COLUMN_NAME_STAGE_REJECTED_DAYS = "Stage Rejected days"
+COLUMN_NAME_STAGE_ON_HOLD_DAYS = "Stage On Hold days"
+COLUMN_NAME_STAGE_OPEN_DAYS = "Stage Open days"
+COLUMN_NAME_STAGE_BLOCKED_DAYS = "Stage Blocked days"
+COLUMN_NAME_STAGE_PENDING_DAYS = "Stage Pending days"
+COLUMN_NAME_STAGE_WAITING_FOR_SUPPORT_DAYS = "Stage Waiting for support days"
+COLUMN_NAME_STAGE_FAILED_TEST_DAYS = "Stage Failed Test days"
+COLUMN_NAME_STAGE_IN_ANALYSIS_DAYS = "Stage In Analysis days"
+COLUMN_NAME_STAGE_IDEAS_INTAKE_DAYS = "Stage Ideas Intake days"
+COLUMN_NAME_STAGE_DISCOVERY_DAYS = "Stage Discovery days"
+COLUMN_NAME_STAGE_READY_FOR_DEVELOPMENT_DAYS = "Stage Ready for Development days"
+COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS = "Stage In Development days"
+COLUMN_NAME_STAGE_IN_PROGRESS_DAYS = "Stage In Progress days"
+COLUMN_NAME_STAGE_IN_CODE_REVIEW_DAYS = "Stage In Code Review days"
+COLUMN_NAME_STAGE_IN_PR_DAYS = "Stage In PR days"
+COLUMN_NAME_STAGE_READY_FOR_PR_TEST_DAYS = "Stage Ready for PR Test days"
+COLUMN_NAME_STAGE_IN_PR_TEST_DAYS = "Stage In PR Test days"
+#COLUMN_NAME_STAGE_AWAITING_DEPLOYMENT_DAYS = "Stage Awaiting Deployment days"
+COLUMN_NAME_STAGE_AWAITING_SIT_DEPLOYMENT_DAYS = "Stage Awaiting SIT Deployment days"
+COLUMN_NAME_STAGE_IN_SIT_DAYS = "Stage In Sit days"
+COLUMN_NAME_STAGE_READY_FOR_QA_DAYS = "Stage Ready for QA days"
+COLUMN_NAME_STAGE_IN_QA_DAYS = "Stage In QA days"
+COLUMN_NAME_STAGE_READY_FOR_SIT_TEST_DAYS = "Stage Ready for SIT Test days"
+COLUMN_NAME_STAGE_IN_SIT_TEST_DAYS = "Stage In SIT Test days"
+COLUMN_NAME_STAGE_IN_TEST_DAYS = "Stage In Test days"
+COLUMN_NAME_STAGE_READY_FOR_STAGING_DAYS = "Stage Ready for Staging days"
+COLUMN_NAME_STAGE_AWAITING_UAT_DEPLOYMENT_DAYS = "Stage Awaiting UAT Deployment days"
+COLUMN_NAME_STAGE_PENDING_DEPLOYMENT_TO_UAT_DAYS = "Stage Pending Deployment to UAT days"
+COLUMN_NAME_STAGE_DEPLOYED_TO_UAT_DAYS = "Stage Deployed to UAT days"
+COLUMN_NAME_STAGE_IN_STAGING_DAYS = "Stage In Staging days"
+COLUMN_NAME_STAGE_READY_FOR_UAT_TEST_DAYS = "Stage Ready for UAT Test days"
+COLUMN_NAME_STAGE_IN_UAT_TEST_DAYS = "Stage In UAT Test days"
+COLUMN_NAME_STAGE_IN_UAT_DAYS = "Stage In UAT days"
+COLUMN_NAME_STAGE_DESIGN_REVIEW_DAYS = "Stage Design Review days"
+COLUMN_NAME_STAGE_PO_REVIEW_DAYS = "Stage PO Review days"
+COLUMN_NAME_STAGE_READY_FOR_RELEASE_DAYS = "Stage Ready for Release days"
+COLUMN_NAME_STAGE_PRE_PRODUCTION_DAYS = "Stage Pre-Production days"
+COLUMN_NAME_STAGE_AWAITING_PROD_DEPLOYMENT_DAYS = "Stage Awaiting Prod Deployment days"
+COLUMN_NAME_STAGE_PROD_PRE_CHECK_DEPLOYMENT_DAYS = "Stage Prod - Pre-check Deployment days"
+COLUMN_NAME_STAGE_IN_PRODUCTION_DAYS = "Stage In Production days"
+COLUMN_NAME_STAGE_DEPLOYED_TO_PROD_DAYS = "Stage Deployed to Prod days"
+COLUMN_NAME_STAGE_IN_PROD_TEST_DAYS = "Stage In Prod Test days"
+COLUMN_NAME_STAGE_DONE_DAYS = "Stage Done days"
+COLUMN_NAME_STAGE_CLOSED_DAYS = "Stage Closed days"
+COLUMN_NAME_STAGE_BUG_FIXED_DAYS = "Stage Bug Fixed days"
+
 ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS = [
-    "Stage Backlog days",
-    "Stage Delivery Backlog days",
-    "Stage Rejected days",
-    "Stage On Hold days",
-    "Stage Open days",
-    "Stage Blocked days",
-    "Stage Pending days",
-    "Stage Waiting for support days",
-    "Stage Failed Test days",
-    "Stage In Analysis days",
-    "Stage Ideas Intake days",
-    "Stage Discovery days",
-    "Stage Ready for Development days",
-    "Stage In Development days",
-    "Stage In Progress days",
-    "Stage In Code Review days",
-    "Stage In PR days",
-    "Stage Ready for PR Test days",
-    "Stage In PR Test days",
-    #"Stage Awaiting Deployment days",
-    "Stage Awaiting SIT Deployment days",
-    "Stage In Sit days",
-    "Stage Ready for QA days",
-    "Stage In QA days",
-    "Stage Ready for SIT Test days",
-    "Stage In SIT Test days",
-    "Stage In Test days",
-    "Stage Ready for Staging days",
-    "Stage Awaiting UAT Deployment days",
-    "Stage Pending Deployment to UAT days",
-    "Stage Deployed to UAT days",
-    "Stage In Staging days",
-    "Stage Ready for UAT Test days",
-    "Stage In UAT Test days",
-    "Stage In UAT days",
-    "Stage Design Review days",
-    "Stage PO Review days",
-    "Stage Ready for Release days",
-    "Stage Pre-Production days",
-    "Stage Awaiting Prod Deployment days",
-    "Stage Prod - Pre-check Deployment days",
-    "Stage In Production days",
-    "Stage Deployed to Prod days",
-    "Stage In Prod Test days",
-    "Stage Done days",
-    "Stage Closed days",
-    "Stage Bug Fixed days"
+    COLUMN_NAME_STAGE_BACKLOG_DAYS,
+    COLUMN_NAME_STAGE_DELIVERY_BACKLOG_DAYS,
+    COLUMN_NAME_STAGE_REJECTED_DAYS,
+    COLUMN_NAME_STAGE_ON_HOLD_DAYS,
+    COLUMN_NAME_STAGE_OPEN_DAYS,
+    COLUMN_NAME_STAGE_BLOCKED_DAYS,
+    COLUMN_NAME_STAGE_PENDING_DAYS,
+    COLUMN_NAME_STAGE_WAITING_FOR_SUPPORT_DAYS,
+    COLUMN_NAME_STAGE_FAILED_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_ANALYSIS_DAYS,
+    COLUMN_NAME_STAGE_IDEAS_INTAKE_DAYS,
+    COLUMN_NAME_STAGE_DISCOVERY_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_DEVELOPMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_PROGRESS_DAYS,
+    COLUMN_NAME_STAGE_IN_CODE_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_IN_PR_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_PR_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_PR_TEST_DAYS,
+    #COLUMN_NAME_STAGE_AWAITING_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_SIT_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_SIT_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_QA_DAYS,
+    COLUMN_NAME_STAGE_IN_QA_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_SIT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_SIT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_TEST_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_STAGING_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_UAT_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_PENDING_DEPLOYMENT_TO_UAT_DAYS,
+    COLUMN_NAME_STAGE_DEPLOYED_TO_UAT_DAYS,
+    COLUMN_NAME_STAGE_IN_STAGING_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_UAT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_UAT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_UAT_DAYS,
+    COLUMN_NAME_STAGE_DESIGN_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_PO_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_RELEASE_DAYS,
+    COLUMN_NAME_STAGE_PRE_PRODUCTION_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_PROD_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_PROD_PRE_CHECK_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_PRODUCTION_DAYS,
+    COLUMN_NAME_STAGE_DEPLOYED_TO_PROD_DAYS,
+    COLUMN_NAME_STAGE_IN_PROD_TEST_DAYS,
+    COLUMN_NAME_STAGE_DONE_DAYS,
+    COLUMN_NAME_STAGE_CLOSED_DAYS,
+    COLUMN_NAME_STAGE_BUG_FIXED_DAYS
 ]
 
 THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS = [
-    "Stage Blocked days",
-    "Stage Pending days",
-    "Stage Waiting for support days",
-    "Stage Failed Test days",
-    "Stage In Analysis days",
-    "Stage Ideas Intake days",
-    "Stage Discovery days",
-    "Stage Ready for Development days",
-    "Stage In Development days",
-    "Stage In Progress days",
-    "Stage In Code Review days",
-    "Stage In PR days",
-    "Stage Ready for PR Test days",
-    "Stage In PR Test days",
-    #"Stage Awaiting Deployment days",
-    "Stage Awaiting SIT Deployment days",
-    "Stage In Sit days",
-    "Stage Ready for QA days",
-    "Stage In QA days",
-    "Stage Ready for SIT Test days",
-    "Stage In SIT Test days",
-    "Stage In Test days",
-    "Stage Ready for Staging days",
-    "Stage Awaiting UAT Deployment days",
-    "Stage Pending Deployment to UAT days",
-    "Stage Deployed to UAT days",
-    "Stage In Staging days",
-    "Stage Ready for UAT Test days",
-    "Stage In UAT Test days",
-    "Stage In UAT days",
-    "Stage Design Review days",
-    "Stage PO Review days",
-    "Stage Ready for Release days",
-    "Stage Pre-Production days",
-    "Stage Awaiting Prod Deployment days",
-    "Stage Prod - Pre-check Deployment days",
-    "Stage In Production days",
-    "Stage Deployed to Prod days",
-    "Stage In Prod Test days"
+    COLUMN_NAME_STAGE_BLOCKED_DAYS,
+    COLUMN_NAME_STAGE_PENDING_DAYS,
+    COLUMN_NAME_STAGE_WAITING_FOR_SUPPORT_DAYS,
+    COLUMN_NAME_STAGE_FAILED_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_ANALYSIS_DAYS,
+    COLUMN_NAME_STAGE_IDEAS_INTAKE_DAYS,
+    COLUMN_NAME_STAGE_DISCOVERY_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_DEVELOPMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_PROGRESS_DAYS,
+    COLUMN_NAME_STAGE_IN_CODE_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_IN_PR_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_PR_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_PR_TEST_DAYS,
+    #COLUMN_NAME_STAGE_AWAITING_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_SIT_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_SIT_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_QA_DAYS,
+    COLUMN_NAME_STAGE_IN_QA_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_SIT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_SIT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_TEST_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_STAGING_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_UAT_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_PENDING_DEPLOYMENT_TO_UAT_DAYS,
+    COLUMN_NAME_STAGE_DEPLOYED_TO_UAT_DAYS,
+    COLUMN_NAME_STAGE_IN_STAGING_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_UAT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_UAT_TEST_DAYS,
+    COLUMN_NAME_STAGE_IN_UAT_DAYS,
+    COLUMN_NAME_STAGE_DESIGN_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_PO_REVIEW_DAYS,
+    COLUMN_NAME_STAGE_READY_FOR_RELEASE_DAYS,
+    COLUMN_NAME_STAGE_PRE_PRODUCTION_DAYS,
+    COLUMN_NAME_STAGE_AWAITING_PROD_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_PROD_PRE_CHECK_DEPLOYMENT_DAYS,
+    COLUMN_NAME_STAGE_IN_PRODUCTION_DAYS,
+    COLUMN_NAME_STAGE_DEPLOYED_TO_PROD_DAYS,
+    COLUMN_NAME_STAGE_IN_PROD_TEST_DAYS
 ]
 
 THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS = [

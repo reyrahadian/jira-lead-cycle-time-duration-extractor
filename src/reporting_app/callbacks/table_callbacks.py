@@ -4,7 +4,7 @@ import numpy as np
 from src.reporting_app.config.constants import STAGE_THRESHOLDS
 from src.reporting_app.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
@@ -23,14 +23,14 @@ def init_callbacks(app, jira_tickets):
             return []
 
         # Filter data
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         # Exclude tickets in Done or Closed stages
-        sprint_data = sprint_data[~sprint_data['Stage'].isin(['Done', 'Closed', 'Rejected'])]
-        if selected_squad and 'Squad' in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
+        sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin(['Done', 'Closed', 'Rejected'])]
+        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
         if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
             sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
