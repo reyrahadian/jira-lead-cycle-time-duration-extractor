@@ -8,8 +8,8 @@ def get_sprint_date_range(df, sprint_name):
     def get_sprint_value_index(value, list):
         # example value: ["LFW 1.1.25"-"LFW 2.1.25"]
         if is_multiple_values(list):
-            list_str = list.strip('[]').replace('"', '')
-            list = [s.strip() for s in list_str.split('-')]
+            list_str = list.strip('[]')
+            list = [s.replace('"', '').strip() for s in list_str.split("\"-\"")]
             return list.index(value)
         return 0
     def get_date_from_multiple_values(index, list):
