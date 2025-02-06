@@ -28,7 +28,6 @@ def init_callbacks(app, jira_tickets):
         if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
         if selected_types and len(selected_types) > 0:
-
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
             sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
@@ -37,17 +36,45 @@ def init_callbacks(app, jira_tickets):
         if selected_ticket:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
-        # Calculate stage sums and filter out zero values
+        # Calculate stage sums
         stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].sum()
-        non_zero_stages = stage_sums[stage_sums > 0]
+
+        # Define stage mappings (add this according to your workflow)
+        stage_mappings = {
+            'In Progress': ['In Development', 'In Progress'],
+            'In PR Test': ['Ready for PR Test', 'In PR Test'],
+            'In SIT Test': ['Ready for SIT Test', 'In SIT Test'],
+            'Awaiting UAT Deployment': ['Awaiting UAT Deployment', 'Pending Deployment to UAT'],
+            'In UAT Test': ['Ready for UAT Test', 'In UAT Test', 'In UAT', 'Deployed to UAT'],
+            # Add more mappings as needed
+        }
+
+        # Combine related stages
+        merged_stages = {}
+        for stage_name in stage_sums.index:
+            stage = to_stage_name(stage_name)
+            # Check if this stage should be merged
+            merged_into = None
+            for merged_name, related_stages in stage_mappings.items():
+                if stage in related_stages:
+                    merged_into = merged_name
+                    break
+
+            if merged_into:
+                merged_stages[merged_into] = merged_stages.get(merged_into, 0) + stage_sums[stage_name]
+            else:
+                merged_stages[stage] = stage_sums[stage_name]
+
+        # Filter out zero values
+        merged_stages = {k: v for k, v in merged_stages.items() if v > 0}
 
         # Create DataFrame for the chart
         chart_data = pd.DataFrame({
-            'Stage': to_stage_name(non_zero_stages.index),
-            'Days': non_zero_stages.values
+            'Stage': list(merged_stages.keys()),
+            'Days': list(merged_stages.values())
         })
 
-        # Create bar chart with non-zero stages only
+        # Create bar chart with merged stages
         fig = px.bar(
             chart_data,
             x='Stage',
