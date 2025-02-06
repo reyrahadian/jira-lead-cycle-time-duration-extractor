@@ -140,26 +140,16 @@ def init_callbacks(app, jira_tickets):
     @callback(
         [Output('sprint-goals', 'children'),
          Output('sprint-dates', 'children'),
-         Output('total-points', 'children'),
-         Output('ticket-count', 'children')],
+         Output('sprint-stats', 'children')],
         [Input('sprint-dropdown', 'value')]
     )
     def update_sprint_info(selected_sprint):
         if not selected_sprint:
-            return "No sprint selected", "No sprint selected", "Total Points: 0", "Total Tickets: 0"
+            return "No sprint selected", "", ""
 
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
 
-        # Calculate total story points and ticket count
-        total_points = sprint_data['StoryPoints'].sum()
-        ticket_count = len(sprint_data)
-
-        # Get sprint dates
-        sprint_dates = "Sprint dates not available"
-        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data)
-        sprint_dates = f"Sprint Duration: {sprint_start_date.strftime('%d %b %Y')} - {sprint_end_date.strftime('%d %b %Y')}"
-
-        # Get sprint goals
+         # Get sprint goals
         goals_component = "No sprint goals available"
         if 'SprintGoals' in sprint_data.columns:
             goals = sprint_data['SprintGoals'].dropna().unique()
@@ -183,4 +173,22 @@ def init_callbacks(app, jira_tickets):
                             html.P(last_goal)
                         ])
 
-        return goals_component, sprint_dates, f"Total Points: {total_points}", f"Total Tickets: {ticket_count}"
+        # Get sprint dates
+        sprint_dates = "Sprint dates not available"
+        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data, selected_sprint)
+        sprint_dates = f"{sprint_start_date.strftime('%d %b %Y')} - {sprint_end_date.strftime('%d %b %Y')}"
+        sprint_dates_component = html.Div([
+            html.H4("Sprint Dates:"),
+            html.P(sprint_dates)
+        ])
+
+       # Calculate total story points and ticket count
+        total_points = int(sprint_data['StoryPoints'].sum())
+        ticket_count = len(sprint_data)
+        sprint_stats_component = html.Div([
+            html.H4("Sprint Stats:"),
+            html.P(f"Total Points: {total_points}"),
+            html.P(f"Total Tickets: {ticket_count}")
+        ])
+
+        return goals_component, sprint_dates_component, sprint_stats_component

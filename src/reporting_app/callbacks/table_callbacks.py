@@ -24,7 +24,7 @@ def init_callbacks(app, jira_tickets):
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         # Exclude tickets in Done or Closed stages
         sprint_data = sprint_data[~sprint_data['Stage'].isin(['Done', 'Closed', 'Rejected'])]
         if selected_squad and 'Squad' in sprint_data.columns:
@@ -132,7 +132,7 @@ def init_callbacks(app, jira_tickets):
 
         # Process data for selected ticket
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
         if ticket_data.empty:
             return (
@@ -260,12 +260,6 @@ def init_callbacks(app, jira_tickets):
 
         # Add priority order for sorting
         defects['priority_sort'] = defects['Priority'].map(lambda x: PRIORITY_ORDER.get(x, 8))
-
-        # Sort by priority first (using priority_order), then by created date
-        # Fix the datetime parsing warning by specifying utc=True
-        defects['CreatedDate'] = pd.to_datetime(defects['CreatedDate'], utc=True)
-        defects = defects.sort_values(['priority_sort', 'CreatedDate'],
-                                    ascending=[True, False])
 
         # Prepare table data with markdown links
         table_data = defects[[

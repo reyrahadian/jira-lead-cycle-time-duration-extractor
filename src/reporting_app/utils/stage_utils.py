@@ -5,7 +5,7 @@ from src.reporting_app.config.constants import (
 )
 from src.reporting_app.utils.sprint_utils import get_sprint_date_range
 
-def calculate_tickets_duration_in_sprint(df):
+def calculate_tickets_duration_in_sprint(df, sprint_name):
     """
     Calculate stage metrics for tickets within a sprint's date range.
 
@@ -18,7 +18,7 @@ def calculate_tickets_duration_in_sprint(df):
         pd.DataFrame: DataFrame with stage metrics for the sprint period
     """
 
-    sprint_start_date, sprint_end_date = get_sprint_date_range(df)
+    sprint_start_date, sprint_end_date = get_sprint_date_range(df, sprint_name)
 
     if sprint_start_date is None or sprint_end_date is None:
         return df  # Return original dataframe if no sprint dates

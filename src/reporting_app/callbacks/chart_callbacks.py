@@ -23,7 +23,7 @@ def init_callbacks(app, jira_tickets):
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         if selected_squad and 'Squad' in sprint_data.columns:
             sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
         if selected_types and len(selected_types) > 0:
@@ -87,7 +87,7 @@ def init_callbacks(app, jira_tickets):
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         if selected_squad and 'Squad' in sprint_data.columns:
             sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
         if selected_types and len(selected_types) > 0:
@@ -200,7 +200,7 @@ def init_callbacks(app, jira_tickets):
 
         # Process data for selected ticket
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data)
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
         if ticket_data.empty:
 
