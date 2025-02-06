@@ -43,7 +43,7 @@ def init_callbacks(app, jira_tickets):
         stage_mappings = {
             'In Progress': ['In Development', 'In Progress'],
             'In PR Test': ['Ready for PR Test', 'In PR Test'],
-            'In SIT Test': ['Ready for SIT Test', 'In SIT Test', 'In SIT'],
+            'In SIT Test': ['Ready for SIT Test', 'In SIT Test', 'In Sit'],
             'Awaiting UAT Deployment': ['Awaiting UAT Deployment', 'Pending Deployment to UAT'],
             'In UAT Test': ['Ready for UAT Test', 'In UAT Test', 'In UAT', 'Deployed to UAT'],
             # Add more mappings as needed
