@@ -7,13 +7,9 @@ def create_teams_tab():
         value='teams-dashboard-tab',
         children=[
             html.Div([
-                dcc.Graph(id='ticket-progression-chart')
-            ]),
-            html.Div([
-                html.H3('Teams Metrics', style={'color': '#2c3e50', 'margin-bottom': '20px'}),
-                html.Div(id='teams-metrics-panel')
-            ], style={
-                **CARD_STYLE
-            })
+                dcc.Graph(id='ticket-progression-chart'),
+                dcc.Graph(id='avg-ticket-progression-chart'),
+                dcc.Graph(id='ticket-type-distribution-pie-chart')
+            ])
         ]
     )
