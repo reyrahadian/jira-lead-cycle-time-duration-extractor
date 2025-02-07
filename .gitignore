@@ -16,3 +16,4 @@ output*.csv
 groupon
 
 __pycache__/
+*.pyc
