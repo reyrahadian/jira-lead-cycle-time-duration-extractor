@@ -2,6 +2,11 @@
 
 A Dash-based web application for visualizing and analyzing Jira ticket data. This dashboard provides insights into ticket progression, team velocity, and project health metrics.
 
+## Screenshots
+
+![Teams Dashboard](src/reporting_app/images/teams-dashboard.png)
+![Sprint Dashboard](src/reporting_app/images/sprint-tickets-progression-dashboard.png)
+
 ## Pre-requisites
 - [Conda](https://www.anaconda.com/download/success)
 - [Node.js](https://nodejs.org/en/download)
