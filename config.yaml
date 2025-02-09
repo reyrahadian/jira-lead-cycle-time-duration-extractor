@@ -8,9 +8,12 @@ Connection:
 
 
 JQL:
-    #Query: project = "Lower Funnel Web" and sprint in (1651,1659)
-    #Query: project = "Lower Funnel Web" and created >= -12w
-    Query: project in( "Lower Funnel Web","Upper Funnel Web","Digital MECCA App", "COM", "SIT") and updated >= -4w
+    # Product Engineering
+    Query: project in ("LFW","MFW","DMA", "COM", "SIT", "WEB") and updated >= -24w
+    # Platform Engineering
+    #Query: project in ("PAYAPI", "PLE", "RIS", "RS", "AD", "AMY", "CAP", "DEA", "ILA", "MAI", "MFS", "MNL", "SAP", "SHI", "SIC", "UML", "USA", "WAP", "WEX", "ZES") and updated >= -24w
+    # Everyone
+    #Query: project in ("LFW","MFW","DMA", "COM", "SIT", "WEB", "PAYAPI", "PLE", "RIS", "RS", "AD", "AMY", "CAP", "DEA", "ILA", "MAI", "MFS", "MNL", "SAP", "SHI", "SIC", "UML", "USA", "WAP", "WEX", "ZES") and updated >= -24w
 
 # Map field names to additional attributes to extract
 Attributes:
