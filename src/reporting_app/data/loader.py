@@ -20,9 +20,17 @@ def load_data():
     jira_tickets[COLUMN_NAME_CREATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_CREATED_DATE], utc=True)
     jira_tickets[COLUMN_NAME_UPDATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_UPDATED_DATE], utc=True)
 
-    for stage in ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS:
-        start_col = to_stage_start_date_column_name(stage)
-        jira_tickets[start_col] = pd.to_datetime(jira_tickets[start_col], utc=True, errors='coerce')
+    for days_col in ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS:
+        # Handle start date columns
+        start_col = to_stage_start_date_column_name(days_col)
+        if start_col in jira_tickets.columns:
+            jira_tickets[start_col] = pd.to_datetime(jira_tickets[start_col], utc=True, errors='coerce')
+        else:
+            jira_tickets[start_col] = pd.NaT
+
+        # Handle duration columns
+        if days_col not in jira_tickets.columns:
+            jira_tickets[days_col] = pd.NA
 
     return jira_tickets
 
