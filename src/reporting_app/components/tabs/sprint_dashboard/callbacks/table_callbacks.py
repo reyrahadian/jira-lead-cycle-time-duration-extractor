@@ -3,11 +3,13 @@ import pandas as pd
 import numpy as np
 from src.reporting_app.config.constants import STAGE_THRESHOLDS
 from src.reporting_app.config.constants import (
-    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
+    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
+    COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PROJECT, COLUMN_NAME_PRIORITY, COLUMN_NAME_ID, COLUMN_NAME_CREATED_DATE
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
+from src.reporting_app.utils.sprint_utils import get_sprint_date_range
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -238,28 +240,30 @@ def init_callbacks(app, jira_tickets):
             return []
 
         # First filter by project
-        filtered_data = jira_tickets[jira_tickets['Project'] == selected_project]
+        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
 
         # Then filter by squad if selected
-        if selected_squad and 'Squad' in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data['Squad'] == selected_squad]
+        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
+            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
 
         # Then filter by components if selected
         if selected_components and len(selected_components) > 0:
-            filtered_data = filtered_data[filtered_data['CalculatedComponents'].apply(
+            filtered_data = filtered_data[filtered_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
 
         # Then filter by sprint
-        sprint_data = filtered_data[filtered_data['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
+        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data, selected_sprint)
+        sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]
         if sprint_data.empty:
             return []
 
         # Filter defects
-        defects = sprint_data[sprint_data['Type'].isin(['Bug', 'Defect'])].copy()
+        defects = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(['Bug', 'Defect'])].copy()
 
         # Add priority order for sorting
-        defects['priority_sort'] = defects['Priority'].map(lambda x: PRIORITY_ORDER.get(x, 8))
+        defects['priority_sort'] = defects[COLUMN_NAME_PRIORITY].map(lambda x: PRIORITY_ORDER.get(x, 8))
 
         # Prepare table data with markdown links
         table_data = defects[[
@@ -268,7 +272,7 @@ def init_callbacks(app, jira_tickets):
         ]].copy()
 
         # Convert ID column to markdown links
-        table_data['ID'] = table_data['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
+        table_data[COLUMN_NAME_ID] = table_data[COLUMN_NAME_ID].apply(lambda x: f'[{x}]({create_jira_link(x)})')
 
         return table_data.to_dict('records')
 
@@ -321,15 +325,15 @@ def init_callbacks(app, jira_tickets):
             return []  # Return empty list instead of strings
 
         # Filter data for selected sprint
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
 
         # Apply squad filter if selected
-        if selected_squad and 'Squad' in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data['Squad'] == selected_squad]
+        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
 
         # Apply type filter if selected
         if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data['Type'].isin(selected_types)]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
 
         # Apply components filter if selected
         if selected_components and len(selected_components) > 0:
@@ -337,7 +341,7 @@ def init_callbacks(app, jira_tickets):
 
         # Apply ticket filter if selected
         if selected_ticket:
-            sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
         # Define type order for sorting
         type_order = {
@@ -358,7 +362,7 @@ def init_callbacks(app, jira_tickets):
         sprint_data = sprint_data.sort_values(['type_sort', 'ID'])
 
         # Convert ID column to markdown links
-        sprint_data['ID'] = sprint_data['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
+        sprint_data[COLUMN_NAME_ID] = sprint_data[COLUMN_NAME_ID].apply(lambda x: f'[{x}]({create_jira_link(x)})')
 
         # Convert to records and remove the temporary sorting column
         sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
