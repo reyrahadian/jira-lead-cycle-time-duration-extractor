@@ -4,7 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 from src.reporting_app.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS,
-    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY
 )
 from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
@@ -30,14 +30,14 @@ def init_callbacks(app, jira_tickets):
         if selected_types and len(selected_types) > 0:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
-            sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
         if selected_ticket:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
-        # Calculate stage sums
-        stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].sum()
+        # Calculate stage mean
+        stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].apply(lambda x: x[x > 0].mean() if any(x > 0) else 0)
 
         # Define stage mappings (add this according to your workflow)
         stage_mappings = {
@@ -80,7 +80,7 @@ def init_callbacks(app, jira_tickets):
             chart_data,
             x='Stage',
             y='Days',
-            labels={'Stage': 'Stage', 'Days': 'Total Days'},
+            labels={'Stage': 'Stage', 'Days': 'Avg Days'},
             title=f'Time Spent in Each Stage - {selected_sprint}'
         )
 
@@ -122,11 +122,11 @@ def init_callbacks(app, jira_tickets):
         if selected_types and len(selected_types) > 0:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_ticket:
-            sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
         # Apply components filter if selected
         if selected_components and len(selected_components) > 0:
-            sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
 
@@ -135,8 +135,8 @@ def init_callbacks(app, jira_tickets):
         stage_tickets['days_in_stage'] = stage_tickets[days_column_name]
 
         # Add priority order column for sorting
-        if 'Priority' in stage_tickets.columns:
-            stage_tickets['priority_sort'] = stage_tickets['Priority'].map(lambda x: PRIORITY_ORDER.get(x, 8))
+        if COLUMN_NAME_PRIORITY in stage_tickets.columns:
+            stage_tickets['priority_sort'] = stage_tickets[COLUMN_NAME_PRIORITY].map(lambda x: PRIORITY_ORDER.get(x, 8))
         else:
             stage_tickets['priority_sort'] = 8
 

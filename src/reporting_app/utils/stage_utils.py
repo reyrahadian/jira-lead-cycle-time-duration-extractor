@@ -1,7 +1,8 @@
 import pandas as pd
 from src.reporting_app.config.constants import (
     THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS,
+    COLUMN_NAME_CREATED_DATE
 )
 from src.reporting_app.utils.sprint_utils import get_sprint_date_range
 
@@ -25,7 +26,7 @@ def calculate_tickets_duration_in_sprint(df, sprint_name):
 
     # Filter tickets that were active before the sprint ended
     sprint_tickets = df[
-        (df['CreatedDate'] <= sprint_end_date)
+        (df[COLUMN_NAME_CREATED_DATE] <= sprint_end_date)
     ].copy()
 
     # Calculate stage end dates based on start dates and durations
