@@ -17,7 +17,6 @@ def get_sprint_date_range(df, sprint_name):
         if is_multiple_values(list):
             list = split_string_array(list)
             return list[index]
-
         return list
 
     start_date = None
