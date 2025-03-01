@@ -1,15 +1,20 @@
 from dash import Output, Input, callback, no_update, dash_table
 import plotly.express as px
 import pandas as pd
-from src.reporting_app.config.constants import THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS, COLUMN_NAME_TYPE
+from src.reporting_app.config.constants import (
+    THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS,
+    COLUMN_NAME_TYPE,
+    COLUMN_NAME_PROJECT,
+    COLUMN_NAME_CREATED_DATE,
+    COLUMN_NAME_SPRINT
+)
 from src.reporting_app.utils.stage_utils import to_stage_name
 
 stage_mappings = {
     'Blocked': ['Blocked', 'Pending', 'Waiting for support'],
-    'Discovery': ['Discovery', 'In Analysis'],
     'In Progress': ['Ready for Development', 'In Development', 'In Progress', 'In Code Review', 'In Design Review', 'In PR',
                     'Failed Test', 'Awaiting SIT Deployment', 'Awaiting UAT Deployment', 'Pending Deployment to UAT', 'Ready for Staging',
-                    'PO Review','Ready for Release', 'Pre-Production', 'Awaiting Prod Deployment'],
+                    'PO Review','Ready for Release', 'Pre-Production', 'Awaiting Prod Deployment', 'Discovery', 'In Analysis'],
     'In QA': ['Ready for PR Test', 'In PR Test', 'In SIT Test', 'In UAT Test', 'In QA', 'In Test', 'In UAT Test', 'In Prod Test',
                 'In SIT Test', 'In UAT Test', 'In Staging', 'Design Review', 'In Sit', 'Ready for QA', 'Ready for SIT Test', 'Deployed to UAT',
                 'In UAT', 'Ready for UAT Test', 'Prod - Pre-check Deployment'],
@@ -175,15 +180,31 @@ def init_callbacks(app, jira_tickets):
         [Output('ticket-progression-chart', 'figure'),
          Output('avg-ticket-progression-chart', 'figure'),
          Output('ticket-type-distribution-pie-chart', 'figure')],
-        [Input('tabs-component', 'value')]
+        [Input('tabs-component', 'value'),
+         Input('teams-tab-project-dropdown', 'value'),
+         Input('teams-tab-date-range', 'start_date'),
+         Input('teams-tab-date-range', 'end_date')]
     )
-    def update_chart(active_tab):
+    def update_chart(active_tab, selected_project, start_date, end_date):
         if active_tab != 'teams-dashboard-tab':
             return no_update, no_update, no_update
 
-        fig = create_total_time_spent_figure(jira_tickets)
-        fig2 = create_avg_time_spent_figure(jira_tickets)
-        fig3 = create_ticket_type_distribution_pie_chart(jira_tickets)
+        # Filter the data based on selected project and date range
+        filtered_tickets = jira_tickets
+
+        if selected_project:
+            filtered_tickets = filtered_tickets[filtered_tickets[COLUMN_NAME_PROJECT] == selected_project]
+        if start_date:
+            filtered_tickets = filtered_tickets[filtered_tickets[COLUMN_NAME_CREATED_DATE] >= start_date]
+        if end_date:
+            filtered_tickets = filtered_tickets[filtered_tickets[COLUMN_NAME_CREATED_DATE] <= end_date]
+
+        # Filter tickets to only include those assigned to a sprint
+        filtered_tickets = filtered_tickets[filtered_tickets[COLUMN_NAME_SPRINT].notna()]
+
+        fig = create_total_time_spent_figure(filtered_tickets)
+        fig2 = create_avg_time_spent_figure(filtered_tickets)
+        fig3 = create_ticket_type_distribution_pie_chart(filtered_tickets)
 
         return fig, fig2, fig3
 
