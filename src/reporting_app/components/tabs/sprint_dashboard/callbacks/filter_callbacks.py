@@ -145,34 +145,39 @@ def init_callbacks(app, jira_tickets):
         [Input('sprint-dropdown', 'value')]
     )
     def update_sprint_info(selected_sprint):
+        def is_multiple_values(value):
+            if isinstance(value, str) and '[' in value:
+                return True
+            return False
+        def get_sprint_value_index(value, list):
+            # example value: ["LFW 1.1.25"-"LFW 2.1.25"]
+            if is_multiple_values(list):
+                list = split_string_array(list)
+                return list.index(value)
+            return 0
+        def get_sprint_goals_from_multiple_values(index, list):
+            # example value: ["Complete Apple Pay- Complete Wishlist in Bag- Complete prepartion for Non-Shoppable (Design- Tickets- Test Plan- TC Prep- Env)"-"Apple Pay defects- Non-shoppable PDPs development"]
+            if is_multiple_values(list):
+                list = split_string_array(list)
+                return list[index]
+            return list
+
         if not selected_sprint:
             return "No sprint selected", "", ""
 
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
+        jira_ticket = sprint_data.iloc[0]
 
-         # Get sprint goals
-        goals_component = "No sprint goals available"
-        if COLUMN_NAME_SPRINT_GOALS in sprint_data.columns:
-            goals = sprint_data[COLUMN_NAME_SPRINT_GOALS].dropna().unique()
-            if len(goals) > 0:
-                # Get the last goal from the list
-                last_goal = goals[-1]
-                if isinstance(last_goal, str):
-                    if last_goal.startswith('['):
-                        # Extract the last goal from the list format
-                        goal_items = [item.strip() for item in last_goal.strip('[]').split('"')
-                                    if item and item not in ['-', ' ', '']]
-                        if goal_items:
-                            last_goal_item = goal_items[-1]
-                            goals_component = html.Div([
-                                html.H4("Sprint Goal:"),
-                                html.P(last_goal_item)
-                            ])
-                    else:
-                        goals_component = html.Div([
-                            html.H4("Sprint Goal:"),
-                            html.P(last_goal)
-                        ])
+        if is_multiple_values(jira_ticket[COLUMN_NAME_SPRINT]):
+            sprint_index = get_sprint_value_index(selected_sprint, jira_ticket[COLUMN_NAME_SPRINT])
+            sprint_goals = get_sprint_goals_from_multiple_values(sprint_index, jira_ticket[COLUMN_NAME_SPRINT_GOALS])
+        else:
+            sprint_goals = jira_ticket[COLUMN_NAME_SPRINT_GOALS]
+
+        goals_component = html.Div([
+            html.H4("Sprint Goal:"),
+            html.P(sprint_goals)
+        ])
 
         # Get sprint dates
         sprint_dates = "Sprint dates not available"
