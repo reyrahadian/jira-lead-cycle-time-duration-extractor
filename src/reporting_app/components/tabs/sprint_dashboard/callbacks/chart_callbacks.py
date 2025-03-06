@@ -10,17 +10,10 @@ from src.reporting_app.utils.jira_utils import create_jira_link
 from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
-    @callback(
-        Output('tickets-in-stage-bar-chart', 'figure'),
-        [Input('sprint-dropdown', 'value'),
-        Input('type-dropdown', 'value'),
-        Input('ticket-dropdown', 'value'),
-        Input('squad-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
-    )
-    def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+    def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):
         if not selected_sprint:
-            return {}
+            # Return empty DataFrame with expected columns instead of empty dict
+            return pd.DataFrame(columns=['Stage', 'Days'])
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
@@ -70,10 +63,35 @@ def init_callbacks(app, jira_tickets):
         merged_stages = {k: v for k, v in merged_stages.items() if v > 0}
 
         # Create DataFrame for the chart
-        chart_data = pd.DataFrame({
+        result = pd.DataFrame({
             'Stage': list(merged_stages.keys()),
             'Days': list(merged_stages.values())
         })
+
+        return result
+
+    @callback(
+        Output('tickets-in-stage-bar-chart', 'figure'),
+        [Input('sprint-dropdown', 'value'),
+        Input('type-dropdown', 'value'),
+        Input('ticket-dropdown', 'value'),
+        Input('squad-dropdown', 'value'),
+        Input('components-dropdown', 'value')]
+    )
+    def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+        chart_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
+
+        # Create empty figure if no data
+        if chart_data.empty:
+            fig = go.Figure()
+            fig.update_layout(
+                title="No data available",
+                xaxis_title="Stage",
+                yaxis_title="Avg Days",
+                height=500,
+                margin=dict(b=150)
+            )
+            return fig
 
         # Create bar chart with merged stages
         fig = px.bar(
@@ -92,6 +110,20 @@ def init_callbacks(app, jira_tickets):
         )
 
         return fig
+
+    @callback(
+        Output('avg-days-table', 'data'),
+        [Input('sprint-dropdown', 'value'),
+        Input('type-dropdown', 'value'),
+        Input('ticket-dropdown', 'value'),
+        Input('squad-dropdown', 'value'),
+        Input('components-dropdown', 'value')]
+    )
+    def update_avg_days_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+        table_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
+
+        # Convert DataFrame to list of dictionaries for Dash table
+        return table_data.to_dict('records')
 
     @callback(
         [Output('tickets-in-stage-table', 'data'),

@@ -1,12 +1,11 @@
 from dash import Dash, html, dcc
 from src.reporting_app.config.constants import COLORS
-from src.reporting_app.config.styles import *
-from src.reporting_app.components.tabs.sprint_dashboard.components.header import create_header
 from src.reporting_app.data.loader import JIRA_TICKETS
-from src.reporting_app.components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprint_filter_callbacks, \
-    chart_callbacks as sprint_chart_callbacks, table_callbacks as sprint_table_callbacks
+from src.reporting_app.components.tabs.sprint_dashboard.components.header import create_header
 from src.reporting_app.components.tabs.sprint_dashboard  import create_sprint_tab
 from src.reporting_app.components.tabs.teams_dashboard import create_teams_tab
+from src.reporting_app.components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprint_filter_callbacks, \
+    chart_callbacks as sprint_chart_callbacks, table_callbacks as sprint_table_callbacks
 from src.reporting_app.components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 
 # Initialize Dash App

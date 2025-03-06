@@ -8,7 +8,51 @@ def create_charts():
         html.Div([  # Wrap everything in a Div
             html.H2("Tickets Cycle Time",
                     style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
-            dcc.Graph(id='tickets-in-stage-bar-chart'),
+            # Create a flex container for the graph and average days table
+            html.Div([
+                # Left column - Graph
+                html.Div([
+                    dcc.Graph(id='tickets-in-stage-bar-chart')
+                ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+
+                # Right column - Average Days Table
+                html.Div([
+                    html.H3("Average Days per Stage",
+                            style={'color': COLORS['secondary'], 'margin-bottom': '10px'}),
+                    dash_table.DataTable(
+                        id='avg-days-table',
+                        columns=[
+                            {'name': 'Stage', 'id': 'Stage'},
+                            {'name': 'Average Days', 'id': 'Days'}
+                        ],
+                        style_table={
+                            'overflowX': 'auto',
+                            'backgroundColor': COLORS['background'],
+                            'maxWidth': '500px',
+                            'cursor': 'text'  # Shows text cursor on hover
+                        },
+                        style_cell={
+                            'textAlign': 'left',
+                            'minWidth': '100px',
+                            'maxWidth': '300px',
+                            'whiteSpace': 'normal',
+                            'padding': '10px',
+                            'copyable': True,
+                            'selectable': True
+                        },
+                        style_header={
+                            'backgroundColor': COLORS['primary'],
+                            'color': 'white',
+                            'fontWeight': 'bold',
+                            'textAlign': 'left'
+                        },
+                        css=[{
+                            'selector': '.dash-cell div',
+                            'rule': 'user-select: text !important; -webkit-user-select: text !important;'
+                        }]
+                    )
+                ], style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+            ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginBottom': '20px'}),
             # Stage Tickets Panel
             html.Div([
                 # Left side - Stage Tickets Table
