@@ -10,7 +10,7 @@ Connection:
 JQL:
     #Query: project in ("LFW", "COM", "SIT") and updated >= -12w
     # Product Engineering
-    Query: project in ("LFW","MFW","DMA", "COM", "SIT", "WEB") and updated >= -12w
+    Query: project in ("LFW","MFW","DMA", "COM", "SIT", "WEB") and updated >= -1d
     # Platform Engineering
     #Query: project in ("PAYAPI", "PLE", "RIS", "RS", "AD", "AMY", "CAP", "DEA", "ILA", "MAI", "MFS", "MNL", "SAP", "SHI", "SIC", "UML", "USA", "WAP", "WEX", "ZES") and updated >= -24w
     # Everyone
