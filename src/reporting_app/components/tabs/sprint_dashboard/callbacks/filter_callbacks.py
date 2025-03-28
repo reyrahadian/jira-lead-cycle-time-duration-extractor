@@ -18,10 +18,11 @@ def init_callbacks(app, jira_tickets):
 
         project_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
         if COLUMN_NAME_SQUAD in project_data.columns:
+            # Filter out NaN values and convert to list before sorting
+            squads = [squad for squad in project_data[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)]
             squad_options = [
                 {'label': squad, 'value': squad}
-                for squad in sorted(project_data[COLUMN_NAME_SQUAD].unique())
-                if pd.notna(squad)
+                for squad in sorted(squads)
             ]
         else:
             squad_options = []
