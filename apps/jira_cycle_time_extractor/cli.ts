@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as ProgressBar from 'progress';
 import * as chalk from 'chalk';
 import { safeLoad } from 'js-yaml';
-import { argv } from 'yargs';
+import * as argsParser from 'args-parser';
 import { prompt } from 'inquirer';
 import { JiraExtractor } from './index';
 import { convertYamlToJiraSettings } from './src/components/yaml-converter';
@@ -18,7 +18,7 @@ const bar = new ProgressBar(chalk.cyan('  Extracting: [:bar] :percent | :eta sec
   total: 100,
 });
 
-const getArgs = () => argv;
+const getArgs = () => argsParser(process.argv);
 
 const clearConsole = (): boolean => process.stdout.write('\x1Bc');
 
@@ -48,12 +48,18 @@ const run = async function (cliArgs: any): Promise<void> {
   clearConsole();
   console.log(chalk.underline('Jira data extractor tool'));
   console.log('JIRA Extractor configuring...');
+
   // Parse CLI settings
   const jiraConfigPath: string = cliArgs.i ? cliArgs.i : defaultYamlPath;
   const debugMode: boolean = cliArgs.d ? true : false;
   const outputPath: string = cliArgs.o ? cliArgs.o : defaultOutputPath;
   const cliUsername: string = cliArgs.u;
   const cliPassword: string = cliArgs.p;
+  const cliJql: string = cliArgs.jql;
+
+  if(debugMode) {
+    console.log(`Debug mode: ${cliArgs}`);
+  }
 
   // Parse YAML settings
   let settings: any = {};
@@ -85,6 +91,10 @@ const run = async function (cliArgs: any): Promise<void> {
 
   // Import data
   const jiraExtractorConfig = convertYamlToJiraSettings(settings);
+  if(cliJql) {
+    jiraExtractorConfig.customJql = cliJql;
+  }
+  console.log(jiraExtractorConfig);
   const jiraExtractor = new JiraExtractor(jiraExtractorConfig);
 
   console.log('Beginning extraction process');

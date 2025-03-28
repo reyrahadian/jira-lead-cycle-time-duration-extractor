@@ -17,3 +17,6 @@ groupon
 
 __pycache__/
 *.pyc
+
+.env
+docker/apps/data/

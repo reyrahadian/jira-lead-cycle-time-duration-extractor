@@ -6,7 +6,12 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./apps/data:/app/data
+      - ./docker/apps/data:/app/data
+    environment:
+      - JIRA_USERNAME=${JIRA_USERNAME}
+      - JIRA_PASSWORD=${JIRA_PASSWORD}
+      - OUTPUT_PATH=/app/data/jira_metrics.csv
+      - CUSTOM_JQL=${CUSTOM_JQL}
   reporting_app:
     build:
       context: .

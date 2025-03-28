@@ -1,9 +1,9 @@
 Connection:
     Domain: https://mecca-brands.atlassian.net/
     #Open Jira in your browser and see the domain name in the browser link, ie. jira.microsoft.com or microsoft.atlassian.net
-    Username: rey.rahadian@mecca.com.au
+    Username: xxx
     #Use an email you use to access Jira. See https://jira.eurowag.com/secure/ViewProfile.jspa.
-    Password: ATATT3xFfGF0gFNtjCk4dZ5ZD-vfUJaEWHzzgjVq0SHb6PeX1ei2eJqWg67Ue7ZWl-Fo4CFGYNzF9zXKWt9vdlesJ0XU3_0PNMQzOez-ihP_3jOhWnqfP5eMwrSFZ1qwGfXp4JjNqlANJEyf6bLjG71NI3C5Hs7Pr5htwB3PEnY5PAs2swdEp2Q=4D41DFA8
+    Password: xxx
     # is your Jira API Token. The token can be generated at https://id.atlassian.com/manage-profile/security/api-tokens
 
 

@@ -31,6 +31,38 @@ RUN mkdir -p /config
 # Set environment variables
 ENV NODE_ENV=production
 ENV CONFIG_PATH=/config/config.yaml
+ENV OUTPUT_PATH=""
+ENV JIRA_USERNAME=""
+ENV JIRA_PASSWORD=""
+ENV CUSTOM_JQL=""
 
 # Command to run the application
-CMD ["npm", "run", "extract"]
+CMD if [ -n "$JIRA_USERNAME" ] && [ -n "$JIRA_PASSWORD" ]; then \
+    if [ -n "$OUTPUT_PATH" ]; then \
+        if [ -n "$CUSTOM_JQL" ]; then \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d; \
+        else \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --d; \
+        fi; \
+    else \
+        if [ -n "$CUSTOM_JQL" ]; then \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --jql="$CUSTOM_JQL" --d; \
+        else \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --d; \
+        fi; \
+    fi; \
+    else \
+    if [ -n "$OUTPUT_PATH" ]; then \
+        if [ -n "$CUSTOM_JQL" ]; then \
+            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d; \
+        else \
+            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --d; \
+        fi; \
+    else \
+        if [ -n "$CUSTOM_JQL" ]; then \
+            node --insecure-http-parser dist/cli --jql="$CUSTOM_JQL" --d; \
+        else \
+            node --insecure-http-parser dist/cli --d; \
+        fi; \
+    fi; \
+    fi
