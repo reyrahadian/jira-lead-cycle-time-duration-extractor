@@ -1,15 +1,15 @@
 from dash import Input, Output, callback
 import pandas as pd
 import numpy as np
-from src.reporting_app.config.constants import STAGE_THRESHOLDS
-from src.reporting_app.config.constants import (
+from config.constants import STAGE_THRESHOLDS
+from config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
     COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PROJECT, COLUMN_NAME_PRIORITY, COLUMN_NAME_ID, COLUMN_NAME_CREATED_DATE
 )
-from src.reporting_app.utils.jira_utils import create_jira_link
-from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
-from src.reporting_app.utils.sprint_utils import get_sprint_date_range
+from utils.jira_utils import create_jira_link
+from utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
+from utils.sprint_utils import get_sprint_date_range
 
 def init_callbacks(app, jira_tickets):
     @callback(

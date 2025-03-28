@@ -2,12 +2,12 @@ from dash import Input, Output, callback
 import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
-from src.reporting_app.config.constants import (
+from config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS,
     COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY
 )
-from src.reporting_app.utils.jira_utils import create_jira_link
-from src.reporting_app.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
+from utils.jira_utils import create_jira_link
+from utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
     def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):

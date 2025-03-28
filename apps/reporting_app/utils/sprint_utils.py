@@ -1,5 +1,5 @@
 import pandas as pd
-from src.reporting_app.utils.string_utils import split_string_array
+from utils.string_utils import split_string_array
 
 def get_sprint_date_range(df, sprint_name):
     def is_multiple_values(value):

@@ -1,5 +1,6 @@
 import pandas as pd
-from src.reporting_app.config.constants import (
+import os
+from config.constants import (
     VALID_COMPONENTS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS,
     COLUMN_NAME_CREATED_DATE,
@@ -10,12 +11,12 @@ from src.reporting_app.config.constants import (
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_SQUAD
 )
-from src.reporting_app.utils.stage_utils import (
+from utils.stage_utils import (
     to_stage_start_date_column_name
 )
 
 def load_data():
-    csv_filepath = "output-static.csv"
+    csv_filepath = os.getenv('REPORTING_CSV_PATH', "/mnt/c/workspace/jira-lead-cycle-time-duration-extractor/docker/data/jira_metrics.csv")
     jira_tickets = pd.read_csv(csv_filepath, delimiter=",")
     jira_tickets[COLUMN_NAME_CREATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_CREATED_DATE], utc=True)
     jira_tickets[COLUMN_NAME_UPDATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_UPDATED_DATE], utc=True)

@@ -3,14 +3,12 @@ services:
     build:
       context: .
       dockerfile: ./docker/apps/jira_cycle_time_extractor/Dockerfile
-    ports:
-      - "8000:8000"
     volumes:
-      - ./docker/apps/data:/app/data
+      - ./docker/data:/data
     environment:
       - JIRA_USERNAME=${JIRA_USERNAME}
       - JIRA_PASSWORD=${JIRA_PASSWORD}
-      - OUTPUT_PATH=/app/data/jira_metrics.csv
+      - OUTPUT_PATH=/data/jira_metrics.csv
       - CUSTOM_JQL=${CUSTOM_JQL}
   reporting_app:
     build:
@@ -18,3 +16,8 @@ services:
       dockerfile: ./docker/apps/reporting_app/Dockerfile
     ports:
       - "8050:8050"
+    volumes:
+      - ./docker/data:/data
+    environment:
+      - REPORTING_CSV_PATH=/data/jira_metrics.csv
+      - HOST=0.0.0.0

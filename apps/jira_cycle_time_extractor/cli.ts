@@ -9,7 +9,7 @@ import { convertYamlToJiraSettings } from './src/components/yaml-converter';
 
 const defaultYamlPath = 'config.yaml';
 //const defaultOutputPath = `output${new Date().getTime()}.csv`;
-const defaultOutputPath = `output-static.csv`;
+const defaultOutputPath = `jira_metrics.csv`;
 
 const bar = new ProgressBar(chalk.cyan('  Extracting: [:bar] :percent | :eta seconds remaining'), {
   complete: '=',

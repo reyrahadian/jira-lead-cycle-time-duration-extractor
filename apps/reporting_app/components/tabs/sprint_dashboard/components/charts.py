@@ -1,6 +1,6 @@
 from dash import html, dcc, dash_table
-from src.reporting_app.config.styles import CARD_STYLE
-from src.reporting_app.config.constants import COLORS
+from config.styles import CARD_STYLE
+from config.constants import COLORS
 
 def create_charts():
     """Create the charts section of the dashboard."""

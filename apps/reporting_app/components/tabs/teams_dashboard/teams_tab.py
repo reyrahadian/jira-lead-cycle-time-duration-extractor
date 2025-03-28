@@ -1,6 +1,6 @@
 from dash import html, dcc
-from src.reporting_app.data.loader import UNIQUE_PROJECTS
-from src.reporting_app.components.tabs.teams_dashboard.components.filters import create_filters
+from data.loader import UNIQUE_PROJECTS
+from components.tabs.teams_dashboard.components.filters import create_filters
 
 def create_teams_tab():
     return dcc.Tab(

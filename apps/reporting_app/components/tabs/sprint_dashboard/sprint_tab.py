@@ -1,9 +1,9 @@
 from dash import html, dcc
-from src.reporting_app.components.tabs.sprint_dashboard.components.filters import create_filters
-from src.reporting_app.components.tabs.sprint_dashboard.components.sprint_metrics import create_sprint_metrics
-from src.reporting_app.components.tabs.sprint_dashboard.components.charts import create_charts
-from src.reporting_app.components.tabs.sprint_dashboard.components.tables import create_tables
-from src.reporting_app.data.loader import UNIQUE_PROJECTS, UNIQUE_COMPONENTS
+from components.tabs.sprint_dashboard.components.filters import create_filters
+from components.tabs.sprint_dashboard.components.sprint_metrics import create_sprint_metrics
+from components.tabs.sprint_dashboard.components.charts import create_charts
+from components.tabs.sprint_dashboard.components.tables import create_tables
+from data.loader import UNIQUE_PROJECTS, UNIQUE_COMPONENTS
 
 def create_sprint_tab():
     return dcc.Tab(

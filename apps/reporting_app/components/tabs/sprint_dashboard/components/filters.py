@@ -1,6 +1,6 @@
 from dash import html, dcc
-from src.reporting_app.config.styles import CARD_STYLE
-from src.reporting_app.config.constants import VALID_COMPONENTS, COLORS
+from config.styles import CARD_STYLE
+from config.constants import VALID_COMPONENTS, COLORS
 
 def create_filters(unique_projects=[], unique_components=[]):
     """Create the filters section of the dashboard."""

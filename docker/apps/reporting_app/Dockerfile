@@ -17,15 +17,10 @@ COPY apps/reporting_app/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code
-COPY apps/reporting_app /app/src/reporting_app
-
-# Set environment variables
-ENV PYTHONPATH=/app
-ENV FLASK_APP=src.reporting_app.app
-ENV FLASK_ENV=production
+COPY apps/reporting_app/ ./
 
 # Expose the port the app runs on
 EXPOSE 8050
 
 # Command to run the application
-CMD ["python", "-m", "src.reporting_app.app"]
+CMD ["python", "run-report.py"]

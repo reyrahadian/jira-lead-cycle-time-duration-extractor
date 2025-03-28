@@ -1,4 +1,4 @@
-from src.reporting_app.config.constants import COLORS
+from config.constants import COLORS
 
 CARD_STYLE = {
     'padding': '20px',

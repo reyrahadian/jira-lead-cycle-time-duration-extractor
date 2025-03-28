@@ -1,9 +1,9 @@
 from dash import Input, Output, callback, html
 import pandas as pd
 import numpy as np
-from src.reporting_app.utils.sprint_utils import get_sprint_date_range
-from src.reporting_app.utils.string_utils import split_string_array
-from src.reporting_app.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
+from utils.sprint_utils import get_sprint_date_range
+from utils.string_utils import split_string_array
+from config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
     COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
 
 def init_callbacks(app, jira_tickets):
