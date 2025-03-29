@@ -160,7 +160,7 @@ resource "aws_ecs_task_definition" "reporting" {
       mountPoints = [
         {
           sourceVolume  = "s3-data"
-          containerPath = "/mnt/s3-data"
+          containerPath = "/data"
           readOnly      = true
         }
       ]
@@ -168,7 +168,7 @@ resource "aws_ecs_task_definition" "reporting" {
       environment = [
         {
           name  = "REPORTING_CSV_PATH"
-          value = "/mnt/s3-data/jira_metrics.csv"
+          value = "/data/jira_metrics.csv"
         },
         {
           name  = "HOST"
@@ -653,7 +653,7 @@ resource "aws_ecs_task_definition" "extractor" {
       environment = [
         {
           name  = "OUTPUT_PATH"
-          value = "/data/jira_metrics2.csv"
+          value = "/data/jira_metrics.csv"
         }
       ]
 
@@ -813,7 +813,6 @@ resource "aws_iam_role_policy" "eventbridge_policy" {
     ]
   })
 }
-
 # Create EventBridge target
 resource "aws_cloudwatch_event_target" "ecs_extractor" {
   rule      = aws_cloudwatch_event_rule.extractor_schedule.name
