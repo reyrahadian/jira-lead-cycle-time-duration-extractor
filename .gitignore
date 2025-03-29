@@ -20,3 +20,6 @@ __pycache__/
 
 .env
 docker/data/
+
+.terraform/
+.terraform.lock.hcl

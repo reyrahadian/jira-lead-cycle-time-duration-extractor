@@ -17,6 +17,9 @@ from utils.stage_utils import (
 
 def load_data():
     csv_filepath = os.getenv('REPORTING_CSV_PATH', "/mnt/c/workspace/jira-lead-cycle-time-duration-extractor/docker/data/jira_metrics.csv")
+    print(f"Loading data from {csv_filepath}")
+    print(f"Directory containing CSV file: {os.path.dirname(csv_filepath)}")
+    print(f"Files in directory: {os.listdir(os.path.dirname(csv_filepath))}")
     jira_tickets = pd.read_csv(csv_filepath, delimiter=",")
     jira_tickets[COLUMN_NAME_CREATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_CREATED_DATE], utc=True)
     jira_tickets[COLUMN_NAME_UPDATED_DATE] = pd.to_datetime(jira_tickets[COLUMN_NAME_UPDATED_DATE], utc=True)

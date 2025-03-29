@@ -1,5 +1,8 @@
-apps/jira_cycle_time_extractor/dist
-apps/jira_cycle_time_extractor/node_modules
+*
+!apps/jira_metrics_extractor
+apps/jira_metrics_extractor/dist
+apps/jira_metrics_extractor/node_modules
 
+!apps/reporting_app
 apps/reporting_app/**/__pycache__
 apps/reporting_app/**/*.pyc

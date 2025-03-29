@@ -5,13 +5,13 @@ FROM node:18-slim
 WORKDIR /app
 
 # Copy package files
-COPY apps/jira_cycle_time_extractor/package*.json ./
+COPY apps/jira_metrics_extractor/package*.json ./
 
 # Install dependencies
 RUN npm install --production
 
 # Copy application files
-COPY apps/jira_cycle_time_extractor/ ./
+COPY apps/jira_metrics_extractor/ ./
 
 RUN npm run build
 

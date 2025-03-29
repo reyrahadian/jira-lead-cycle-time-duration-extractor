@@ -1,0 +1,9 @@
+aws_region   = "ap-southeast-2"
+vpc_id       = "vpc-55415b31"
+subnet_cidrs = ["172.31.48.0/20", "172.31.64.0/20"]
+application_name = "jira-metrics"
+bucket_name  = "jira-metrics-bucket"
+cluster_name = "jira-metrics-cluster"
+extractor_ecr_repository_name = "jira-metrics-extractor"
+reporting_ecr_repository_name = "reporting-app"
+environment  = "dev"
