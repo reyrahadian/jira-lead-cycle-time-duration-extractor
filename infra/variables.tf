@@ -44,3 +44,21 @@ variable "subnet_cidrs" {
   type    = list(string)
   default = ["10.0.1.0/24", "10.0.2.0/24"]  # Adjust these based on your VPC CIDR
 }
+
+variable "jira_username" {
+  description = "Username for Jira authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "jira_password" {
+  description = "Password for Jira authentication"
+  type        = string
+  sensitive   = true
+}
+
+variable "custom_jql" {
+  description = "Custom JQL query for Jira metrics extraction"
+  type        = string
+  default     = ""
+}

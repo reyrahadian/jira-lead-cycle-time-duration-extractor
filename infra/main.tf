@@ -362,14 +362,15 @@ resource "aws_subnet" "main" {
   }
 }
 
-# Update EFS Mount Target to use first subnet
+# Create EFS Mount Target for each subnet
 resource "aws_efs_mount_target" "s3_data" {
+  count           = 2  # Create a mount target in each subnet
   file_system_id  = aws_efs_file_system.s3_data.id
-  subnet_id       = aws_subnet.main[0].id
+  subnet_id       = aws_subnet.main[count.index].id
   security_groups = [aws_security_group.efs.id]
 }
 
-# Create Security Group for EFS
+# Update Security Group for EFS
 resource "aws_security_group" "efs" {
   name        = "${var.application_name}-efs-sg-${var.environment}"
   description = "Security group for EFS mount targets"
@@ -384,11 +385,11 @@ resource "aws_security_group" "efs" {
   }
 
   egress {
-    from_port       = 0
-    to_port         = 0
-    protocol        = "-1"
-    security_groups = [aws_security_group.ecs_tasks.id]
-    description     = "Allow all outbound traffic to ECS tasks"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow all outbound traffic"
   }
 
   tags = {
@@ -593,5 +594,242 @@ resource "aws_efs_access_point" "s3_data" {
     Name        = "${var.application_name}-efs-ap-${var.environment}"
     Environment = var.environment
     Application = var.application_name
+  }
+}
+
+# Create SSM Parameters for Jira credentials
+resource "aws_ssm_parameter" "jira_username" {
+  name        = "/${var.application_name}/${var.environment}/jira_username"
+  description = "Jira username for metrics extractor"
+  type        = "SecureString"
+  value       = var.jira_username
+
+  tags = {
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+resource "aws_ssm_parameter" "jira_password" {
+  name        = "/${var.application_name}/${var.environment}/jira_password"
+  description = "Jira password for metrics extractor"
+  type        = "SecureString"
+  value       = var.jira_password
+
+  tags = {
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+resource "aws_ssm_parameter" "custom_jql" {
+  name        = "/${var.application_name}/${var.environment}/custom_jql"
+  description = "Custom JQL for metrics extractor"
+  type        = "String"
+  value       = var.custom_jql
+
+  tags = {
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Create ECS Task Definition for Jira Metrics Extractor
+resource "aws_ecs_task_definition" "extractor" {
+  family                   = "${var.application_name}-extractor-${var.environment}"
+  requires_compatibilities = ["FARGATE"]
+  network_mode            = "awsvpc"
+  cpu                     = 256
+  memory                  = 512
+  execution_role_arn      = aws_iam_role.ecs_execution_role.arn
+  task_role_arn           = aws_iam_role.ecs_task_role.arn
+
+  container_definitions = jsonencode([
+    {
+      name      = "extractor-container"
+      image     = "${aws_ecr_repository.extractor.repository_url}:latest"
+      essential = true
+
+      environment = [
+        {
+          name  = "OUTPUT_PATH"
+          value = "/data/jira_metrics2.csv"
+        }
+      ]
+
+      secrets = [
+        {
+          name      = "JIRA_USERNAME"
+          valueFrom = aws_ssm_parameter.jira_username.arn
+        },
+        {
+          name      = "JIRA_PASSWORD"
+          valueFrom = aws_ssm_parameter.jira_password.arn
+        },
+        {
+          name      = "CUSTOM_JQL"
+          valueFrom = aws_ssm_parameter.custom_jql.arn
+        }
+      ]
+
+      mountPoints = [
+        {
+          sourceVolume  = "s3-data"
+          containerPath = "/data"
+          readOnly      = false
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = "/ecs/${var.application_name}-extractor-${var.environment}"
+          "awslogs-region"        = var.aws_region
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+  volume {
+    name = "s3-data"
+    efs_volume_configuration {
+      file_system_id          = aws_efs_file_system.s3_data.id
+      root_directory          = "/"
+      transit_encryption      = "ENABLED"
+      authorization_config {
+        access_point_id = aws_efs_access_point.s3_data.id
+        iam            = "ENABLED"
+      }
+    }
+  }
+
+  tags = {
+    Name        = "${var.application_name}-extractor-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Create ECS Service for Jira Metrics Extractor
+resource "aws_ecs_service" "extractor" {
+  name            = "${var.application_name}-extractor-service-${var.environment}"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.extractor.arn
+  desired_count   = 0  # Set to 0 since this will be triggered by EventBridge
+  launch_type     = "FARGATE"
+
+  enable_execute_command = true
+
+  network_configuration {
+    subnets          = aws_subnet.main[*].id
+    security_groups  = [aws_security_group.ecs_tasks.id]
+    assign_public_ip = true
+  }
+
+  tags = {
+    Name        = "${var.application_name}-extractor-service-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Create CloudWatch Log Group for Extractor
+resource "aws_cloudwatch_log_group" "extractor" {
+  name              = "/ecs/${var.application_name}-extractor-${var.environment}"
+  retention_in_days = 30
+
+  tags = {
+    Name        = "${var.application_name}-extractor-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Update the execution role policy to allow reading SSM parameters
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_ssm" {
+  role       = aws_iam_role.ecs_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
+}
+
+# Create EventBridge rule to trigger the Jira metrics extractor
+resource "aws_cloudwatch_event_rule" "extractor_schedule" {
+  name                = "${var.application_name}-extractor-schedule-${var.environment}"
+  description         = "Schedule for running the Jira metrics extractor every 4 hours on weekdays"
+  schedule_expression = "cron(0 0/4 ? * MON-FRI *)"  # Run every 4 hours on weekdays
+
+  tags = {
+    Name        = "${var.application_name}-extractor-schedule-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Create IAM role for EventBridge to run ECS tasks
+resource "aws_iam_role" "eventbridge_role" {
+  name = "${var.application_name}-eventbridge-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.application_name}-eventbridge-role-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Create IAM policy for EventBridge to run ECS tasks
+resource "aws_iam_role_policy" "eventbridge_policy" {
+  name = "${var.application_name}-eventbridge-policy-${var.environment}"
+  role = aws_iam_role.eventbridge_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = "ecs:RunTask"
+        Resource = aws_ecs_task_definition.extractor.arn
+      },
+      {
+        Effect = "Allow"
+        Action = "iam:PassRole"
+        Resource = [
+          aws_iam_role.ecs_task_role.arn,
+          aws_iam_role.ecs_execution_role.arn
+        ]
+      }
+    ]
+  })
+}
+
+# Create EventBridge target
+resource "aws_cloudwatch_event_target" "ecs_extractor" {
+  rule      = aws_cloudwatch_event_rule.extractor_schedule.name
+  target_id = "RunExtractorTask"
+  arn       = aws_ecs_cluster.main.arn
+  role_arn  = aws_iam_role.eventbridge_role.arn
+
+  ecs_target {
+    task_count          = 1
+    task_definition_arn = aws_ecs_task_definition.extractor.arn
+    launch_type         = "FARGATE"
+
+    network_configuration {
+      subnets          = aws_subnet.main[*].id
+      security_groups  = [aws_security_group.ecs_tasks.id]
+      assign_public_ip = true
+    }
   }
 }
