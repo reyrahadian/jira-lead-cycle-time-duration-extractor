@@ -1,13 +1,3 @@
-output "s3_bucket_id" {
-  description = "The ID of the S3 bucket"
-  value       = aws_s3_bucket.main.id
-}
-
-output "s3_bucket_arn" {
-  description = "The ARN of the S3 bucket"
-  value       = aws_s3_bucket.main.arn
-}
-
 output "ecs_cluster_id" {
   description = "The ID of the ECS cluster"
   value       = aws_ecs_cluster.main.id
@@ -15,7 +5,7 @@ output "ecs_cluster_id" {
 
 output "ecs_cluster_arn" {
   description = "The ARN of the ECS cluster"
-  value       = aws_s3_bucket.main.arn
+  value       = aws_ecs_cluster.main.arn
 }
 
 output "extractor_ecr_repository_url" {

@@ -6,25 +6,6 @@ provider "aws" {
 # Add this at the top of your file with other data sources
 data "aws_caller_identity" "current" {}
 
-# Create S3 Bucket
-resource "aws_s3_bucket" "main" {
-  bucket = "${var.bucket_name}-${data.aws_caller_identity.current.account_id}"
-
-  tags = {
-    Name        = var.bucket_name
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-# Enable versioning for the S3 bucket
-resource "aws_s3_bucket_versioning" "versioning" {
-  bucket = aws_s3_bucket.main.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
 # Create ECS Cluster
 resource "aws_ecs_cluster" "main" {
   name = var.cluster_name
@@ -110,44 +91,9 @@ resource "aws_ecs_task_definition" "reporting" {
 
   container_definitions = jsonencode([
     {
-      name      = "s3-sync"
-      image     = "amazon/aws-cli:latest"
-      essential = false
-
-      command = [
-        "s3",
-        "cp",
-        "s3://${aws_s3_bucket.main.id}/jira_metrics.csv",
-        "/mnt/s3-data/"
-      ]
-
-      mountPoints = [
-        {
-          sourceVolume  = "s3-data"
-          containerPath = "/mnt/s3-data"
-          readOnly      = false
-        }
-      ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = "/ecs/${var.application_name}-reporting-${var.environment}"
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "ecs-s3-sync"
-        }
-      }
-    },
-    {
       name      = "reporting-container"
       image     = "${aws_ecr_repository.reporting.repository_url}:latest"
       essential = true
-      dependsOn = [
-        {
-          containerName = "s3-sync"
-          condition     = "SUCCESS"
-        }
-      ]
 
       healthCheck = {
         command     = ["CMD-SHELL", "curl -f http://localhost:8050/ || exit 1"]
@@ -159,7 +105,7 @@ resource "aws_ecs_task_definition" "reporting" {
 
       mountPoints = [
         {
-          sourceVolume  = "s3-data"
+          sourceVolume  = "efs-data"
           containerPath = "/data"
           readOnly      = true
         }
@@ -196,13 +142,13 @@ resource "aws_ecs_task_definition" "reporting" {
   ])
 
   volume {
-    name = "s3-data"
+    name = "efs-data"
     efs_volume_configuration {
-      file_system_id          = aws_efs_file_system.s3_data.id
+      file_system_id          = aws_efs_file_system.efs_data.id
       root_directory          = "/"
       transit_encryption      = "ENABLED"
       authorization_config {
-        access_point_id = aws_efs_access_point.s3_data.id
+        access_point_id = aws_efs_access_point.efs_data.id
         iam            = "ENABLED"
       }
     }
@@ -269,29 +215,6 @@ resource "aws_iam_role" "ecs_task_role" {
   }
 }
 
-# Add S3 access policy to ECS Task Role
-resource "aws_iam_role_policy" "ecs_task_s3_policy" {
-  name = "${var.application_name}-ecs-task-s3-policy-${var.environment}"
-  role = aws_iam_role.ecs_task_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:ListBucket"
-        ]
-        Resource = [
-          aws_s3_bucket.main.arn,
-          "${aws_s3_bucket.main.arn}/*"
-        ]
-      }
-    ]
-  })
-}
-
 # Add EFS access policy to ECS Task Role
 resource "aws_iam_role_policy" "ecs_task_efs_policy" {
   name = "${var.application_name}-ecs-task-efs-policy-${var.environment}"
@@ -307,7 +230,7 @@ resource "aws_iam_role_policy" "ecs_task_efs_policy" {
           "elasticfilesystem:ClientWrite",
           "elasticfilesystem:ClientRootAccess"
         ]
-        Resource = aws_efs_file_system.s3_data.arn
+        Resource = aws_efs_file_system.efs_data.arn
       }
     ]
   })
@@ -336,7 +259,7 @@ resource "aws_iam_role_policy" "ecs_task_ssm_policy" {
 }
 
 # Create EFS File System
-resource "aws_efs_file_system" "s3_data" {
+resource "aws_efs_file_system" "efs_data" {
   creation_token = "${var.application_name}-efs-${var.environment}"
   encrypted      = true
 
@@ -363,9 +286,9 @@ resource "aws_subnet" "main" {
 }
 
 # Create EFS Mount Target for each subnet
-resource "aws_efs_mount_target" "s3_data" {
+resource "aws_efs_mount_target" "efs_data" {
   count           = 2  # Create a mount target in each subnet
-  file_system_id  = aws_efs_file_system.s3_data.id
+  file_system_id  = aws_efs_file_system.efs_data.id
   subnet_id       = aws_subnet.main[count.index].id
   security_groups = [aws_security_group.efs.id]
 }
@@ -462,15 +385,6 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow HTTP inbound traffic"
   }
-
-  # Allow outbound traffic to ECS tasks
-  #egress {
-  #  from_port       = 8050
-  # to_port         = 8050
-  #  protocol        = "tcp"
-  #  security_groups = [aws_security_group.ecs_tasks.id]
-  #  description     = "Allow outbound traffic to ECS tasks"
-  #}
 
   tags = {
     Name        = "${var.application_name}-alb-sg-${var.environment}"
@@ -578,8 +492,8 @@ resource "aws_cloudwatch_log_group" "reporting" {
 }
 
 # Create EFS Access Point
-resource "aws_efs_access_point" "s3_data" {
-  file_system_id = aws_efs_file_system.s3_data.id
+resource "aws_efs_access_point" "efs_data" {
+  file_system_id = aws_efs_file_system.efs_data.id
 
   root_directory {
     path = "/data"
@@ -674,7 +588,7 @@ resource "aws_ecs_task_definition" "extractor" {
 
       mountPoints = [
         {
-          sourceVolume  = "s3-data"
+          sourceVolume  = "efs-data"
           containerPath = "/data"
           readOnly      = false
         }
@@ -692,13 +606,13 @@ resource "aws_ecs_task_definition" "extractor" {
   ])
 
   volume {
-    name = "s3-data"
+    name = "efs-data"
     efs_volume_configuration {
-      file_system_id          = aws_efs_file_system.s3_data.id
+      file_system_id          = aws_efs_file_system.efs_data.id
       root_directory          = "/"
       transit_encryption      = "ENABLED"
       authorization_config {
-        access_point_id = aws_efs_access_point.s3_data.id
+        access_point_id = aws_efs_access_point.efs_data.id
         iam            = "ENABLED"
       }
     }
