@@ -1,38 +1,24 @@
-# Jira Tickets Analysis Dashboard
+# Jira Metrics Reporting System
 
-A Dash-based web application for visualizing and analyzing Jira ticket data. This dashboard provides insights into ticket progression, team velocity, and project health metrics.
+A system for extracting Jira metrics and visualizing them through an interactive dashboard. Combines a Jira data extractor (Node.js) with a reporting dashboard (Python).
 
-## Screenshots
+## Features
 
-![Teams Dashboard](src/reporting_app/images/teams-dashboard.png)
-![Sprint Dashboard](src/reporting_app/images/sprint-tickets-progression-dashboard.png)
+- Automated Jira data extraction:
+  - Stage durations and flow status
+  - Cycle time and lead time calculations
+  - Custom field support
+- Interactive dashboard with:
+  - Sprint analysis
+  - Team metrics
+  - Project/squad filtering
+- Docker containerization
+- AWS deployment support
 
-## Pre-requisites
-- [Conda](https://www.anaconda.com/download/success)
-- [Node.js](https://nodejs.org/en/download)
+## Quick Start
 
-## Setup Instructions
-
-1. **Create a Conda Environment**:
-   ```bash
-   conda create -n jira-dashboard
-   conda activate jira-dashboard
-   ```
-
-2. **Install Dependencies**:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure Data Source**:
-   - Update `config.yaml` with your JIRA credentials
-   - Update the JQL query to filter the data you want to analyze
-
-4. **Run the Reporting Application**:
-   ```bash
-   python run-report.py
-   ```
-
-5. **Access the Dashboard**:
-   - Open a web browser
-   - Navigate to `http://localhost:8081`
+### Running the apps
+1. Update the `.env` file with the correct values
+2. Run the following commands to build and start the apps
+`docker compose build`
+`docker compose up`
