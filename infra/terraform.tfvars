@@ -1,6 +1,6 @@
 aws_region   = "ap-southeast-2"
-vpc_id       = "vpc-55415b31"
-subnet_cidrs = ["172.31.48.0/20", "172.31.64.0/20"]
+vpc_id       = "vpc-c38d7fa5"
+subnet_cidrs = ["172.31.7.0/24", "172.31.8.0/24"]
 application_name = "jira-metrics"
 cluster_name = "jira-metrics-cluster"
 extractor_ecr_repository_name = "jira-metrics-extractor"
