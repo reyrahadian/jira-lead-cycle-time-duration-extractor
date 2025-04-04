@@ -1,3 +1,12 @@
+terraform {
+  cloud {
+    organization = "MeccaBrands-sandbox"
+    workspaces {
+      name = "jira-metrics-reporting"
+    }
+  }
+}
+
 # Configure AWS Provider
 provider "aws" {
   region = var.aws_region
@@ -384,6 +393,15 @@ resource "aws_security_group" "alb" {
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
     description = "Allow HTTP inbound traffic"
+  }
+
+  # Allow outbound traffic to container port
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "Allow outbound traffic to containers"
   }
 
   tags = {
