@@ -23,6 +23,6 @@ docker/data/
 
 .terraform/
 .terraform.lock.hcl
-
+*.zip
 *.ignore
 
