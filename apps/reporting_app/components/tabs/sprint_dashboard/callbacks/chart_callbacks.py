@@ -10,6 +10,17 @@ from utils.jira_utils import create_jira_link
 from utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
+    # Define stage mappings at the start of init_callbacks
+    stage_mappings = {
+        'In Progress': ['In Development', 'In Progress'],
+        'In PR Test': ['Ready for PR Test', 'In PR Test'],
+        'In SIT Test': ['Ready for SIT Test', 'In SIT Test', 'In Sit'],
+        'Awaiting UAT Deployment': ['Awaiting UAT Deployment', 'Pending Deployment to UAT'],
+        'In UAT Test': ['Ready for UAT Test', 'In UAT Test', 'In UAT', 'Deployed to UAT'],
+        'Awaiting Prod Deployment': ['Awaiting Prod Deployment', 'Prod - Pre-check Deployment'],
+        # Add more mappings as needed
+    }
+
     def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):
         if not selected_sprint:
             # Return empty DataFrame with expected columns instead of empty dict
@@ -29,43 +40,43 @@ def init_callbacks(app, jira_tickets):
         if selected_ticket:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
-        # Calculate stage mean
-        stage_sums = sprint_data[THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS].apply(lambda x: x[x > 0].mean() if any(x > 0) else 0)
+        # Calculate stage mean using stage_mappings
+        stage_sums = {}
+        for merged_stage, related_stages in stage_mappings.items():
+            print(f"\nProcessing merged stage: {merged_stage}")
+            # Calculate the mean for each group of related stages
+            related_stage_columns = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
 
-        # Define stage mappings (add this according to your workflow)
-        stage_mappings = {
-            'In Progress': ['In Development', 'In Progress'],
-            'In PR Test': ['Ready for PR Test', 'In PR Test'],
-            'In SIT Test': ['Ready for SIT Test', 'In SIT Test', 'In Sit'],
-            'Awaiting UAT Deployment': ['Awaiting UAT Deployment', 'Pending Deployment to UAT'],
-            'In UAT Test': ['Ready for UAT Test', 'In UAT Test', 'In UAT', 'Deployed to UAT'],
-            'Awaiting Prod Deployment': ['Awaiting Prod Deployment', 'Prod - Pre-check Deployment'],
-            # Add more mappings as needed
-        }
+            # Get tickets with non-zero days in any of the related stages
+            tickets_in_stage = sprint_data[sprint_data[related_stage_columns].gt(0).any(axis=1)]
 
-        # Combine related stages
-        merged_stages = {}
-        for stage_name in stage_sums.index:
-            stage = to_stage_name(stage_name)
-            # Check if this stage should be merged
-            merged_into = None
-            for merged_name, related_stages in stage_mappings.items():
-                if stage in related_stages:
-                    merged_into = merged_name
-                    break
+            if not tickets_in_stage.empty:
+                print("\nTickets in this stage:")
+                for idx, ticket in tickets_in_stage.iterrows():
+                    days_in_stages = [ticket[col] for col in related_stage_columns if ticket[col] > 0]
+                    avg_days = sum(days_in_stages) / len(days_in_stages) if days_in_stages else 0
+                    print(f"Ticket {ticket[COLUMN_NAME_ID]}: {days_in_stages} days (avg: {avg_days:.2f})")
 
-            if merged_into:
-                merged_stages[merged_into] = merged_stages.get(merged_into, 0) + stage_sums[stage_name]
+                total_days = tickets_in_stage[related_stage_columns].sum().sum()
+                num_tickets = len(tickets_in_stage)
+                stage_avg = total_days / num_tickets if num_tickets > 0 else 0
+
+                print(f"\nSummary for {merged_stage}:")
+                print(f"Number of tickets: {num_tickets}")
+                print(f"Total days: {total_days:.2f}")
+                print(f"Average days per ticket: {stage_avg:.2f}")
+
+                stage_sums[merged_stage] = stage_avg
             else:
-                merged_stages[stage] = stage_sums[stage_name]
-
+                print(f"No tickets found in stage: {merged_stage}")
+                stage_sums[merged_stage] = 0
         # Filter out zero values
-        merged_stages = {k: v for k, v in merged_stages.items() if v > 0}
+        stage_sums = {k: v for k, v in stage_sums.items() if v > 0}
 
         # Create DataFrame for the chart
         result = pd.DataFrame({
-            'Stage': list(merged_stages.keys()),
-            'Days': list(merged_stages.values())
+            'Stage': list(stage_sums.keys()),
+            'Days': list(stage_sums.values())
         })
 
         return result
@@ -142,8 +153,9 @@ def init_callbacks(app, jira_tickets):
             return [], "No stage selected", {'display': 'none'}, []
 
         clicked_stage = click_data['points'][0]['x']
-        stage_name = to_stage_name(clicked_stage)
-        days_column_name = to_stage_in_sprint_duration_days_column_name(stage_name)
+        # Use stage_mappings to get all related stages
+        related_stages = stage_mappings.get(clicked_stage, [clicked_stage])
+        days_column_names = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
         thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Filter data
@@ -162,9 +174,9 @@ def init_callbacks(app, jira_tickets):
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
 
-        # Get tickets that spent time in this stage
-        stage_tickets = sprint_data[sprint_data[days_column_name] > 0].copy()
-        stage_tickets['days_in_stage'] = stage_tickets[days_column_name]
+        # Get tickets that spent time in any of the related stages
+        stage_tickets = sprint_data[sprint_data[days_column_names].sum(axis=1) > 0].copy()
+        stage_tickets['days_in_stage'] = stage_tickets[days_column_names].sum(axis=1)
 
         # Add priority order column for sorting
         if COLUMN_NAME_PRIORITY in stage_tickets.columns:
