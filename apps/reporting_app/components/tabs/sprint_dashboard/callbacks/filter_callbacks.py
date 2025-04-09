@@ -51,11 +51,28 @@ def init_callbacks(app, jira_tickets):
 
         # Get unique sprints
         sprint_set = set()
-        for sprint_str in filtered_data[COLUMN_NAME_SPRINT].dropna():
+        for sprint_str in filtered_data[COLUMN_NAME_SPRINT].dropna().unique():
             sprints = split_string_array(sprint_str)
             sprint_set.update(sprint.strip() for sprint in sprints)
 
-        sprint_options = [{'label': sprint, 'value': sprint} for sprint in sorted(list(sprint_set))]
+        # Get sprint end dates and sort sprints by end date descending
+        sprint_dates = {}
+        for sprint in sprint_set:
+            # Get one ticket from this sprint to get its dates
+            sprint_ticket = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)].iloc[0]
+            # Convert the Series to a DataFrame with a single row
+            sprint_ticket_df = sprint_ticket.to_frame().T
+            start_date, _ = get_sprint_date_range(sprint_ticket_df, sprint)
+            if start_date and not pd.isna(start_date):
+                # Ensure timezone-naive comparison by converting to UTC and removing timezone
+                sprint_dates[sprint] = start_date.tz_localize(None) if start_date.tz else start_date
+            else:
+                # Use timezone-naive minimum timestamp
+                sprint_dates[sprint] = pd.Timestamp.min.tz_localize(None)
+
+        # Sort sprints by start date descending
+        sprint_set = sorted(sprint_dates.keys(), key=lambda x: sprint_dates[x], reverse=True)
+        sprint_options = [{'label': sprint, 'value': sprint} for sprint in list(sprint_set)]
 
         return sprint_options, None, [], [], [], None
 
