@@ -2,7 +2,8 @@ blinker==1.9.0
 certifi==2025.1.31
 charset-normalizer==3.4.1
 click==8.1.8
-dash==2.18.2
+dash==3.0.2
+dash-bootstrap-components==2.0.0
 dash-core-components==2.0.0
 dash-html-components==2.0.0
 dash-table==5.0.0
@@ -14,7 +15,7 @@ Jinja2==3.1.5
 MarkupSafe==3.0.2
 narwhals==1.25.2
 nest-asyncio==1.6.0
-numpy==2.0.2
+numpy==2.2.2
 packaging==24.2
 pandas==2.2.3
 plotly==6.0.0

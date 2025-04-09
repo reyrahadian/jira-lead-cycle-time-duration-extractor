@@ -9,15 +9,6 @@ STAGE_THRESHOLDS = {
     'Awaiting Prod Deployment': {'warning': 5, 'critical': 10}
 }
 
-# Colors
-COLORS = {
-    'primary': '#2c3e50',
-    'secondary': '#34495e',
-    'background': '#f8f9fa',
-    'card': '#ffffff',
-    'border': '#dee2e6'
-}
-
 # Valid Components
 VALID_COMPONENTS = {
     'BFF': 'BFF',

@@ -3,7 +3,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 from config.constants import (
-    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS,
+    STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY,
     STAGE_NAME_GROUPINGS, STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS
 )
@@ -388,7 +388,7 @@ def init_callbacks(app, jira_tickets):
 
         return (
             {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
-            {'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'block'},
+            {'marginBottom': '20px', 'display': 'block'},
             stage_data,
             f"Stage Duration Details for {selected_ticket}",
             style_conditional

@@ -1,29 +1,27 @@
 from dash import html, dcc
-from config.styles import CARD_STYLE
-from config.constants import COLORS
 
 def create_filters(unique_projects=[], unique_components=[]):
     """Create the filters section of the dashboard."""
     filters = html.Div([
-        html.H2("Filters", style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+        html.H2("Filters", style={'marginBottom': '20px'}),
         html.Div([
-            html.Label("Project:", style={'font-weight': 'bold', 'color': COLORS['secondary']}),
+                html.Label("Project:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='teams-tab-project-dropdown',
                 options=[{'label': project, 'value': project} for project in unique_projects],
                 value=unique_projects[0] if unique_projects else None,
                 multi=False,
-                style={'margin-bottom': '15px'}
+                style={'marginBottom': '15px'}
             ),
-            html.Label("Date Range:", style={'font-weight': 'bold', 'color': COLORS['secondary'], 'margin-top': '10px'}),
+            html.Label("Date Range:", style={'fontWeight': 'bold', 'marginTop': '10px'}),
             dcc.DatePickerRange(
                 id='teams-tab-date-range',
                 start_date_placeholder_text="Start Date",
                 end_date_placeholder_text="End Date",
                 calendar_orientation='horizontal',
-                style={'margin-bottom': '15px'}
+                style={'marginBottom': '15px'}
             ),
         ]),
-    ], style=CARD_STYLE)
+    ])
 
     return filters

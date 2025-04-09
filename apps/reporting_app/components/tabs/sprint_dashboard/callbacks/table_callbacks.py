@@ -4,7 +4,7 @@ import numpy as np
 from config.constants import STAGE_THRESHOLDS
 from config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLORS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
     COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PROJECT, COLUMN_NAME_PRIORITY, COLUMN_NAME_ID, COLUMN_NAME_CREATED_DATE
 )
 from utils.jira_utils import create_jira_link
@@ -222,7 +222,7 @@ def init_callbacks(app, jira_tickets):
 
         return (
             {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
-            {'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'block'},
+            {'marginBottom': '20px', 'display': 'block'},
             stage_data,
             f"Stage Duration Details for {selected_ticket}",
             style_conditional

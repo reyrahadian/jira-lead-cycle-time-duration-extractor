@@ -1,0 +1,16 @@
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner th{
+    text-align: left;
+    padding: 10px;
+    color: #ffffff;
+    background-color: rgb(44, 62, 80);
+}
+.dash-header{
+    color: #000000;
+}
+.dash-table-container .dash-spreadsheet-container .dash-spreadsheet-inner td{
+    text-align: left;
+    padding: 10px;
+}
+.dash-cell-value{
+    font-size: 13px;
+}

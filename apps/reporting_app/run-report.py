@@ -7,4 +7,4 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app
 
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=False, port=8050)
+    app.run(debug=True, use_reloader=False, port=8050)

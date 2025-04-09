@@ -1,13 +1,13 @@
 from dash import html, dcc, dash_table
-from config.styles import CARD_STYLE
-from config.constants import COLORS
+import dash_bootstrap_components as dbc
 
 def create_charts():
     """Create the charts section of the dashboard."""
     return html.Div([  # Return a single Div containing all elements
-        html.Div([  # Wrap everything in a Div
-            html.H2("Tickets Cycle Time",
-                    style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+        dbc.Card([
+            dbc.CardBody([  # Wrap everything in a Div
+                html.H2("Tickets Cycle Time",
+                        style={'marginBottom': '20px'}),
             # Create a flex container for the graph and average days table
             html.Div([
                 # Left column - Graph
@@ -18,38 +18,13 @@ def create_charts():
                 # Right column - Average Days Table
                 html.Div([
                     html.H3("Average Days per Stage",
-                            style={'color': COLORS['secondary'], 'margin-bottom': '10px'}),
+                            style={'marginBottom': '10px'}),
                     dash_table.DataTable(
                         id='avg-days-table',
                         columns=[
                             {'name': 'Stage', 'id': 'Stage'},
                             {'name': 'Average Days', 'id': 'Days'}
-                        ],
-                        style_table={
-                            'overflowX': 'auto',
-                            'backgroundColor': COLORS['background'],
-                            'maxWidth': '500px',
-                            'cursor': 'text'  # Shows text cursor on hover
-                        },
-                        style_cell={
-                            'textAlign': 'left',
-                            'minWidth': '100px',
-                            'maxWidth': '300px',
-                            'whiteSpace': 'normal',
-                            'padding': '10px',
-                            'copyable': True,
-                            'selectable': True
-                        },
-                        style_header={
-                            'backgroundColor': COLORS['primary'],
-                            'color': 'white',
-                            'fontWeight': 'bold',
-                            'textAlign': 'left'
-                        },
-                        css=[{
-                            'selector': '.dash-cell div',
-                            'rule': 'user-select: text !important; -webkit-user-select: text !important;'
-                        }]
+                        ]
                     )
                 ], style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginBottom': '20px'}),
@@ -59,7 +34,7 @@ def create_charts():
                 html.Div([
                     html.H3("Tickets in Selected Stage",
                             id='tickets-in-stage-title',
-                            style={'display': 'none', 'color': COLORS['secondary']}),
+                            style={'display': 'none'}),
                     dash_table.DataTable(
                         id='tickets-in-stage-table',
                         columns=[
@@ -75,20 +50,8 @@ def create_charts():
                         markdown_options={'link_target': '_blank'},
                         row_selectable='single',
                         selected_rows=[],
-                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                        style_cell={
-                            'textAlign': 'left',
-                            'minWidth': '100px',
-                            'maxWidth': '300px',
-                            'whiteSpace': 'normal'
-                        },
-                        page_size=10,
-                        style_header={
-                            'backgroundColor': COLORS['primary'],
-                            'color': 'white',
-                            'fontWeight': 'bold',
-                            'textAlign': 'left'
-                        }
+                        style_table={'overflowX': 'auto'},
+                        page_size=10
                     )
                 ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -96,28 +59,17 @@ def create_charts():
                 html.Div([
                     html.H3("Stage Duration Details",
                             id='tickets-in-stage-ticket-details-title',
-                            style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
+                            style={'marginBottom': '20px', 'display': 'none'}),
                     dash_table.DataTable(
                         id='tickets-in-stage-ticket-details-table',
                         columns=[
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
                         ],
-                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                        style_cell={
-                            'textAlign': 'left',
-                            'minWidth': '100px',
-                            'maxWidth': '300px',
-                            'whiteSpace': 'normal'
-                        },
-                        style_header={
-                            'backgroundColor': COLORS['primary'],
-                            'color': 'white',
-                            'fontWeight': 'bold',
-                            'textAlign': 'left'
-                        }
+                        style_table={'overflowX': 'auto'}
                     )
                 ], id='tickets-in-stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
-        ], style=CARD_STYLE)
+            ])
+        ])
     ])

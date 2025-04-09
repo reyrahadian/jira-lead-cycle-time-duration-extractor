@@ -1,16 +1,13 @@
 from dash import html, dcc
-from config.styles import CARD_STYLE
-from config.constants import COLORS
 
 def create_header():
     """Create the header component for the dashboard."""
     header_style = {
-        **CARD_STYLE,
-        'margin-bottom': '20px',
-        'text-align': 'center',
+        'marginBottom': '20px',
+        'textAlign': 'center',
         'display': 'flex',
-        'justify-content': 'space-between',
-        'align-items': 'center'
+        'justifyContent': 'space-between',
+        'alignItems': 'center'
     }
 
     return html.Div([
@@ -21,11 +18,11 @@ def create_header():
         html.Div([
             html.H1(
                 "Jira Tickets Analysis Dashboard",
-                style={'color': COLORS['primary'], 'margin-bottom': '10px'}
+                style={'marginBottom': '10px'}
             ),
             html.P(
                 "Track and analyze ticket progression across different stages and sprints",
-                style={'color': COLORS['secondary']}
+                style={'marginBottom': '10px'}
             )
         ]),
 
@@ -34,14 +31,7 @@ def create_header():
             html.Button(
                 "↻ Refresh Data",
                 id='refresh-data-button',
-                style={
-                    'backgroundColor': COLORS['primary'],
-                    'color': 'white',
-                    'border': 'none',
-                    'padding': '10px 20px',
-                    'borderRadius': '5px',
-                    'cursor': 'pointer'
-                }
+                className='btn btn-primary'
             )
         ], style={'width': '100px'})
     ], style=header_style)

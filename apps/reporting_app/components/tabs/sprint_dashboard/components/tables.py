@@ -1,16 +1,16 @@
 from dash import html, dash_table
-from config.styles import CARD_STYLE, TABLE_STYLE, TABLE_HEADER_STYLE, TABLE_CELL_STYLE
-from config.constants import COLORS
+import dash_bootstrap_components as dbc
 
 def create_tables():
     """Create the tables section of the dashboard."""
     return html.Div([
+        dbc.Card([
         # Combined Details Panel
-            html.Div([
+            dbc.CardBody([
                 # Left side - Warning Tickets
                 html.Div([
                     html.H2("Tickets Exceeding Stage Thresholds",
-                            style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
+                            style={'marginBottom': '20px'}),
                     dash_table.DataTable(
                         id='tickets-exceeding-threshold-table',
                         columns=[
@@ -37,22 +37,10 @@ def create_tables():
                                 'color': '#9c6500'  # Dark amber text
                             }
                         ],
-                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                        style_cell={
-                            'textAlign': 'left',
-                            'minWidth': '100px',
-                            'maxWidth': '300px',
-                            'whiteSpace': 'normal'
-                        },
+                        style_table={'overflowX': 'auto'},
                         page_size=10,
-                        style_header={
-                            'backgroundColor': COLORS['primary'],
-                            'color': 'white',
-                            'fontWeight': 'bold',
-                            'textAlign': 'left'
-                        },
                         row_selectable='single',
-                        selected_rows=[],
+                        selected_rows=[]
                     )
                 ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -60,35 +48,24 @@ def create_tables():
                 html.Div([
                     html.H2("Stage Duration Details",
                             id='tickets-exceeding-threshold-details-title',
-                            style={'color': COLORS['primary'], 'margin-bottom': '20px', 'display': 'none'}),
+                            style={'marginBottom': '20px', 'display': 'none'}),
                     dash_table.DataTable(
                         id='tickets-exceeding-threshold-details-table',
                         columns=[
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
                         ],
-                        style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                        style_cell={
-                            'textAlign': 'left',
-                            'minWidth': '100px',
-                            'maxWidth': '300px',
-                            'whiteSpace': 'normal'
-                        },
-                        style_header={
-                            'backgroundColor': COLORS['primary'],
-                            'color': 'white',
-                            'fontWeight': 'bold',
-                            'textAlign': 'left'
-                        }
+                        style_table={'overflowX': 'auto'}
                     )
                 ], id='tickets-exceeding-threshold-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
-            ], style=dict(CARD_STYLE, **{'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})),
-
+            ]),
+        ], style={'marginTop': '20px'}),
         # Defects Table Section
-        html.Div([
-            html.H2("Defects Created During Sprint",
-                    style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
-            dash_table.DataTable(
+        dbc.Card([
+            dbc.CardBody([
+                html.H2("Defects Created During Sprint",
+                        style={'marginBottom': '20px'}),
+                dash_table.DataTable(
                 id='defects-table',
                 columns=[
                     {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
@@ -102,28 +79,18 @@ def create_tables():
                 markdown_options={'link_target': '_blank'},
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
-                style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                style_cell={
-                    'textAlign': 'left',
-                    'minWidth': '100px',
-                    'maxWidth': '300px',
-                    'whiteSpace': 'normal'
-                },
-                page_size=10,
-                style_header={
-                    'backgroundColor': COLORS['primary'],
-                    'color': 'white',
-                    'fontWeight': 'bold',
-                    'textAlign': 'left'
-                }
-            )
-        ], style=CARD_STYLE),
+                style_table={'overflowX': 'auto'},
+                page_size=10
+                )
+            ]),
+        ], style={'marginTop': '20px'}),
 
         # Sprint Tickets Section
-        html.Div([
-            html.H2("Sprint Tickets",
-                    style={'color': COLORS['primary'], 'margin-bottom': '20px'}),
-            dash_table.DataTable(
+        dbc.Card([
+            dbc.CardBody([
+                html.H2("Sprint Tickets",
+                        style={'marginBottom': '20px'}),
+                dash_table.DataTable(
                 id='sprint-tickets-table',
                 columns=[
                     {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
@@ -141,20 +108,8 @@ def create_tables():
                 markdown_options={'link_target': '_blank'},
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
-                style_table={'overflowX': 'auto', 'backgroundColor': COLORS['background']},
-                style_cell={
-                    'textAlign': 'left',
-                    'minWidth': '100px',
-                    'maxWidth': '300px',
-                    'whiteSpace': 'normal'
-                },
-                page_size=10,
-                style_header={
-                    'backgroundColor': COLORS['primary'],
-                    'color': 'white',
-                    'fontWeight': 'bold',
-                    'textAlign': 'left'
-                }
-            )
-        ], style=CARD_STYLE)
+                style_table={'overflowX': 'auto'},
+                page_size=10)
+            ]),
+        ], style={'marginTop': '20px'}),
     ])

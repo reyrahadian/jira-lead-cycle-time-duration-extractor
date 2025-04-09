@@ -180,13 +180,13 @@ def init_callbacks(app, jira_tickets):
         [Output('ticket-progression-chart', 'figure'),
          Output('avg-ticket-progression-chart', 'figure'),
          Output('ticket-type-distribution-pie-chart', 'figure')],
-        [Input('tabs-component', 'value'),
+        [Input('tabs-component', 'active_tab'),
          Input('teams-tab-project-dropdown', 'value'),
          Input('teams-tab-date-range', 'start_date'),
          Input('teams-tab-date-range', 'end_date')]
     )
     def update_chart(active_tab, selected_project, start_date, end_date):
-        if active_tab != 'teams-dashboard-tab':
+        if active_tab != 'tab-1':
             return no_update, no_update, no_update
 
         # Filter the data based on selected project and date range
