@@ -16,6 +16,8 @@ app = Dash(__name__)
 app.layout = html.Div([
     # Add dcc.Store component to store Jira data
     dcc.Store(id='jira-data-store', data=JIRA_TICKETS.to_dict('records')),
+    # Add dcc.Store component to store ticket IDs
+    dcc.Store(id='tickets-in-stage-ticket-ids'),
 
     create_header(),
     dcc.Tabs([

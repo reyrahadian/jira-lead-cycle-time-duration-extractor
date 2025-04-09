@@ -4,23 +4,13 @@ import plotly.graph_objects as go
 import pandas as pd
 from config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLORS,
-    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY,
+    STAGE_NAME_GROUPINGS, STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS
 )
 from utils.jira_utils import create_jira_link
 from utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
-    # Define stage mappings at the start of init_callbacks
-    stage_mappings = {
-        'In Progress': ['In Development', 'In Progress'],
-        'In PR Test': ['Ready for PR Test', 'In PR Test'],
-        'In SIT Test': ['Ready for SIT Test', 'In SIT Test', 'In Sit'],
-        'Awaiting UAT Deployment': ['Awaiting UAT Deployment', 'Pending Deployment to UAT'],
-        'In UAT Test': ['Ready for UAT Test', 'In UAT Test', 'In UAT', 'Deployed to UAT'],
-        'Awaiting Prod Deployment': ['Awaiting Prod Deployment', 'Prod - Pre-check Deployment'],
-        # Add more mappings as needed
-    }
-
     def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):
         if not selected_sprint:
             # Return empty DataFrame with expected columns instead of empty dict
@@ -42,8 +32,9 @@ def init_callbacks(app, jira_tickets):
 
         # Calculate stage mean using stage_mappings
         stage_sums = {}
-        for merged_stage, related_stages in stage_mappings.items():
-            print(f"\nProcessing merged stage: {merged_stage}")
+        stage_ticket_ids = {}  # New dictionary to store ticket IDs for each stage
+
+        for merged_stage, related_stages in STAGE_NAME_GROUPINGS.items():
             # Calculate the mean for each group of related stages
             related_stage_columns = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
 
@@ -51,32 +42,58 @@ def init_callbacks(app, jira_tickets):
             tickets_in_stage = sprint_data[sprint_data[related_stage_columns].gt(0).any(axis=1)]
 
             if not tickets_in_stage.empty:
-                print("\nTickets in this stage:")
                 for idx, ticket in tickets_in_stage.iterrows():
                     days_in_stages = [ticket[col] for col in related_stage_columns if ticket[col] > 0]
                     avg_days = sum(days_in_stages) / len(days_in_stages) if days_in_stages else 0
-                    print(f"Ticket {ticket[COLUMN_NAME_ID]}: {days_in_stages} days (avg: {avg_days:.2f})")
 
                 total_days = tickets_in_stage[related_stage_columns].sum().sum()
                 num_tickets = len(tickets_in_stage)
                 stage_avg = total_days / num_tickets if num_tickets > 0 else 0
-
-                print(f"\nSummary for {merged_stage}:")
-                print(f"Number of tickets: {num_tickets}")
-                print(f"Total days: {total_days:.2f}")
-                print(f"Average days per ticket: {stage_avg:.2f}")
-
                 stage_sums[merged_stage] = stage_avg
+                stage_ticket_ids[merged_stage] = tickets_in_stage[COLUMN_NAME_ID].tolist()  # Store ticket IDs
             else:
-                print(f"No tickets found in stage: {merged_stage}")
                 stage_sums[merged_stage] = 0
+                stage_ticket_ids[merged_stage] = []  # Empty list if no tickets
+
+        # Process remaining stages from ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS
+        for stage_column in ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
+            if stage_column not in sprint_data.columns:
+                print(f"Warning: {stage_column} not found in DataFrame columns.")
+                continue  # Skip this column if it doesn't exist
+
+            stage_name = to_stage_name(stage_column)
+
+            # Skip if stage is already processed in STAGE_NAME_GROUPINGS
+            if any(stage_name in related_stages for related_stages in STAGE_NAME_GROUPINGS.values()):
+                continue
+
+            # Get tickets with non-zero days in this stage
+            tickets_in_stage = sprint_data[sprint_data[stage_column] > 0]
+
+            if not tickets_in_stage.empty:
+                total_days = tickets_in_stage[stage_column].sum()
+                num_tickets = len(tickets_in_stage)
+                stage_avg = total_days / num_tickets if num_tickets > 0 else 0
+                stage_sums[stage_name] = stage_avg
+                stage_ticket_ids[stage_name] = tickets_in_stage[COLUMN_NAME_ID].tolist()  # Store ticket IDs
+            else:
+                stage_ticket_ids[stage_name] = []  # Empty list if no tickets
+
+        # Remove ignored stages
+        stage_sums = {stage: value for stage, value in stage_sums.items()
+                     if stage not in STAGE_NAME_IGNORE}
+        stage_ticket_ids = {stage: ids for stage, ids in stage_ticket_ids.items()
+                            if stage not in STAGE_NAME_IGNORE}
+
         # Filter out zero values
         stage_sums = {k: v for k, v in stage_sums.items() if v > 0}
+        stage_ticket_ids = {k: v for k, v in stage_ticket_ids.items() if k in stage_sums}
 
         # Create DataFrame for the chart
         result = pd.DataFrame({
             'Stage': list(stage_sums.keys()),
-            'Days': list(stage_sums.values())
+            'Days': list(stage_sums.values()),
+            'Ticket IDs': [', '.join(map(str, ids)) for ids in stage_ticket_ids.values()]  # Add ticket IDs to DataFrame
         })
 
         return result
@@ -110,7 +127,8 @@ def init_callbacks(app, jira_tickets):
             x='Stage',
             y='Days',
             labels={'Stage': 'Stage', 'Days': 'Avg Days'},
-            title=f'Time Spent in Each Stage - {selected_sprint}'
+            title=f'Time Spent in Each Stage - {selected_sprint}',
+            custom_data=['Ticket IDs']  # Include ticket IDs as custom data
         )
 
         fig.update_layout(
@@ -138,29 +156,29 @@ def init_callbacks(app, jira_tickets):
 
     @callback(
         [Output('tickets-in-stage-table', 'data'),
-        Output('tickets-in-stage-title', 'children'),
-        Output('tickets-in-stage-title', 'style'),
-        Output('tickets-in-stage-table', 'style_data_conditional')],
+         Output('tickets-in-stage-title', 'children'),
+         Output('tickets-in-stage-title', 'style'),
+         Output('tickets-in-stage-table', 'style_data_conditional'),
+         Output('tickets-in-stage-ticket-ids', 'data')],
         [Input('tickets-in-stage-bar-chart', 'clickData'),
-        Input('sprint-dropdown', 'value'),
-        Input('type-dropdown', 'value'),
-        Input('ticket-dropdown', 'value'),
-        Input('squad-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
+         Input('sprint-dropdown', 'value'),
+         Input('type-dropdown', 'value'),
+         Input('ticket-dropdown', 'value'),
+         Input('squad-dropdown', 'value'),
+         Input('components-dropdown', 'value')]
     )
     def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
         if not click_data or not selected_sprint:
-            return [], "No stage selected", {'display': 'none'}, []
+            return [], "No stage selected", {'display': 'none'}, [], []
 
         clicked_stage = click_data['points'][0]['x']
-        # Use stage_mappings to get all related stages
-        related_stages = stage_mappings.get(clicked_stage, [clicked_stage])
-        days_column_names = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
-        thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
+        ticket_ids = click_data['points'][0]['customdata'][0].split(', ')
+
+        # Filter by ticket IDs
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_ID].isin(ticket_ids)]
 
         # Filter data
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
         if selected_types and len(selected_types) > 0:
@@ -173,6 +191,16 @@ def init_callbacks(app, jira_tickets):
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
+
+        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+
+        # Use stage_mappings to get all related stages
+        related_stages = STAGE_NAME_GROUPINGS.get(clicked_stage, [clicked_stage])
+        if not related_stages:
+            related_stages = [clicked_stage]
+        print(f"Related stages: {related_stages}")
+        days_column_names = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
+        thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Get tickets that spent time in any of the related stages
         stage_tickets = sprint_data[sprint_data[days_column_names].sum(axis=1) > 0].copy()
@@ -235,7 +263,8 @@ def init_callbacks(app, jira_tickets):
             table_data,
             f"Tickets in {clicked_stage} Stage",
             {'display': 'block', 'marginTop': '20px'},
-            style_conditional
+            style_conditional,
+            ticket_ids  # Return the extracted ticket IDs
         )
 
     @callback(
