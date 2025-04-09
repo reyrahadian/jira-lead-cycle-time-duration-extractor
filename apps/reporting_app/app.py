@@ -22,12 +22,12 @@ app.layout = html.Div([
     dbc.Tabs([
         create_sprint_tab(),
         create_teams_tab(),
-    ], id='tabs-component'),
+    ], id='tabs-component',style={'margin-top': '10px'}),
 
     # Add a placeholder for the notification
     html.Div(id='notification', style={"position": "fixed", "top": 10, "right": 10, "zIndex": 9999}),
 
-], style={'minHeight': '100vh', 'padding': '20px'})
+], style={'minHeight': '100vh', 'padding': '20px', 'backgroundColor': '#f8f9fa'})
 
 # Register callbacks with app
 sprint_filter_callbacks.init_callbacks(app, JIRA_TICKETS)

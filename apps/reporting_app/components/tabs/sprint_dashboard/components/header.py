@@ -1,4 +1,5 @@
 from dash import html, dcc
+import dash_bootstrap_components as dbc
 
 def create_header():
     """Create the header component for the dashboard."""
@@ -10,28 +11,32 @@ def create_header():
         'alignItems': 'center'
     }
 
-    return html.Div([
-        # Left side - empty div for alignment
-        html.Div(style={'width': '100px'}),
+    return dbc.Card([
+        dbc.CardBody([
+            html.Div([
+                # Left side - empty div for alignment
+                html.Div(style={'width': '100px'}),
 
-        # Center - title and subtitle
-        html.Div([
-            html.H1(
-                "Jira Tickets Analysis Dashboard",
-                style={'marginBottom': '10px'}
-            ),
-            html.P(
-                "Track and analyze ticket progression across different stages and sprints",
-                style={'marginBottom': '10px'}
-            )
-        ]),
+                # Center - title and subtitle
+                html.Div([
+                    html.H1(
+                        "Jira Tickets Analysis Dashboard",
+                        style={'marginBottom': '10px'}
+                    ),
+                    html.P(
+                        "Track and analyze ticket progression across different stages and sprints",
+                        style={'marginBottom': '10px'}
+                    )
+                ]),
 
-        # Right side - refresh button
-        html.Div([
-            html.Button(
-                "↻ Refresh Data",
-                id='refresh-data-button',
-                className='btn btn-primary'
-            )
-        ], style={'width': '100px'})
-    ], style=header_style)
+                # Right side - refresh button
+                html.Div([
+                    html.Button(
+                        "↻ Refresh Data",
+                        id='refresh-data-button',
+                        className='btn btn-primary'
+                    )
+                ], style={'width': '100px'})
+            ], style=header_style)
+        ])
+    ])
