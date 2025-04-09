@@ -9,7 +9,7 @@ from components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprin
     header_callbacks as sprint_header_callbacks
 from components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 
-app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP,'/assets/custom.css'])
+app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 # Create main layout with tabs
 app.layout = html.Div([

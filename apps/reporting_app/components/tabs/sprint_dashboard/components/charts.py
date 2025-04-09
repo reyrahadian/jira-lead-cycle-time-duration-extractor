@@ -1,6 +1,6 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
-
+from config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
 def create_charts():
     """Create the charts section of the dashboard."""
     return html.Div([  # Return a single Div containing all elements
@@ -24,7 +24,9 @@ def create_charts():
                         columns=[
                             {'name': 'Stage', 'id': 'Stage'},
                             {'name': 'Average Days', 'id': 'Days'}
-                        ]
+                        ],
+                        style_header=TABLE_HEADER_STYLE,
+                        style_cell=TABLE_CELL_STYLE
                     )
                 ], style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginBottom': '20px'}),
@@ -51,7 +53,9 @@ def create_charts():
                         row_selectable='single',
                         selected_rows=[],
                         style_table={'overflowX': 'auto'},
-                        page_size=10
+                        page_size=10,
+                        style_header=TABLE_HEADER_STYLE,
+                        style_cell=TABLE_CELL_STYLE
                     )
                 ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -66,7 +70,9 @@ def create_charts():
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
                         ],
-                        style_table={'overflowX': 'auto'}
+                        style_table={'overflowX': 'auto'},
+                        style_header=TABLE_HEADER_STYLE,
+                        style_cell=TABLE_CELL_STYLE
                     )
                 ], id='tickets-in-stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})

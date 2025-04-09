@@ -1,5 +1,6 @@
 from dash import html, dash_table
 import dash_bootstrap_components as dbc
+from config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
 
 def create_tables():
     """Create the tables section of the dashboard."""
@@ -40,7 +41,9 @@ def create_tables():
                         style_table={'overflowX': 'auto'},
                         page_size=10,
                         row_selectable='single',
-                        selected_rows=[]
+                        selected_rows=[],
+                        style_header=TABLE_HEADER_STYLE,
+                        style_cell=TABLE_CELL_STYLE
                     )
                 ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -55,7 +58,9 @@ def create_tables():
                             {'name': 'Stage', 'id': 'stage'},
                             {'name': 'Days', 'id': 'days'}
                         ],
-                        style_table={'overflowX': 'auto'}
+                        style_table={'overflowX': 'auto'},
+                        style_header=TABLE_HEADER_STYLE,
+                        style_cell=TABLE_CELL_STYLE
                     )
                 ], id='tickets-exceeding-threshold-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ]),
@@ -80,7 +85,9 @@ def create_tables():
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
                 style_table={'overflowX': 'auto'},
-                page_size=10
+                page_size=10,
+                style_header=TABLE_HEADER_STYLE,
+                style_cell=TABLE_CELL_STYLE
                 )
             ]),
         ], style={'marginTop': '20px'}),
@@ -109,7 +116,10 @@ def create_tables():
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
                 style_table={'overflowX': 'auto'},
-                page_size=10)
+                page_size=10,
+                style_header=TABLE_HEADER_STYLE,
+                style_cell=TABLE_CELL_STYLE
+                )
             ]),
         ], style={'marginTop': '20px'}),
     ])
