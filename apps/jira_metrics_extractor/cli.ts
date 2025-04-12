@@ -94,7 +94,6 @@ const run = async function (cliArgs: any): Promise<void> {
   if(cliJql) {
     jiraExtractorConfig.customJql = cliJql;
   }
-  console.log(jiraExtractorConfig);
   const jiraExtractor = new JiraExtractor(jiraExtractorConfig);
 
   console.log('Beginning extraction process');
