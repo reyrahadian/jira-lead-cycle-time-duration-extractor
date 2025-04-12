@@ -93,8 +93,8 @@ resource "aws_ecs_task_definition" "reporting" {
   family                   = "${var.application_name}-reporting-${var.environment}"
   requires_compatibilities = ["FARGATE"]
   network_mode            = "awsvpc"
-  cpu                     = 256
-  memory                  = 512
+  cpu                     = "1024"
+  memory                  = "2048"
   execution_role_arn      = aws_iam_role.ecs_execution_role.arn
   task_role_arn           = aws_iam_role.ecs_task_role.arn
 
@@ -684,168 +684,81 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy_ssm" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMReadOnlyAccess"
 }
 
-# Create EventBridge rule to trigger the Jira metrics extractor
-resource "aws_cloudwatch_event_rule" "extractor_schedule" {
-  name                = "${var.application_name}-extractor-schedule-${var.environment}"
-  description         = "Schedule for running the Jira metrics extractor every 4 hours during business hours"
-  schedule_expression = "cron(0 6-18/4 ? * MON-FRI *)"  # Run every 4 hours between 6 AM and 6 PM on weekdays
-
-  tags = {
-    Name        = "${var.application_name}-extractor-schedule-${var.environment}"
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-# Create EventBridge rules for scaling down and up
-resource "aws_cloudwatch_event_rule" "scale_down_end_of_day" {
-  name                = "${var.application_name}-scale-down-end-day-${var.environment}"
-  description         = "Scale down ECS services at 6 PM on weekdays"
-  schedule_expression = "cron(0 18 ? * MON-FRI *)"  # 6 PM UTC
-
-  tags = {
-    Name        = "${var.application_name}-scale-down-end-day-${var.environment}"
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-resource "aws_cloudwatch_event_rule" "scale_up_start_of_day" {
-  name                = "${var.application_name}-scale-up-start-day-${var.environment}"
-  description         = "Scale up ECS services at 6 AM on weekdays"
-  schedule_expression = "cron(0 6 ? * MON-FRI *)"   # 6 AM UTC
-
-  tags = {
-    Name        = "${var.application_name}-scale-up-start-day-${var.environment}"
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-resource "aws_cloudwatch_event_rule" "scale_down_weekend" {
-  name                = "${var.application_name}-scale-down-weekend-${var.environment}"
-  description         = "Scale down ECS services on weekends"
-  schedule_expression = "cron(0 0 ? * SAT *)"  # Midnight Saturday UTC
-
-  tags = {
-    Name        = "${var.application_name}-scale-down-weekend-${var.environment}"
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-# Create IAM role for EventBridge
-resource "aws_iam_role" "eventbridge_ecs_role" {
-  name = "${var.application_name}-eventbridge-ecs-role-${var.environment}"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "events.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name        = "${var.application_name}-eventbridge-ecs-role-${var.environment}"
-    Environment = var.environment
-    Application = var.application_name
-  }
-}
-
-# Create IAM policy for EventBridge to update ECS services
-resource "aws_iam_role_policy" "eventbridge_ecs_policy" {
-  name = "${var.application_name}-eventbridge-ecs-policy-${var.environment}"
-  role = aws_iam_role.eventbridge_ecs_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecs:UpdateService"
-        ]
-        Resource = [
-          aws_ecs_service.reporting_app.id,
-          aws_ecs_service.extractor.id
-        ]
-      }
-    ]
-  })
-}
-
-# Create inline Lambda function code
-data "archive_file" "lambda_scale_ecs" {
-  type        = "zip"
-  output_path = "${path.module}/lambda/scale_ecs.zip"
-
-  source {
-    content  = <<-EOF
-      const AWS = require("aws-sdk");
-      const ecs = new AWS.ECS();
-
-      exports.handler = async (event) => {
-          const clusterName = process.env.CLUSTER_NAME;
-          const serviceName = process.env.SERVICE_NAME;
-
-          const desiredCount = event.action === "scale_up" ? 1 : 0;
-
-          const params = {
-              cluster: clusterName,
-              service: serviceName,
-              desiredCount: desiredCount
-          };
-
-          try {
-              await ecs.updateService(params).promise();
-              console.log("Successfully " + (event.action === "scale_up" ? "scaled up" : "scaled down") + " service " + serviceName + " in cluster " + clusterName);
-              return {
-                  statusCode: 200,
-                  body: "Service " + serviceName + " " + (event.action === "scale_up" ? "scaled up" : "scaled down") + " successfully"
-              };
-          } catch (error) {
-              console.error("Error updating service:", error);
-              throw error;
-          }
-      };
-    EOF
-    filename = "index.js"
-  }
-}
-
-# Update Lambda function to use the archive_file data source
-resource "aws_lambda_function" "scale_ecs" {
-  filename         = data.archive_file.lambda_scale_ecs.output_path
-  source_code_hash = data.archive_file.lambda_scale_ecs.output_base64sha256
-  function_name    = "${var.application_name}-scale-ecs-${var.environment}"
-  role            = aws_iam_role.lambda_scale_ecs_role.arn
-  handler         = "index.handler"
-  runtime         = "nodejs18.x"
-  timeout         = 30
+# Lambda function to update ECS service task count
+resource "aws_lambda_function" "update_ecs_task_count" {
+  filename      = data.archive_file.lambda_zip.output_path
+  function_name = "${var.application_name}-update-ecs-task-count-${var.environment}"
+  role          = aws_iam_role.lambda_role.arn
+  handler       = "index.handler"
+  runtime       = "python3.11"
+  timeout       = 30
 
   environment {
     variables = {
-      CLUSTER_NAME = aws_ecs_cluster.main.name
-      SERVICE_NAME = aws_ecs_service.reporting_app.name
+      ECS_CLUSTER = aws_ecs_cluster.main.name
     }
   }
 
   tags = {
-    Name        = "${var.application_name}-scale-ecs-${var.environment}"
+    Name        = "${var.application_name}-update-ecs-task-count-${var.environment}"
     Environment = var.environment
     Application = var.application_name
   }
 }
 
-# Create IAM role for Lambda
-resource "aws_iam_role" "lambda_scale_ecs_role" {
-  name = "${var.application_name}-lambda-scale-ecs-role-${var.environment}"
+# Create zip file for Lambda function
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  output_path = "${path.module}/lambda/update_ecs_task_count.zip"
+
+  source {
+    content = <<EOF
+import os
+import boto3
+import json
+
+def handler(event, context):
+    # Get the ECS cluster name from environment variable
+    cluster_name = os.environ['ECS_CLUSTER']
+
+    # Get the service name and desired count from the event
+    service_name = event.get('service_name')
+    desired_count = event.get('desired_count')
+
+    if not service_name or desired_count is None:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Missing required parameters: service_name or desired_count')
+        }
+
+    try:
+        # Create ECS client
+        ecs = boto3.client('ecs')
+
+        # Update the service
+        response = ecs.update_service(
+            cluster=cluster_name,
+            service=service_name,
+            desiredCount=int(desired_count)
+        )
+
+        return {
+            'statusCode': 200,
+            'body': json.dumps(f'Successfully updated {service_name} to {desired_count} tasks')
+        }
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f'Error updating service: {str(e)}')
+        }
+EOF
+    filename = "index.py"
+  }
+}
+
+# IAM role for Lambda
+resource "aws_iam_role" "lambda_role" {
+  name = "${var.application_name}-lambda-role-${var.environment}"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -861,16 +774,16 @@ resource "aws_iam_role" "lambda_scale_ecs_role" {
   })
 
   tags = {
-    Name        = "${var.application_name}-lambda-scale-ecs-role-${var.environment}"
+    Name        = "${var.application_name}-lambda-role-${var.environment}"
     Environment = var.environment
     Application = var.application_name
   }
 }
 
-# Create IAM policy for Lambda to update ECS services and write logs
-resource "aws_iam_role_policy" "lambda_scale_ecs_policy" {
-  name = "${var.application_name}-lambda-scale-ecs-policy-${var.environment}"
-  role = aws_iam_role.lambda_scale_ecs_role.id
+# IAM policy for Lambda to update ECS services
+resource "aws_iam_role_policy" "lambda_ecs_policy" {
+  name = "${var.application_name}-lambda-ecs-policy-${var.environment}"
+  role = aws_iam_role.lambda_role.id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -878,77 +791,150 @@ resource "aws_iam_role_policy" "lambda_scale_ecs_policy" {
       {
         Effect = "Allow"
         Action = [
-          "ecs:UpdateService"
+          "ecs:UpdateService",
+          "ecs:DescribeServices"
         ]
-        Resource = [
-          aws_ecs_service.reporting_app.id,
-          aws_ecs_service.extractor.id
-        ]
-      },
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# CloudWatch Logs policy for Lambda
+resource "aws_iam_role_policy_attachment" "lambda_logs" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# Create EventBridge scheduler for scaling up extractor at 8am
+resource "aws_scheduler_schedule" "extractor_scale_up_8am" {
+  name       = "${var.application_name}-extractor-scale-up-8am-${var.environment}"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "cron(0 8 ? * MON-FRI *)"  # 8 AM UTC on weekdays
+
+  target {
+    arn      = aws_lambda_function.update_ecs_task_count.arn
+    role_arn = aws_iam_role.eventbridge_ecs_role.arn
+
+    input = jsonencode({
+      service_name  = "${var.application_name}-extractor-service-${var.environment}"
+      desired_count = 1
+    })
+  }
+}
+
+# Create EventBridge scheduler for scaling down extractor at 10am
+resource "aws_scheduler_schedule" "extractor_scale_down_10am" {
+  name       = "${var.application_name}-extractor-scale-down-10am-${var.environment}"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "cron(0 10 ? * MON-FRI *)"  # 10 AM UTC on weekdays
+
+  target {
+    arn      = aws_lambda_function.update_ecs_task_count.arn
+    role_arn = aws_iam_role.eventbridge_ecs_role.arn
+
+    input = jsonencode({
+      service_name  = "${var.application_name}-extractor-service-${var.environment}"
+      desired_count = 0
+    })
+  }
+}
+
+# Create IAM role for EventBridge to invoke Lambda
+resource "aws_iam_role" "eventbridge_ecs_role" {
+  name = "${var.application_name}-eventbridge-role-${var.environment}"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "${var.application_name}-eventbridge-role-${var.environment}"
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+# Add permission for EventBridge to invoke Lambda
+resource "aws_iam_role_policy" "eventbridge_lambda_policy" {
+  name = "${var.application_name}-eventbridge-lambda-policy-${var.environment}"
+  role = aws_iam_role.eventbridge_ecs_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
       {
         Effect = "Allow"
         Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
+          "lambda:InvokeFunction"
         ]
         Resource = [
-          "arn:aws:logs:${var.aws_region}:${data.aws_caller_identity.current.account_id}:log-group:/aws/lambda/${aws_lambda_function.scale_ecs.function_name}:*"
+          aws_lambda_function.update_ecs_task_count.arn
         ]
       }
     ]
   })
 }
 
-# Keep only these Lambda-based targets
-resource "aws_cloudwatch_event_target" "lambda_scale_down_end_of_day" {
-  rule      = aws_cloudwatch_event_rule.scale_down_end_of_day.name
-  target_id = "ScaleDownECSLambda"
-  arn       = aws_lambda_function.scale_ecs.arn
-  input     = jsonencode({
-    action = "scale_down"
-  })
+# Create EventBridge scheduler for scaling up reporting app at 8am
+resource "aws_scheduler_schedule" "reporting_scale_up_8am" {
+  name       = "${var.application_name}-reporting-scale-up-8am-${var.environment}"
+  group_name = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "cron(0 8 ? * MON-FRI *)"  # 8 AM UTC on weekdays
+
+  target {
+    arn      = aws_lambda_function.update_ecs_task_count.arn
+    role_arn = aws_iam_role.eventbridge_ecs_role.arn
+
+    input = jsonencode({
+      service_name  = "${var.application_name}-reporting-service-${var.environment}"
+      desired_count = 1
+    })
+  }
 }
 
-resource "aws_cloudwatch_event_target" "lambda_scale_up_start_of_day" {
-  rule      = aws_cloudwatch_event_rule.scale_up_start_of_day.name
-  target_id = "ScaleUpECSLambda"
-  arn       = aws_lambda_function.scale_ecs.arn
-  input     = jsonencode({
-    action = "scale_up"
-  })
-}
+# Create EventBridge scheduler for scaling down reporting app at 6pm
+resource "aws_scheduler_schedule" "reporting_scale_down_6pm" {
+  name       = "${var.application_name}-reporting-scale-down-6pm-${var.environment}"
+  group_name = "default"
 
-resource "aws_cloudwatch_event_target" "lambda_scale_down_weekend" {
-  rule      = aws_cloudwatch_event_rule.scale_down_weekend.name
-  target_id = "ScaleDownECSWeekendLambda"
-  arn       = aws_lambda_function.scale_ecs.arn
-  input     = jsonencode({
-    action = "scale_down"
-  })
-}
+  flexible_time_window {
+    mode = "OFF"
+  }
 
-# Add Lambda permissions for EventBridge
-resource "aws_lambda_permission" "scale_down_end_of_day" {
-  statement_id  = "AllowEventBridgeScaleDownEndDay"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.scale_ecs.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.scale_down_end_of_day.arn
-}
+  schedule_expression = "cron(0 18 ? * MON-FRI *)"  # 6 PM UTC on weekdays
 
-resource "aws_lambda_permission" "scale_up_start_of_day" {
-  statement_id  = "AllowEventBridgeScaleUpStartDay"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.scale_ecs.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.scale_up_start_of_day.arn
-}
+  target {
+    arn      = aws_lambda_function.update_ecs_task_count.arn
+    role_arn = aws_iam_role.eventbridge_ecs_role.arn
 
-resource "aws_lambda_permission" "scale_down_weekend" {
-  statement_id  = "AllowEventBridgeScaleDownWeekend"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.scale_ecs.function_name
-  principal     = "events.amazonaws.com"
-  source_arn    = aws_cloudwatch_event_rule.scale_down_weekend.arn
+    input = jsonencode({
+      service_name  = "${var.application_name}-reporting-service-${var.environment}"
+      desired_count = 0
+    })
+  }
 }
