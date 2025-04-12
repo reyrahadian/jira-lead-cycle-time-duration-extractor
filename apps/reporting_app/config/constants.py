@@ -3,6 +3,7 @@ STAGE_THRESHOLDS = {
     'default': {'warning': 2, 'critical': 5},
     'In Development': {'warning': 3, 'critical': 6},
     'In Code Review': {'warning': 1, 'critical': 2},
+    'In PR': {'warning': 2, 'critical': 3},
     'In PR Test': {'warning': 2, 'critical': 3},
     'In SIT Test': {'warning': 2, 'critical': 3},
     'In UAT Test': {'warning': 2, 'critical': 3},
