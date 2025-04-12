@@ -339,6 +339,9 @@ def init_callbacks(app, jira_tickets):
             'days': round(total_days, 1)
         })
 
+        # Filter out ignored stages
+        stage_data = [entry for entry in stage_data if entry['stage'] not in STAGE_NAME_IGNORE]
+
         # Sort stage_data by the original order in all_stage_columns (excluding total row)
         stage_data[:-1] = sorted(stage_data[:-1], key=lambda x: stage_order[x['stage']])
 
