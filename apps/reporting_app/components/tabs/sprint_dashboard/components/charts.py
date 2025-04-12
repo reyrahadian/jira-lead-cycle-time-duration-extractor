@@ -57,7 +57,7 @@ def create_charts():
                         style_header=TABLE_HEADER_STYLE,
                         style_cell=TABLE_CELL_STYLE
                     )
-                ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '65%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
                 # Right side - Stage Duration Details for Stage Tickets
                 html.Div([
@@ -74,7 +74,7 @@ def create_charts():
                         style_header=TABLE_HEADER_STYLE,
                         style_cell=TABLE_CELL_STYLE
                     )
-                ], id='tickets-in-stage-ticket-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], id='tickets-in-stage-ticket-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
             ])
         ])

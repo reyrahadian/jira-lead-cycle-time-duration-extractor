@@ -8,8 +8,9 @@ def create_tables():
         dbc.Card([
         # Combined Details Panel
             dbc.CardBody([
-                # Left side - Warning Tickets
                 html.Div([
+                    # Left side - Warning Tickets
+                    html.Div([
                     html.H2("Tickets Exceeding Stage Thresholds",
                             style={'marginBottom': '20px'}),
                     dash_table.DataTable(
@@ -45,24 +46,25 @@ def create_tables():
                         style_header=TABLE_HEADER_STYLE,
                         style_cell=TABLE_CELL_STYLE
                     )
-                ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '65%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
-                # Right side - Stage Duration Details (moved from left)
-                html.Div([
-                    html.H2("Stage Duration Details",
-                            id='tickets-exceeding-threshold-details-title',
-                            style={'marginBottom': '20px', 'display': 'none'}),
-                    dash_table.DataTable(
-                        id='tickets-exceeding-threshold-details-table',
-                        columns=[
-                            {'name': 'Stage', 'id': 'stage'},
-                            {'name': 'Days', 'id': 'days'}
-                        ],
-                        style_table={'overflowX': 'auto'},
-                        style_header=TABLE_HEADER_STYLE,
-                        style_cell=TABLE_CELL_STYLE
-                    )
-                ], id='tickets-exceeding-threshold-details-container', style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                    # Right side - Stage Duration Details (moved from left)
+                    html.Div([
+                        html.H2("Stage Duration Details",
+                                id='tickets-exceeding-threshold-details-title',
+                                style={'marginBottom': '20px', 'display': 'none'}),
+                        dash_table.DataTable(
+                            id='tickets-exceeding-threshold-details-table',
+                            columns=[
+                                {'name': 'Stage', 'id': 'stage'},
+                                {'name': 'Days', 'id': 'days'}
+                            ],
+                            style_table={'overflowX': 'auto'},
+                            style_header=TABLE_HEADER_STYLE,
+                            style_cell=TABLE_CELL_STYLE
+                        )
+                    ], id='tickets-exceeding-threshold-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
+                ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})
             ]),
         ], style={'marginTop': '20px'}),
         # Defects Table Section
