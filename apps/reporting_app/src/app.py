@@ -53,4 +53,4 @@ sprint_header_callbacks.init_callbacks(app, JIRA_TICKETS)
 teams_chart_callbacks.init_callbacks(app, JIRA_TICKETS)
 
 if __name__ == '__main__':
-    app.run_server(debug=True, use_reloader=True)
+    app.run(debug=True, use_reloader=True)
