@@ -9,7 +9,23 @@ from components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprin
     header_callbacks as sprint_header_callbacks
 from components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 
+# --- Add for download route ---
+from flask import send_file
+import os
+
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
+
+# Hidden download route for the main JIRA CSV file
+def get_jira_csv_path():
+    return os.getenv('REPORTING_CSV_PATH', "/mnt/c/workspace/jira-lead-cycle-time-duration-extractor/docker/data/jira_metrics.csv")
+
+@app.server.route('/download_csv_file')
+def download_jira_csv():
+    csv_path = get_jira_csv_path()
+    if not os.path.exists(csv_path):
+        return "CSV file not found", 404
+    return send_file(csv_path, as_attachment=True, download_name='jira_metrics.csv', mimetype='text/csv')
+# --- End download route ---
 
 # Create main layout with tabs
 app.layout = html.Div([
