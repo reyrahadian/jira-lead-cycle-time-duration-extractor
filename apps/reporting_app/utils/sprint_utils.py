@@ -2,6 +2,9 @@ import pandas as pd
 from utils.string_utils import split_string_array
 from config.constants import COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_START_DATE, COLUMN_NAME_SPRINT_END_DATE
 
+# Set up logger for this module
+# logger = logging.getLogger(__name__)
+
 def get_sprint_date_range(df, sprint_name):
     def is_multiple_values(value):
         if isinstance(value, str) and '[' in value:
@@ -43,10 +46,26 @@ def get_sprint_date_range(df, sprint_name):
         end_date = first_ticket[COLUMN_NAME_SPRINT_END_DATE]
 
     if pd.notna(start_date) and pd.notna(end_date):
-        # Convert to datetime if they're strings
+        # Convert to datetime if they're valid strings
         if isinstance(start_date, str):
-            start_date = pd.to_datetime(start_date)
+            if start_date.lower() == 'null' or start_date.strip() == '':
+                print(f"[WARNING] Sprint '{sprint_name}': Invalid start_date value encountered: '{start_date}'")
+                start_date = None
+            else:
+                try:
+                    start_date = pd.to_datetime(start_date)
+                except Exception:
+                    print(f"[WARNING] Sprint '{sprint_name}': Failed to parse start_date value: '{start_date}'")
+                    start_date = None
         if isinstance(end_date, str):
-            end_date = pd.to_datetime(end_date)
+            if end_date.lower() == 'null' or end_date.strip() == '':
+                print(f"[WARNING] Sprint '{sprint_name}': Invalid end_date value encountered: '{end_date}'")
+                end_date = None
+            else:
+                try:
+                    end_date = pd.to_datetime(end_date)
+                except Exception:
+                    print(f"[WARNING] Sprint '{sprint_name}': Failed to parse end_date value: '{end_date}'")
+                    end_date = None
 
     return start_date, end_date
