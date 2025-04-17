@@ -10,20 +10,6 @@ STAGE_THRESHOLDS = {
     'Awaiting Prod Deployment': {'warning': 5, 'critical': 10}
 }
 
-# Valid Components
-VALID_COMPONENTS = {
-    'FEWeb': 'FEWeb',
-    'FEApp': 'FEApp',
-    'BFFWeb': 'BFFWeb',
-    'BFFApp': 'BFFApp',
-    'BFF': 'BFF',
-    'FED': 'FED',
-    'SFCC': 'SFCC',
-    'XM': 'XM',
-    'SITECORE': 'Sitecore',
-    'CONTENTHUB': 'Content Hub'
-}
-
 # Priority Order
 PRIORITY_ORDER = {
     'Highest': 0,
