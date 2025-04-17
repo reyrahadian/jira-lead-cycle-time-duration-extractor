@@ -1,3 +1,4 @@
+import pandas as pd
 def split_string_array(value:str, separator:str)->list[str]:
     if is_in_array(value):
         list_str = value.strip('[]').replace("null","\"null\"")
@@ -7,6 +8,9 @@ def split_string_array(value:str, separator:str)->list[str]:
     return [value]
 
 def is_in_array(value:str)->bool:
-        if '[' in value:
-            return True
+    if pd.isna(value):
         return False
+
+    if '[' in value:
+        return True
+    return False

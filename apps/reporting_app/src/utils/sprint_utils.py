@@ -2,9 +2,6 @@ import pandas as pd
 from src.utils.string_utils import split_string_array
 from src.config.constants import COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_START_DATE, COLUMN_NAME_SPRINT_END_DATE
 
-# Set up logger for this module
-# logger = logging.getLogger(__name__)
-
 def get_sprint_date_range(df, sprint_name):
     def is_multiple_values(value):
         if isinstance(value, str) and '[' in value:
@@ -13,13 +10,13 @@ def get_sprint_date_range(df, sprint_name):
     def get_sprint_value_index(value, list):
         # example value: ["LFW 1.1.25"-"LFW 2.1.25"]
         if is_multiple_values(list):
-            list = split_string_array(list)
+            list = split_string_array(list, '"-"')
             return list.index(value)
         return 0
     def get_date_from_multiple_values(index, list):
         # example value: ["2025-01-21T23:31:33.421Z"-"2025-02-04T23:59:43.560Z"]
         if is_multiple_values(list):
-            list = split_string_array(list)
+            list = split_string_array(list, '"-"')
             return list[index]
         return list
 
@@ -31,7 +28,7 @@ def get_sprint_date_range(df, sprint_name):
         return start_date, end_date
 
     # Find first ticket that contains the sprint_name
-    tickets = df[df[COLUMN_NAME_SPRINT].apply(lambda x: sprint_name in split_string_array(x))]
+    tickets = df[df[COLUMN_NAME_SPRINT].apply(lambda x: sprint_name in split_string_array(x, '"-"'))]
     if tickets.empty:
         return start_date, end_date
 

@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
+from src.data.loaders import JiraDataSingleton
 from src.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
     COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
 
@@ -16,17 +17,11 @@ def init_callbacks(app, jira_tickets):
         if not selected_project:
             return [], None
 
-        project_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
-        if COLUMN_NAME_SQUAD in project_data.columns:
-            # Filter out NaN values and convert to list before sorting
-            squads = [squad for squad in project_data[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)]
-            squad_options = [
-                {'label': squad, 'value': squad}
-                for squad in sorted(squads)
-            ]
-        else:
-            squad_options = []
-
+        squads = JiraDataSingleton().get_jira_data().get_squads_by_filters(selected_project)
+        squad_options = [
+            {'label': squad, 'value': squad}
+            for squad in sorted(squads)
+        ]
         return squad_options, None
 
     @callback(
@@ -44,34 +39,7 @@ def init_callbacks(app, jira_tickets):
         if not selected_project:
             return [], None, [], [], [], None
 
-        # Filter data
-        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
-        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
-
-        # Get unique sprints
-        sprint_set = set()
-        for sprint_str in filtered_data[COLUMN_NAME_SPRINT].dropna().unique():
-            sprints = split_string_array(sprint_str)
-            sprint_set.update(sprint.strip() for sprint in sprints)
-
-        # Get sprint end dates and sort sprints by end date descending
-        sprint_dates = {}
-        for sprint in sprint_set:
-            # Get one ticket from this sprint to get its dates
-            sprint_ticket = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)].iloc[0]
-            # Convert the Series to a DataFrame with a single row
-            sprint_ticket_df = sprint_ticket.to_frame().T
-            start_date, _ = get_sprint_date_range(sprint_ticket_df, sprint)
-            if start_date and not pd.isna(start_date):
-                # Ensure timezone-naive comparison by converting to UTC and removing timezone
-                sprint_dates[sprint] = start_date.tz_localize(None) if start_date.tz else start_date
-            else:
-                # Use timezone-naive minimum timestamp
-                sprint_dates[sprint] = pd.Timestamp.min.tz_localize(None)
-
-        # Sort sprints by start date descending
-        sprint_set = sorted(sprint_dates.keys(), key=lambda x: sprint_dates[x], reverse=True)
+        sprint_set = JiraDataSingleton().get_jira_data().get_sprints_by_filters(selected_project, selected_squad)
         sprint_options = [{'label': sprint, 'value': sprint} for sprint in list(sprint_set)]
 
         return sprint_options, None, [], [], [], None
@@ -170,13 +138,13 @@ def init_callbacks(app, jira_tickets):
         def get_sprint_value_index(value, list):
             # example value: ["LFW 1.1.25"-"LFW 2.1.25"]
             if is_multiple_values(list):
-                list = split_string_array(list)
+                list = split_string_array(list, '"-"')
                 return list.index(value)
             return 0
         def get_sprint_goals_from_multiple_values(index, list):
             # example value: ["Complete Apple Pay- Complete Wishlist in Bag- Complete prepartion for Non-Shoppable (Design- Tickets- Test Plan- TC Prep- Env)"-"Apple Pay defects- Non-shoppable PDPs development"]
             if is_multiple_values(list):
-                list = split_string_array(list)
+                list = split_string_array(list, '"-"')
                 return list[index]
             return list
 

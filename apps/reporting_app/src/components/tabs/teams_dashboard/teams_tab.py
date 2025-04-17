@@ -1,10 +1,10 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from src.data.loaders import JiraDataLoaderWithCache
+from src.data.loaders import JiraDataSingleton
 from src.components.tabs.teams_dashboard.components.filters import create_filters
 
-jira_data_loader = JiraDataLoaderWithCache()
-jira_data = jira_data_loader.load_data()
+jira_data_singleton = JiraDataSingleton()
+jira_data = jira_data_singleton.get_jira_data()
 
 UNIQUE_PROJECTS = jira_data.projects
 

@@ -1,6 +1,6 @@
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-from src.data.loaders import JiraDataLoaderWithCache
+from src.data.loaders import JiraDataSingleton
 from src.components.tabs.sprint_dashboard.components.header import create_header
 from src.components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
 from src.components.tabs.teams_dashboard.teams_tab import create_teams_tab
@@ -11,15 +11,15 @@ from src.components.tabs.teams_dashboard.callbacks import chart_callbacks as tea
 from flask import send_file
 import os
 
-# load jira data
-jira_data_loader = JiraDataLoaderWithCache()
-jira_data = jira_data_loader.load_data()
+# Access jira data
+jira_data_singleton = JiraDataSingleton()
+jira_data = jira_data_singleton.get_jira_data()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 @app.server.route('/download_csv_file')
 def download_jira_csv():
-    csv_path = jira_data_loader.get_csv_filepath()
+    csv_path = jira_data_singleton.get_csv_filepath()
     if not os.path.exists(csv_path):
         return "CSV file not found", 404
     return send_file(csv_path, as_attachment=True, download_name='jira_metrics.csv', mimetype='text/csv')

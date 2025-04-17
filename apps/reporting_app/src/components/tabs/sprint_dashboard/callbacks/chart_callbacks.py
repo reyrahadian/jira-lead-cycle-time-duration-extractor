@@ -62,7 +62,6 @@ def init_callbacks(app, jira_tickets):
         # Process remaining stages from ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS
         for stage_column in ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
             if stage_column not in sprint_data.columns:
-                print(f"Warning: {stage_column} not found in DataFrame columns.")
                 continue  # Skip this column if it doesn't exist
 
             stage_name = to_stage_name(stage_column)
@@ -112,7 +111,6 @@ def init_callbacks(app, jira_tickets):
     )
     def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
         chart_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
-        print("chart_data", chart_data)
         # Create empty figure if no data
         if chart_data.empty:
             fig = go.Figure()

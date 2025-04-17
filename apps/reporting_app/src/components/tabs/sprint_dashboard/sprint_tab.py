@@ -4,11 +4,11 @@ from src.components.tabs.sprint_dashboard.components.filters import create_filte
 from src.components.tabs.sprint_dashboard.components.sprint_metrics import create_sprint_metrics
 from src.components.tabs.sprint_dashboard.components.charts import create_charts
 from src.components.tabs.sprint_dashboard.components.tables import create_tables
-from src.data.loaders import JiraDataLoaderWithCache
+from src.data.loaders import JiraDataSingleton
 
 # Initialize data loader and load data
-jira_data_loader = JiraDataLoaderWithCache()
-jira_data = jira_data_loader.load_data()
+jira_data_singleton = JiraDataSingleton()
+jira_data = jira_data_singleton.get_jira_data()
 
 # Extract unique values needed for filters
 UNIQUE_PROJECTS = jira_data.projects
