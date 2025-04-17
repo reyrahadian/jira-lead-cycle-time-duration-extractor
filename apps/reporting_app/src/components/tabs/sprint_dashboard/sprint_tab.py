@@ -4,7 +4,16 @@ from components.tabs.sprint_dashboard.components.filters import create_filters
 from components.tabs.sprint_dashboard.components.sprint_metrics import create_sprint_metrics
 from components.tabs.sprint_dashboard.components.charts import create_charts
 from components.tabs.sprint_dashboard.components.tables import create_tables
-from data.loader import UNIQUE_PROJECTS, UNIQUE_COMPONENTS
+from data.loaders import JiraDataLoaderWithCache
+
+# Initialize data loader and load data
+jira_data_loader = JiraDataLoaderWithCache()
+jira_data = jira_data_loader.load_data()
+
+# Extract unique values needed for filters
+UNIQUE_PROJECTS = jira_data.projects
+UNIQUE_COMPONENTS = jira_data.components
+
 
 def create_sprint_tab():
     filters = html.Div([

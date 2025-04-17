@@ -1,7 +1,12 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from data.loader import UNIQUE_PROJECTS
+from data.loaders import JiraDataLoaderWithCache
 from components.tabs.teams_dashboard.components.filters import create_filters
+
+jira_data_loader = JiraDataLoaderWithCache()
+jira_data = jira_data_loader.load_data()
+
+UNIQUE_PROJECTS = jira_data.projects
 
 def create_teams_tab():
     return dbc.Tab(

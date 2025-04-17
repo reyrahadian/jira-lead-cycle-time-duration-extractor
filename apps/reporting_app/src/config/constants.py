@@ -12,6 +12,10 @@ STAGE_THRESHOLDS = {
 
 # Valid Components
 VALID_COMPONENTS = {
+    'FEWeb': 'FEWeb',
+    'FEApp': 'FEApp',
+    'BFFWeb': 'BFFWeb',
+    'BFFApp': 'BFFApp',
     'BFF': 'BFF',
     'FED': 'FED',
     'SFCC': 'SFCC',

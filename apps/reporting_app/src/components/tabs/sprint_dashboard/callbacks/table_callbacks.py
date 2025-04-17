@@ -255,7 +255,11 @@ def init_callbacks(app, jira_tickets):
         # Then filter by sprint
         sprint_data = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data, selected_sprint)
-        sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]
+        # Filter tickets created during the sprint
+        if sprint_start_date is not None:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]
+        if sprint_end_date is not None:
+            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] <= sprint_end_date]
         if sprint_data.empty:
             return []
 

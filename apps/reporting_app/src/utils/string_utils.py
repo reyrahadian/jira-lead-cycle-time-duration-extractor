@@ -9,3 +9,8 @@ def split_string_array(string_array):
         return sprints
 
     return [string_array]
+
+def is_multiple_values(value):
+        if '[' in value:
+            return True
+        return False

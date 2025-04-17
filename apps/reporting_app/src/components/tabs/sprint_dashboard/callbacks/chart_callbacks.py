@@ -24,9 +24,13 @@ def init_callbacks(app, jira_tickets):
         if selected_types and len(selected_types) > 0:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
         if selected_components and len(selected_components) > 0:
+            print("selected_components", selected_components)
+            print("Ticket IDs before component filtering:", sprint_data[COLUMN_NAME_ID].tolist())
+            print("Calculated components:", sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].tolist())
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
             )]
+            print("Ticket IDs after component filtering:", sprint_data[COLUMN_NAME_ID].tolist())
         if selected_ticket:
             sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
@@ -108,7 +112,7 @@ def init_callbacks(app, jira_tickets):
     )
     def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
         chart_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
-
+        print("chart_data", chart_data)
         # Create empty figure if no data
         if chart_data.empty:
             fig = go.Figure()
