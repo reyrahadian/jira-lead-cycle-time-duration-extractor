@@ -1,6 +1,6 @@
 from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
-from config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
+from src.config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
 def create_charts():
     """Create the charts section of the dashboard."""
     return html.Div([  # Return a single Div containing all elements

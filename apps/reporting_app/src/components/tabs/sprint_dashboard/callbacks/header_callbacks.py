@@ -1,7 +1,7 @@
 from dash import Input, Output, callback, State
 import dash_bootstrap_components as dbc  # Import dash-bootstrap-components
 from dash.exceptions import PreventUpdate
-from data.loaders import JiraDataLoaderWithCache
+from src.data.loaders import JiraDataLoaderWithCache
 
 def init_callbacks(app, jira_tickets):
     @callback(

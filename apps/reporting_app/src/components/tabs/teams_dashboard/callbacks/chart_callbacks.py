@@ -1,14 +1,14 @@
 from dash import Output, Input, callback, no_update, dash_table
 import plotly.express as px
 import pandas as pd
-from config.constants import (
+from src.config.constants import (
     THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS,
     COLUMN_NAME_TYPE,
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_CREATED_DATE,
     COLUMN_NAME_SPRINT
 )
-from utils.stage_utils import to_stage_name
+from src.utils.stage_utils import to_stage_name
 
 stage_mappings = {
     'Blocked': ['Blocked', 'Pending', 'Waiting for support'],

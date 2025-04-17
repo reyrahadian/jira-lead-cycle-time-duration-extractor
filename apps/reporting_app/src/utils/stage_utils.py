@@ -1,10 +1,10 @@
 import pandas as pd
-from config.constants import (
+from src.config.constants import (
     THRESHOLD_STAGE_COLUMNS_DURATION_IN_DAYS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS,
     COLUMN_NAME_CREATED_DATE
 )
-from utils.sprint_utils import get_sprint_date_range
+from src.utils.sprint_utils import get_sprint_date_range
 
 def calculate_tickets_duration_in_sprint(df, sprint_name):
     """

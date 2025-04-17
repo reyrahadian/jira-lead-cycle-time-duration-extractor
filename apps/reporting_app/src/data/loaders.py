@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-from config.constants import (
+from src.config.constants import (
     VALID_COMPONENTS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS,
     COLUMN_NAME_CREATED_DATE,
@@ -11,7 +11,7 @@ from config.constants import (
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_SQUAD
 )
-from utils.stage_utils import (
+from src.utils.stage_utils import (
     to_stage_start_date_column_name
 )
 class JiraData:

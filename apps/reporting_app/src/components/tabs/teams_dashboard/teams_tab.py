@@ -1,7 +1,7 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from data.loaders import JiraDataLoaderWithCache
-from components.tabs.teams_dashboard.components.filters import create_filters
+from src.data.loaders import JiraDataLoaderWithCache
+from src.components.tabs.teams_dashboard.components.filters import create_filters
 
 jira_data_loader = JiraDataLoaderWithCache()
 jira_data = jira_data_loader.load_data()

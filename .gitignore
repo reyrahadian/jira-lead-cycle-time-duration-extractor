@@ -3,7 +3,6 @@ SF
 build
 dist
 .DS_Store
-.vscode
 *.yaml
 !config.yaml
 *.log

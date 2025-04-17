@@ -1,13 +1,13 @@
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
-from data.loaders import JiraDataLoaderWithCache
-from components.tabs.sprint_dashboard.components.header import create_header
-from components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
-from components.tabs.teams_dashboard.teams_tab import create_teams_tab
-from components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprint_filter_callbacks, \
+from src.data.loaders import JiraDataLoaderWithCache
+from src.components.tabs.sprint_dashboard.components.header import create_header
+from src.components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
+from src.components.tabs.teams_dashboard.teams_tab import create_teams_tab
+from src.components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprint_filter_callbacks, \
     chart_callbacks as sprint_chart_callbacks, table_callbacks as sprint_table_callbacks, \
     header_callbacks as sprint_header_callbacks
-from components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
+from src.components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 from flask import send_file
 import os
 
