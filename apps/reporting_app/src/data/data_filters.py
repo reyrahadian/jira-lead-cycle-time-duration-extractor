@@ -98,10 +98,14 @@ class JiraDataFilterService:
     def __get_components_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
         # Get all components from the calculated components column
         all_components = []
-        for components_list in tickets[COLUMN_NAME_CALCULATED_COMPONENTS].dropna():
-            # Filter out any non-string values
-            valid_components = [comp for comp in components_list if isinstance(comp, str)]
-            all_components.extend(valid_components)
+        for components_str in tickets[COLUMN_NAME_CALCULATED_COMPONENTS].dropna():
+            if isinstance(components_str, list):
+                for comp in components_str:
+                    if pd.notna(comp):
+                        # Handle potential hyphenated values in array elements
+                        subparts = str(comp).split('-')
+                        all_components.extend(part.strip('"').strip("'").strip() for part in subparts if part.strip())
+
         # Remove duplicates and sort
         return sorted(list(set(all_components)))
 
@@ -121,6 +125,11 @@ class JiraDataFilterService:
         # filter by types
         if filter.ticket_types:
             tickets = tickets[tickets[COLUMN_NAME_TYPE].isin(filter.ticket_types)]
+
+        if filter.components:
+            tickets = tickets[tickets[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
+                lambda x: any(comp in x for comp in filter.components) if isinstance(x, list) else False
+            )]
 
         # filter by ticketId
         if filter.ticketId:
