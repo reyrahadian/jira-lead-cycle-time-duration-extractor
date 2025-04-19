@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK
 )
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
 from src.data.loaders import JiraDataFilter, JiraDataSingleton
@@ -71,7 +71,8 @@ def init_callbacks(app, jira_tickets):
                     'StoryPoints': ticket['StoryPoints'],
                     'Sprint': ticket['Sprint'],
                     '_threshold_ratio': max_threshold_ratio,
-                    '_priority_order': PRIORITY_ORDER.get(priority, 8)
+                    '_priority_order': PRIORITY_ORDER.get(priority, 8),
+                    COLUMN_NAME_LINK: ticket[COLUMN_NAME_LINK]
                 }
                 tickets_exceeding_threshold.append(ticket_data)
 

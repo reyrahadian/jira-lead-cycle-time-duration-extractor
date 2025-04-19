@@ -1,6 +1,8 @@
 from dash import Input, Output, callback
 from src.data.loaders import JiraDataSingleton, JiraDataFilter
-from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_TYPE
+from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_TYPE, COLUMN_NAME_PARENT_TYPE, \
+    COLUMN_NAME_PARENT_NAME, COLUMN_NAME_STAGE, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_FIX_VERSIONS, \
+    COLUMN_NAME_CREATED_DATE, COLUMN_NAME_UPDATED_DATE, COLUMN_NAME_SPRINT, COLUMN_NAME_NAME
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -41,5 +43,20 @@ def init_callbacks(app, jira_tickets):
 
         # Convert to records and remove the temporary sorting column
         sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
+
+        # Filter to only include columns shown in the table
+        sprint_records = [{
+            COLUMN_NAME_ID: record[COLUMN_NAME_ID],
+            COLUMN_NAME_NAME: record[COLUMN_NAME_NAME],
+            COLUMN_NAME_TYPE: record[COLUMN_NAME_TYPE],
+            COLUMN_NAME_PARENT_TYPE: record[COLUMN_NAME_PARENT_TYPE],
+            COLUMN_NAME_PARENT_NAME: record[COLUMN_NAME_PARENT_NAME],
+            COLUMN_NAME_STAGE: record[COLUMN_NAME_STAGE],
+            COLUMN_NAME_STORY_POINTS: record[COLUMN_NAME_STORY_POINTS],
+            COLUMN_NAME_FIX_VERSIONS: record[COLUMN_NAME_FIX_VERSIONS],
+            COLUMN_NAME_CREATED_DATE: record[COLUMN_NAME_CREATED_DATE],
+            COLUMN_NAME_UPDATED_DATE: record[COLUMN_NAME_UPDATED_DATE],
+            COLUMN_NAME_SPRINT: record[COLUMN_NAME_SPRINT]
+        } for record in sprint_records]
 
         return sprint_records
