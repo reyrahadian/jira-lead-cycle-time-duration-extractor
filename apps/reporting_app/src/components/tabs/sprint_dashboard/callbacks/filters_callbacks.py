@@ -67,7 +67,7 @@ def init_callbacks(app, jira_tickets):
 
         # Get ticket options
         ticket_options = [
-            {'label': f"{row[COLUMN_NAME_ID]} - {row[COLUMN_NAME_NAME]}", 'value': row[COLUMN_NAME_ID]}
+            {'label': f"{row[COLUMN_NAME_ID]} - {row[COLUMN_NAME_NAME][:15]}..", 'value': row[COLUMN_NAME_ID]}
             for _, row in jira_data_filter_result.tickets.iterrows()
         ]
 
