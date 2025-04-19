@@ -4,10 +4,12 @@ import plotly.graph_objects as go
 import pandas as pd
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY,
-    STAGE_NAME_GROUPINGS, STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLUMN_NAME_LINK
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_PRIORITY, STAGE_NAME_GROUPINGS,
+    STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLUMN_NAME_LINK, COLUMN_NAME_STORY_POINTS,
+    COLUMN_NAME_NAME
 )
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
+from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets):
     def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):
@@ -15,23 +17,10 @@ def init_callbacks(app, jira_tickets):
             # Return empty DataFrame with expected columns instead of empty dict
             return pd.DataFrame(columns=['Stage', 'Days'])
 
-        # Filter data
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
+        filter = JiraDataFilter(squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, components=selected_components)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
+        sprint_data = jira_data_filter_result.tickets
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
-        if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
-        if selected_components and len(selected_components) > 0:
-            print("selected_components", selected_components)
-            print("Ticket IDs before component filtering:", sprint_data[COLUMN_NAME_ID].tolist())
-            print("Calculated components:", sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].tolist())
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
-                lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
-            )]
-            print("Ticket IDs after component filtering:", sprint_data[COLUMN_NAME_ID].tolist())
-        if selected_ticket:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
 
         # Calculate stage mean using stage_mappings
         stage_sums = {}
@@ -178,21 +167,13 @@ def init_callbacks(app, jira_tickets):
         # Filter by ticket IDs
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_ID].isin(ticket_ids)]
 
-        # Filter data
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
-        if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
-        if selected_ticket:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
+        filter = JiraDataFilter(squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, components=selected_components)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
 
-        # Apply components filter if selected
-        if selected_components and len(selected_components) > 0:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
-                lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
-            )]
+        if jira_data_filter_result.tickets.empty:
+            return [], "No tickets found", {'display': 'none'}, [], []
 
+        sprint_data = jira_data_filter_result.tickets
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
 
         # Use stage_mappings to get all related stages
@@ -214,7 +195,15 @@ def init_callbacks(app, jira_tickets):
             stage_tickets['priority_sort'] = 8
 
         # Define columns to select
-        available_columns = ['ID', 'Name', 'Type', 'Priority', 'Stage', 'days_in_stage', 'StoryPoints', 'Sprint']
+        available_columns = [
+            COLUMN_NAME_ID,
+            COLUMN_NAME_NAME,
+            COLUMN_NAME_TYPE,
+            COLUMN_NAME_PRIORITY,
+            COLUMN_NAME_SPRINT,
+            'days_in_stage',
+            COLUMN_NAME_STORY_POINTS
+            ]
 
         # Sort by priority first, then days in stage
         stage_tickets = stage_tickets.sort_values(
@@ -290,7 +279,7 @@ def init_callbacks(app, jira_tickets):
 
         try:
             # Extract the ID from the markdown link format
-            selected_ticket_link = table_data[selected_rows[0]]['ID']
+            selected_ticket_link = table_data[selected_rows[0]][COLUMN_NAME_ID]
             selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
         except (IndexError, KeyError):
             return (
