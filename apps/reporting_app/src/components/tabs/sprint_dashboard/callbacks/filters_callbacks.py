@@ -1,12 +1,7 @@
-from dash import Input, Output, callback, html
+from dash import Input, Output, callback
 import pandas as pd
-import numpy as np
-from src.utils.sprint_utils import get_sprint_date_range
-from src.utils.string_utils import split_string_array
-from src.data.loaders import JiraDataSingleton
-from src.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
-    COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
-from src.data.loaders import JiraDataFilter
+from src.data.data_filters import JiraDataFilter, JiraDataFilterService
+from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_NAME
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -19,12 +14,9 @@ def init_callbacks(app, jira_tickets):
             return [], None
 
         filter = JiraDataFilter(project=selected_project)
-        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         squads = jira_data_filter_result.squads
-        squad_options = [
-            {'label': squad, 'value': squad}
-            for squad in sorted(squads)
-        ]
+        squad_options = [{'label': squad, 'value': squad} for squad in sorted(squads)]
         return squad_options, None
 
     @callback(
@@ -43,7 +35,7 @@ def init_callbacks(app, jira_tickets):
             return [], None, [], [], [], None
 
         filter = JiraDataFilter(project=selected_project, squad=selected_squad)
-        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         sprint_set = jira_data_filter_result.sprints
         sprint_options = [{'label': sprint, 'value': sprint} for sprint in list(sprint_set)]
 
@@ -67,7 +59,7 @@ def init_callbacks(app, jira_tickets):
             return [], [], [], None, [], []
 
         filter = JiraDataFilter(project=selected_project, squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types)
-        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         # Get ticket types options
         types = jira_data_filter_result.ticket_types
@@ -75,7 +67,7 @@ def init_callbacks(app, jira_tickets):
 
         # Get ticket options
         ticket_options = [
-            {'label': f"{row['ID']} - {row['Name']}", 'value': row['ID']}
+            {'label': f"{row[COLUMN_NAME_ID]} - {row[COLUMN_NAME_NAME]}", 'value': row[COLUMN_NAME_ID]}
             for _, row in jira_data_filter_result.tickets.iterrows()
         ]
 

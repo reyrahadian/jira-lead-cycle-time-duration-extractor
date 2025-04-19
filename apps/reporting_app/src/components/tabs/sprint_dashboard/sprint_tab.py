@@ -4,19 +4,15 @@ from src.components.tabs.sprint_dashboard.components.filters import create_filte
 from src.components.tabs.sprint_dashboard.components.sprint_goals import create_sprint_metrics
 from src.components.tabs.sprint_dashboard.components.avg_cycletime import create_charts
 from src.components.tabs.sprint_dashboard.components.tables import create_tables
-from src.data.loaders import JiraDataSingleton
+from src.data.data_loaders import JiraData
 
-# Initialize data loader and load data
-jira_data_singleton = JiraDataSingleton()
-jira_data = jira_data_singleton.get_jira_data()
-
-def create_sprint_tab():
+def create_sprint_tab(jira_data: JiraData):
     filters = html.Div([
         html.Div([
                 # Left column - Filters
                 html.Div([
                     dbc.Card([
-                        dbc.CardBody(create_filters(projects=jira_data.projects)),
+                        dbc.CardBody(create_filters(projects=jira_data.get_projects())),
                     ]),
                     dbc.Card([
                         dbc.CardBody(create_sprint_metrics()),

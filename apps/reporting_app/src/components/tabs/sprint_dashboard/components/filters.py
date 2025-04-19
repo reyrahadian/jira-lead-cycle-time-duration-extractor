@@ -9,8 +9,9 @@ def create_filters(projects=[]):
             dcc.Dropdown(
                 id='project-dropdown',
                 options=[{'label': project, 'value': project} for project in projects],
-                value=projects[0] if projects else None,
+                value=None,
                 multi=False,
+                placeholder="Select project",
                 style={'marginBottom': '15px'}
             ),
         ]),

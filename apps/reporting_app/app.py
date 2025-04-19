@@ -3,7 +3,7 @@ import dash_bootstrap_components as dbc
 from src.components.tabs.sprint_dashboard.callbacks \
     import avg_cycletime_callbacks, defects_table_callbacks, filters_callbacks, \
         sprint_goals_callbacks, sprint_tickets_callbacks, threshold_tickets_table_callbacks
-from src.data.loaders import JiraDataSingleton
+from src.data.data_loaders import JiraDataSingleton
 from src.components.tabs.sprint_dashboard.components.header import create_header
 from src.components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
 from src.components.tabs.teams_dashboard.teams_tab import create_teams_tab
@@ -31,8 +31,8 @@ app.layout = html.Div([
 
     create_header(),
     dbc.Tabs([
-        create_sprint_tab(),
-        create_teams_tab(),
+        create_sprint_tab(jira_data),
+        #create_teams_tab(jira_data),
     ], id='tabs-component',style={'margin-top': '10px'}),
 
     # Add a placeholder for the notification
@@ -41,13 +41,13 @@ app.layout = html.Div([
 ], style={'minHeight': '100vh', 'padding': '20px', 'backgroundColor': '#f8f9fa'})
 
 # Register callbacks with app
-filters_callbacks.init_callbacks(app, jira_data.tickets)
-sprint_goals_callbacks.init_callbacks(app, jira_data.tickets)
-avg_cycletime_callbacks.init_callbacks(app, jira_data.tickets)
-threshold_tickets_table_callbacks.init_callbacks(app, jira_data.tickets)
-defects_table_callbacks.init_callbacks(app, jira_data.tickets)
-sprint_tickets_callbacks.init_callbacks(app, jira_data.tickets)
-teams_chart_callbacks.init_callbacks(app, jira_data.tickets)
+filters_callbacks.init_callbacks(app, jira_data.get_tickets())
+sprint_goals_callbacks.init_callbacks(app, jira_data.get_tickets())
+avg_cycletime_callbacks.init_callbacks(app, jira_data.get_tickets())
+threshold_tickets_table_callbacks.init_callbacks(app, jira_data.get_tickets())
+defects_table_callbacks.init_callbacks(app, jira_data.get_tickets())
+sprint_tickets_callbacks.init_callbacks(app, jira_data.get_tickets())
+#teams_chart_callbacks.init_callbacks(app, jira_data.get_tickets())
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=True, port=8050)

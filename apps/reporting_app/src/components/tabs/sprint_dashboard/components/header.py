@@ -7,36 +7,25 @@ def create_header():
         'marginBottom': '20px',
         'textAlign': 'center',
         'display': 'flex',
-        'justifyContent': 'space-between',
-        'alignItems': 'center'
+        'justifyContent': 'center',
+        'alignItems': 'center',
+        'width': '100%'
     }
 
     return dbc.Card([
         dbc.CardBody([
             html.Div([
-                # Left side - empty div for alignment
-                html.Div(style={'width': '100px'}),
-
                 # Center - title and subtitle
                 html.Div([
                     html.H1(
                         "Jira Tickets Analysis Dashboard",
-                        style={'marginBottom': '10px'}
+                        style={'marginBottom': '10px', 'textAlign': 'center'}
                     ),
                     html.P(
                         "Track and analyze ticket progression across different stages and sprints",
-                        style={'marginBottom': '10px'}
+                        style={'marginBottom': '10px', 'textAlign': 'center'}
                     )
-                ]),
-
-                # Right side - refresh button
-                html.Div([
-                    html.Button(
-                        "↻ Refresh Data",
-                        id='refresh-data-button',
-                        className='btn btn-primary'
-                    )
-                ], style={'width': '100px'})
+                ], style={'width': '100%'})
             ], style=header_style)
         ])
     ])

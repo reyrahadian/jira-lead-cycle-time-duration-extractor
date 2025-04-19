@@ -1,14 +1,9 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
-from src.data.loaders import JiraDataSingleton
 from src.components.tabs.teams_dashboard.components.filters import create_filters
+from src.data.data_loaders import JiraData
 
-jira_data_singleton = JiraDataSingleton()
-jira_data = jira_data_singleton.get_jira_data()
-
-UNIQUE_PROJECTS = jira_data.projects
-
-def create_teams_tab():
+def create_teams_tab(jira_data: JiraData):
     return dbc.Tab(
         label='Teams Dashboard',
         id='teams-dashboard-tab',
@@ -17,7 +12,7 @@ def create_teams_tab():
                 # Left column - Filters
                 html.Div([
                     dbc.Card([
-                        dbc.CardBody(create_filters(unique_projects=UNIQUE_PROJECTS)),
+                        dbc.CardBody(create_filters(unique_projects=jira_data.get_projects())),
                     ]),
                 ], style={'width': '20%', 'paddingRight': '20px', 'paddingBottom': '20px'}),
 

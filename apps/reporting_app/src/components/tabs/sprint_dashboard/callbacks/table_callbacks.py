@@ -3,11 +3,13 @@ import pandas as pd
 import numpy as np
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
+    COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PROJECT, COLUMN_NAME_PRIORITY, COLUMN_NAME_ID, COLUMN_NAME_LINK,
+    COLUMN_NAME_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_PARENT_TYPE, COLUMN_NAME_PARENT_NAME, COLUMN_NAME_CREATED_DATE
 )
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
-from src.data.data_loaders import JiraDataSingleton
-from src.data.data_filters import JiraDataFilter, JiraDataFilterService
+from src.utils.sprint_utils import get_sprint_date_range
+from apps.reporting_app.src.data.data_loaders import JiraDataFilter, JiraDataSingleton
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -23,7 +25,7 @@ def init_callbacks(app, jira_tickets):
             return []
 
         filter = JiraDataFilter(sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, squad=selected_squad, components=selected_components)
-        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
 
         # Filter data
         sprint_data = jira_data_filter_result.tickets
@@ -72,8 +74,7 @@ def init_callbacks(app, jira_tickets):
                     'StoryPoints': ticket['StoryPoints'],
                     'Sprint': ticket['Sprint'],
                     '_threshold_ratio': max_threshold_ratio,
-                    '_priority_order': PRIORITY_ORDER.get(priority, 8),
-                    COLUMN_NAME_LINK: ticket[COLUMN_NAME_LINK]
+                    '_priority_order': PRIORITY_ORDER.get(priority, 8)
                 }
                 tickets_exceeding_threshold.append(ticket_data)
 
@@ -220,3 +221,80 @@ def init_callbacks(app, jira_tickets):
             style_conditional
         )
 
+    @callback(
+        Output('defects-table', 'data'),
+        [Input('project-dropdown', 'value'),
+        Input('squad-dropdown', 'value'),
+        Input('sprint-dropdown', 'value'),
+        Input('components-dropdown', 'value')]
+    )
+    def update_defects_table(selected_project, selected_squad, selected_sprint, selected_components):
+        if not selected_project or not selected_sprint:
+            return []
+
+        filter = JiraDataFilter(project=selected_project, sprint=selected_sprint, squad=selected_squad, components=selected_components)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+
+        # Filter defects
+        defects = jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_TYPE].isin(['Bug', 'Defect'])].copy()
+        sprint_start_date, sprint_end_date = get_sprint_date_range(defects, filter.sprint)
+        # Filter defects created during the sprint
+        if sprint_start_date is not None:
+            defects = defects[defects[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]
+        if sprint_end_date is not None:
+            defects = defects[defects[COLUMN_NAME_CREATED_DATE] <= sprint_end_date]
+
+        # Add priority order for sorting
+        defects['priority_sort'] = defects[COLUMN_NAME_PRIORITY].map(lambda x: PRIORITY_ORDER.get(x, 8))
+
+        # Prepare table data with markdown links
+        table_data = defects[[
+            COLUMN_NAME_ID, COLUMN_NAME_NAME, COLUMN_NAME_PRIORITY, COLUMN_NAME_STAGE, COLUMN_NAME_STORY_POINTS,
+            COLUMN_NAME_PARENT_TYPE, COLUMN_NAME_PARENT_NAME, COLUMN_NAME_LINK
+        ]].copy()
+
+        # Convert ID column to markdown links
+        table_data[COLUMN_NAME_ID] = table_data.apply(lambda x: f'[{x[COLUMN_NAME_ID]}]({x[COLUMN_NAME_LINK]})', axis=1)
+
+        return table_data.to_dict('records')
+
+    @callback(
+        Output('sprint-tickets-table', 'data'),
+        [Input('sprint-dropdown', 'value'),
+        Input('type-dropdown', 'value'),
+        Input('ticket-dropdown', 'value'),
+        Input('squad-dropdown', 'value'),
+        Input('components-dropdown', 'value')]
+    )
+    def update_tickets_in_sprint_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+        if not selected_sprint:
+            return []  # Return empty list instead of strings
+
+        filter = JiraDataFilter(sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, squad=selected_squad, components=selected_components)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+
+        # Define type order for sorting
+        type_order = {
+            'Epic': 0,
+            'Story': 1,
+            'User Story': 1,
+            'Task': 2,
+            'Sub-task': 2,
+            'Bug': 3,
+            'Defect': 3,
+        }
+
+        # Create a copy and add the type order column
+        sprint_data = jira_data_filter_result.tickets.copy()
+        sprint_data['type_sort'] = sprint_data['Type'].map(lambda x: type_order.get(x, 999))
+
+        # Sort the data using the temporary column
+        sprint_data = sprint_data.sort_values(['type_sort', 'ID'])
+
+        # Convert ID column to markdown links
+        sprint_data[COLUMN_NAME_ID] = sprint_data.apply(lambda x: f'[{x[COLUMN_NAME_ID]}]({x[COLUMN_NAME_LINK]})', axis=1)
+
+        # Convert to records and remove the temporary sorting column
+        sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
+
+        return sprint_records

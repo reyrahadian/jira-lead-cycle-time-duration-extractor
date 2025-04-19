@@ -1,21 +1,17 @@
 import pandas as pd
-from src.utils.string_utils import split_string_array
+from src.utils.string_utils import split_string_array, is_in_array
 from src.config.constants import COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_START_DATE, COLUMN_NAME_SPRINT_END_DATE
 
 def get_sprint_date_range(df, sprint_name):
-    def is_multiple_values(value):
-        if isinstance(value, str) and '[' in value:
-            return True
-        return False
     def get_sprint_value_index(value, list):
         # example value: ["LFW 1.1.25"-"LFW 2.1.25"]
-        if is_multiple_values(list):
+        if is_in_array(list):
             list = split_string_array(list, '"-"')
             return list.index(value)
         return 0
     def get_date_from_multiple_values(index, list):
         # example value: ["2025-01-21T23:31:33.421Z"-"2025-02-04T23:59:43.560Z"]
-        if is_multiple_values(list):
+        if is_in_array(list):
             list = split_string_array(list, '"-"')
             return list[index]
         return list
@@ -34,7 +30,7 @@ def get_sprint_date_range(df, sprint_name):
 
     first_ticket = tickets.iloc[0]
     sprints = first_ticket[COLUMN_NAME_SPRINT]
-    if is_multiple_values(sprints):
+    if is_in_array(sprints):
         sprint_index = get_sprint_value_index(sprint_name, sprints)
         start_date = get_date_from_multiple_values(sprint_index, first_ticket[COLUMN_NAME_SPRINT_START_DATE])
         end_date = get_date_from_multiple_values(sprint_index, first_ticket[COLUMN_NAME_SPRINT_END_DATE])
@@ -46,23 +42,19 @@ def get_sprint_date_range(df, sprint_name):
         # Convert to datetime if they're valid strings
         if isinstance(start_date, str):
             if start_date.lower() == 'null' or start_date.strip() == '':
-                print(f"[WARNING] Sprint '{sprint_name}': Invalid start_date value encountered: '{start_date}'")
                 start_date = None
             else:
                 try:
                     start_date = pd.to_datetime(start_date)
                 except Exception:
-                    print(f"[WARNING] Sprint '{sprint_name}': Failed to parse start_date value: '{start_date}'")
                     start_date = None
         if isinstance(end_date, str):
             if end_date.lower() == 'null' or end_date.strip() == '':
-                print(f"[WARNING] Sprint '{sprint_name}': Invalid end_date value encountered: '{end_date}'")
                 end_date = None
             else:
                 try:
                     end_date = pd.to_datetime(end_date)
                 except Exception:
-                    print(f"[WARNING] Sprint '{sprint_name}': Failed to parse end_date value: '{end_date}'")
                     end_date = None
 
     return start_date, end_date

@@ -1,5 +1,6 @@
 from dash import Input, Output, callback
-from src.data.loaders import JiraDataSingleton, JiraDataFilter
+from src.data.data_loaders import JiraDataSingleton
+from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_TYPE, COLUMN_NAME_PARENT_TYPE, \
     COLUMN_NAME_PARENT_NAME, COLUMN_NAME_STAGE, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_FIX_VERSIONS, \
     COLUMN_NAME_CREATED_DATE, COLUMN_NAME_UPDATED_DATE, COLUMN_NAME_SPRINT, COLUMN_NAME_NAME
@@ -18,7 +19,7 @@ def init_callbacks(app, jira_tickets):
             return []  # Return empty list instead of strings
 
         filter = JiraDataFilter(sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, squad=selected_squad, components=selected_components)
-        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         # Define type order for sorting
         type_order = {

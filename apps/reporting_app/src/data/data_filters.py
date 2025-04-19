@@ -1,0 +1,140 @@
+from src.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT,\
+    COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS
+from src.utils.sprint_utils import get_sprint_date_range
+from src.utils.string_utils import split_string_array
+import pandas as pd
+
+class JiraDataFilter:
+    project: str
+    squad: str
+    sprint: str
+    ticket_types: list[str]
+    ticketId: str
+    components: list[str]
+
+    def __init__(self, project: str = None, squad: str = None, sprint: str = None, ticket_types: list[str] = None, ticketId: str = None, components: list[str] = None):
+        self.project = project
+        self.squad = squad
+        self.sprint = sprint
+        self.ticket_types = ticket_types
+        self.ticketId = ticketId
+        self.components = components
+
+class JiraDataFilterResult:
+    @property
+    def tickets(self) -> pd.DataFrame:
+        return self._tickets
+
+    @property
+    def projects(self) -> list[str]:
+        return self._projects
+
+    @property
+    def squads(self) -> list[str]:
+        return self._squads
+
+    @property
+    def sprints(self) -> list[str]:
+        return self._sprints
+
+    @property
+    def ticket_types(self) -> list[str]:
+        return self._ticket_types
+
+    @property
+    def components(self) -> list[str]:
+        return self._components
+
+    @property
+    def ticketIds(self) -> list[str]:
+        return self._ticketIds
+
+    def __init__(self, tickets: pd.DataFrame = None, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None):
+        self._tickets = tickets
+        self._projects = projects
+        self._squads = squads
+        self._sprints = sprints
+        self._ticket_types = ticket_types
+        self._ticketIds = ticketIds
+        self._components = components
+
+class JiraDataFilterService:
+    def __get_squads_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+        if COLUMN_NAME_SQUAD in tickets.columns:
+            # Filter out NaN values and convert to list before sorting
+            squads = [squad for squad in tickets[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)]
+            return sorted(squads)
+        else:
+            return []
+
+    def __get_sprints_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+        # Get unique sprints
+        sprint_set = set()
+        for sprint_str in tickets[COLUMN_NAME_SPRINT].dropna().unique():
+            sprints = split_string_array(sprint_str, '"-"')
+            sprint_set.update(sprint.strip() for sprint in sprints)
+
+        # Get sprint end dates and sort sprints by end date descending
+        sprint_dates = {}
+        for sprint in sprint_set:
+            # Get one ticket from this sprint to get its dates
+            sprint_ticket = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)].iloc[0]
+            # Convert the Series to a DataFrame with a single row
+            sprint_ticket_df = sprint_ticket.to_frame().T
+            start_date, _ = get_sprint_date_range(sprint_ticket_df, sprint)
+            if start_date and not pd.isna(start_date):
+                # Ensure timezone-naive comparison by converting to UTC and removing timezone
+                sprint_dates[sprint] = start_date.tz_localize(None) if start_date.tz else start_date
+            else:
+                # Use timezone-naive minimum timestamp
+                sprint_dates[sprint] = pd.Timestamp.min.tz_localize(None)
+
+        # Sort sprints by start date descending
+        return sorted(sprint_dates.keys(), key=lambda x: sprint_dates[x], reverse=True)
+
+    def __get_ticket_types_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+        return sorted(tickets[COLUMN_NAME_TYPE].unique())
+
+    def __get_components_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+        # Get all components from the calculated components column
+        all_components = []
+        for components_list in tickets[COLUMN_NAME_CALCULATED_COMPONENTS].dropna():
+            # Filter out any non-string values
+            valid_components = [comp for comp in components_list if isinstance(comp, str)]
+            all_components.extend(valid_components)
+        # Remove duplicates and sort
+        return sorted(list(set(all_components)))
+
+    def filter_tickets(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> JiraDataFilterResult:
+        # filter by project
+        if filter.project:
+            tickets = tickets[tickets[COLUMN_NAME_PROJECT] == filter.project]
+
+        # filter by squad
+        if filter.squad:
+            tickets = tickets[tickets[COLUMN_NAME_SQUAD] == filter.squad]
+
+        # filter by sprint
+        if filter.sprint:
+            tickets = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(filter.sprint, na=False)]
+
+        # filter by types
+        if filter.ticket_types:
+            tickets = tickets[tickets[COLUMN_NAME_TYPE].isin(filter.ticket_types)]
+
+        # filter by ticketId
+        if filter.ticketId:
+            tickets = tickets[tickets[COLUMN_NAME_ID] == filter.ticketId]
+
+        squads = self.__get_squads_by_filters(tickets, filter)
+        sprints = self.__get_sprints_by_filters(tickets, filter)
+        ticket_types = self.__get_ticket_types_by_filters(tickets, filter)
+        components = self.__get_components_by_filters(tickets, filter)
+
+        return JiraDataFilterResult(
+            tickets=tickets,
+            squads=squads,
+            sprints=sprints,
+            ticket_types=ticket_types,
+            components=components
+        )
