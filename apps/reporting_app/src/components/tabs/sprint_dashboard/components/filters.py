@@ -1,6 +1,6 @@
 from dash import html, dcc
 
-def create_filters(unique_projects=[], unique_components=[]):
+def create_filters(projects=[]):
     """Create the filters section of the dashboard."""
     filters = html.Div([
         html.H2("Filters", style={'marginBottom': '20px'}),
@@ -8,8 +8,8 @@ def create_filters(unique_projects=[], unique_components=[]):
             html.Label("Project:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='project-dropdown',
-                options=[{'label': project, 'value': project} for project in unique_projects],
-                value=unique_projects[0] if unique_projects else None,
+                options=[{'label': project, 'value': project} for project in projects],
+                value=projects[0] if projects else None,
                 multi=False,
                 style={'marginBottom': '15px'}
             ),
@@ -18,7 +18,7 @@ def create_filters(unique_projects=[], unique_components=[]):
             html.Label("Squad:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='squad-dropdown',
-                options=[],  # Populated by callback
+                options=[],
                 value=None,
                 multi=False,
                 placeholder="Select squad (optional)",
@@ -29,7 +29,7 @@ def create_filters(unique_projects=[], unique_components=[]):
             html.Label("Sprint:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='sprint-dropdown',
-                options=[],  # Populated by callback
+                options=[],
                 value=None,
                 multi=False,
                 style={'marginBottom': '15px'}
@@ -50,7 +50,7 @@ def create_filters(unique_projects=[], unique_components=[]):
             html.Label("Components:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='components-dropdown',
-                options=[{'label': comp, 'value': comp} for comp in unique_components],
+                options=[],
                 value=[],
                 multi=True,
                 placeholder="Select component(s)",

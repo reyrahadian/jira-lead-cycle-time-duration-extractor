@@ -1,5 +1,5 @@
 import pandas as pd
-from src.data.loaders import JiraDataLoader, JiraData
+from src.data.loaders import JiraDataLoader, JiraData, JiraDataFilter
 from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_NAME, COLUMN_NAME_PROJECT, COLUMN_NAME_COMPONENTS, \
     COLUMN_NAME_SQUAD, COLUMN_NAME_CREATED_DATE, COLUMN_NAME_UPDATED_DATE, COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS, \
     COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE
@@ -31,14 +31,47 @@ def test_jiradataloader_load_data(mocker):
     assert jira_data.squads == ['Team1','Team2']
     assert jira_data.ticket_types == ['Spike','Story','Task']
 
-def test_jiradata_get_squads_by_project():
-    jira_data = JiraData()
-    jira_data.tickets = __get_jira_data()
+def test_jiradataloader_filter_tickets(mocker):
+    csv_data_loader = mocker.Mock()
+    csv_data_loader.load_data.return_value = __get_jira_data()
+    jira_data_loader = JiraDataLoader(csv_data_loader)
+    jira_data = jira_data_loader.load_data("test_data/jira_metrics.csv")
 
-    assert jira_data.get_squads_by_filters('Commerce') == ['Team1','Team2']
+    filter = JiraDataFilter(project='Commerce')
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1','Team2']
 
-def test_jiradata_get_sprints_by_filters():
-    jira_data = JiraData()
-    jira_data.tickets = __get_jira_data()
+    filter = JiraDataFilter(project='Commerce', squad='Team1')
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1']
+    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
 
-    assert jira_data.get_sprints_by_filters('Commerce', 'Team1') == ['LFW 1.2.25']
+    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25')
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1']
+    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.ticket_types == ['Story']
+
+    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'])
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1']
+    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.ticket_types == ['Story']
+    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
+
+    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'], components=['BFF'])
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1']
+    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.ticket_types == ['Story']
+    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
+
+    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'], components=['BFF'], ticketId='COM-123')
+    jira_data_filter_result = jira_data.filter_tickets(filter)
+    assert jira_data_filter_result.squads == ['Team1']
+    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.ticket_types == ['Story']
+    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
+    assert len(jira_data_filter_result.tickets) == 1
+
+

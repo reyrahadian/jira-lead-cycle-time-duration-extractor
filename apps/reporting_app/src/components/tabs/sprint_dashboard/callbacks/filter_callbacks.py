@@ -6,6 +6,7 @@ from src.utils.string_utils import split_string_array
 from src.data.loaders import JiraDataSingleton
 from src.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT, \
     COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE
+from src.data.loaders import JiraDataFilter
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -17,7 +18,9 @@ def init_callbacks(app, jira_tickets):
         if not selected_project:
             return [], None
 
-        squads = JiraDataSingleton().get_jira_data().get_squads_by_filters(selected_project)
+        filter = JiraDataFilter(project=selected_project)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        squads = jira_data_filter_result.squads
         squad_options = [
             {'label': squad, 'value': squad}
             for squad in sorted(squads)
@@ -39,33 +42,12 @@ def init_callbacks(app, jira_tickets):
         if not selected_project:
             return [], None, [], [], [], None
 
-        sprint_set = JiraDataSingleton().get_jira_data().get_sprints_by_filters(selected_project, selected_squad)
+        filter = JiraDataFilter(project=selected_project, squad=selected_squad)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        sprint_set = jira_data_filter_result.sprints
         sprint_options = [{'label': sprint, 'value': sprint} for sprint in list(sprint_set)]
 
         return sprint_options, None, [], [], [], None
-
-    def parse_components(components_str):
-        if pd.isna(components_str):
-            return set()
-
-        components = set()
-        if isinstance(components_str, str):
-            # Remove brackets and extra whitespace
-            cleaned_str = components_str.replace('[', '').replace(']', '').strip()
-
-            # First split by comma if present
-            for part in cleaned_str.split(','):
-                # Then split by hyphen if present
-                subparts = part.split('-')
-                components.update(comp.strip('"').strip("'").strip() for comp in subparts if comp.strip())
-        elif isinstance(components_str, (list, np.ndarray)):
-            for comp in components_str:
-                if pd.notna(comp):
-                    # Handle potential hyphenated values in array elements
-                    subparts = str(comp).split('-')
-                    components.update(part.strip('"').strip("'").strip() for part in subparts if part.strip())
-
-        return components
 
     @callback(
         [Output('type-dropdown', 'options', allow_duplicate=True),
@@ -84,45 +66,24 @@ def init_callbacks(app, jira_tickets):
         if not selected_project or not selected_sprint:
             return [], [], [], None, [], []
 
-        # Filter data
-        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
+        filter = JiraDataFilter(project=selected_project, squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
 
-        # Apply squad filter if selected
-        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
-
-        # Apply sprint filter
-        filtered_data = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-
-        # Apply type filter for components only
-        components_data = filtered_data.copy()
-        if selected_types and len(selected_types) > 0:
-            components_data = filtered_data[filtered_data[COLUMN_NAME_TYPE].isin(selected_types)]
-
-        # Get unique types
-        types = sorted(filtered_data[COLUMN_NAME_TYPE].unique())
+        # Get ticket types options
+        types = jira_data_filter_result.ticket_types
         type_options = [{'label': type_name, 'value': type_name} for type_name in types if pd.notna(type_name)]
 
-        # Preserve selected types if they're still valid
-        valid_types = [t['value'] for t in type_options]
-        preserved_types = selected_types if selected_types else []
-        preserved_types = [t for t in preserved_types if t in valid_types]
-
-        # Get unique tickets
+        # Get ticket options
         ticket_options = [
             {'label': f"{row['ID']} - {row['Name']}", 'value': row['ID']}
-            for _, row in filtered_data.iterrows()
+            for _, row in jira_data_filter_result.tickets.iterrows()
         ]
 
-        # Get unique components based on filtered data
-        unique_components = set()
-        for components_str in components_data['CalculatedComponents'].dropna():
-            components = parse_components(components_str)
-            unique_components.update(components)
+        # Get components options
+        components = jira_data_filter_result.components
+        component_options = [{'label': comp, 'value': comp} for comp in sorted(list(components))]
 
-        component_options = [{'label': comp, 'value': comp} for comp in sorted(list(unique_components))]
-
-        return type_options, preserved_types, ticket_options, None, component_options, []
+        return type_options, selected_types, ticket_options, None, component_options, []
 
     @callback(
         [Output('sprint-goals', 'children'),
@@ -151,8 +112,9 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return "No sprint selected", "", ""
 
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-        jira_ticket = sprint_data.iloc[0]
+        filter = JiraDataFilter(sprint=selected_sprint)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+        jira_ticket = jira_data_filter_result.tickets.iloc[0]
 
         if is_multiple_values(jira_ticket[COLUMN_NAME_SPRINT]):
             sprint_index = get_sprint_value_index(selected_sprint, jira_ticket[COLUMN_NAME_SPRINT])
@@ -167,7 +129,7 @@ def init_callbacks(app, jira_tickets):
 
         # Get sprint dates
         sprint_dates = "Sprint dates not available"
-        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data, selected_sprint)
+        sprint_start_date, sprint_end_date = get_sprint_date_range(jira_data_filter_result.tickets, selected_sprint)
         sprint_dates = f"{sprint_start_date.strftime('%d %b %Y')} - {sprint_end_date.strftime('%d %b %Y')}"
         sprint_dates_component = html.Div([
             html.H4("Sprint Dates:"),
@@ -175,12 +137,12 @@ def init_callbacks(app, jira_tickets):
         ])
 
        # Calculate total story points and ticket count
-        total_points = int(sprint_data[COLUMN_NAME_STORY_POINTS].sum())
-        ticket_count = len(sprint_data)
+        total_points = int(jira_data_filter_result.tickets[COLUMN_NAME_STORY_POINTS].sum())
+        ticket_count = len(jira_data_filter_result.tickets)
         # Calculate tickets in terminal states
         terminal_states = ['Closed', 'Done', 'Resolved', 'Rejected']
-        completed_tickets = len(sprint_data[sprint_data[COLUMN_NAME_STAGE].isin(terminal_states)])
-        total_points_completed = int(sprint_data[sprint_data[COLUMN_NAME_STAGE].isin(terminal_states)][COLUMN_NAME_STORY_POINTS].sum())
+        completed_tickets = len(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(terminal_states)])
+        total_points_completed = int(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(terminal_states)][COLUMN_NAME_STORY_POINTS].sum())
         sprint_stats_component = html.Div([
             html.H4("Sprint Planned:"),
             html.P(f"Total Points: {total_points}"),

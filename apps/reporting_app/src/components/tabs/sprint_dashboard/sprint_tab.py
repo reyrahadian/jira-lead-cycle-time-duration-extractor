@@ -10,18 +10,13 @@ from src.data.loaders import JiraDataSingleton
 jira_data_singleton = JiraDataSingleton()
 jira_data = jira_data_singleton.get_jira_data()
 
-# Extract unique values needed for filters
-UNIQUE_PROJECTS = jira_data.projects
-UNIQUE_COMPONENTS = jira_data.components
-
-
 def create_sprint_tab():
     filters = html.Div([
         html.Div([
                 # Left column - Filters
                 html.Div([
                     dbc.Card([
-                        dbc.CardBody(create_filters(unique_projects=UNIQUE_PROJECTS, unique_components=UNIQUE_COMPONENTS)),
+                        dbc.CardBody(create_filters(projects=jira_data.projects)),
                     ]),
                     dbc.Card([
                         dbc.CardBody(create_sprint_metrics()),
