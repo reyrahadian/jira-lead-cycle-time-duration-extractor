@@ -39,6 +39,10 @@ def create_tables():
                                 'color': '#9c6500'  # Dark amber text
                             }
                         ],
+                        css=[{
+                            'selector': 'p',
+                            'rule': 'margin: 0; padding: 0; display: inline;'
+                        }],
                         style_table={'overflowX': 'auto'},
                         page_size=10,
                         row_selectable='single',
@@ -83,9 +87,13 @@ def create_tables():
                     {'name': 'Parent Type', 'id': 'ParentType'},
                     {'name': 'Parent Name', 'id': 'ParentName'}
                 ],
-                markdown_options={'link_target': '_blank'},
+                markdown_options={'link_target': '_blank', 'html': False},
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
+                css=[{
+                    'selector': 'p',
+                    'rule': 'margin: 0; padding: 0; display: inline;'
+                }],
                 style_table={'overflowX': 'auto'},
                 page_size=10,
                 style_header=TABLE_HEADER_STYLE,
@@ -114,9 +122,13 @@ def create_tables():
                     {'name': 'Updated', 'id': 'UpdatedDate'},
                     {'name': 'Sprint', 'id': 'Sprint'}
                 ],
-                markdown_options={'link_target': '_blank'},
+                markdown_options={'link_target': '_blank', 'html': False},
                 sort_action='native',  # Enable native sorting
                 sort_mode='multi',     # Allow sorting by multiple columns
+                css=[{
+                    'selector': 'p',
+                    'rule': 'margin: 0; padding: 0; display: inline;'
+                }],
                 style_table={'overflowX': 'auto'},
                 page_size=10,
                 style_header=TABLE_HEADER_STYLE,

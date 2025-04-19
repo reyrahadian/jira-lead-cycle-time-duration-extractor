@@ -54,6 +54,10 @@ def create_charts():
                         selected_rows=[],
                         style_table={'overflowX': 'auto'},
                         page_size=10,
+                        css=[{
+                            'selector': 'p',
+                            'rule': 'margin: 0; padding: 0; display: inline;'
+                        }],
                         style_header=TABLE_HEADER_STYLE,
                         style_cell=TABLE_CELL_STYLE
                     )

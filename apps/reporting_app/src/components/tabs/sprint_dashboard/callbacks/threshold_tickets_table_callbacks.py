@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK, COLUMN_NAME_ID, COLUMN_NAME_NAME,
+    COLUMN_NAME_TYPE, COLUMN_NAME_ASSIGNEE_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT, COLUMN_NAME_PRIORITY
 )
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
-from src.data.data_loaders import JiraDataSingleton
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets):
@@ -55,22 +55,22 @@ def init_callbacks(app, jira_tickets):
             if exceeding_stages:
                 # Get priority value from the available columns
                 priority = None
-                if 'Priority' in ticket and pd.notna(ticket['Priority']):
-                    priority = str(ticket['Priority'])
+                if COLUMN_NAME_PRIORITY in ticket and pd.notna(ticket[COLUMN_NAME_PRIORITY]):
+                    priority = str(ticket[COLUMN_NAME_PRIORITY])
 
                 if not priority or pd.isna(priority) or priority.lower() == 'nan':
                     priority = 'N/A'
 
                 ticket_data = {
-                    'ID': ticket['ID'],
-                    'Name': ticket['Name'],
-                    'Type': ticket['Type'],
-                    'Priority': priority,
-                    'Stage': ticket['Stage'],
-                    'AssigneeName': ticket['AssigneeName'],
+                    COLUMN_NAME_ID: ticket[COLUMN_NAME_ID],
+                    COLUMN_NAME_NAME: ticket[COLUMN_NAME_NAME],
+                    COLUMN_NAME_TYPE: ticket[COLUMN_NAME_TYPE],
+                    COLUMN_NAME_PRIORITY: priority,
+                    COLUMN_NAME_STAGE: ticket[COLUMN_NAME_STAGE],
+                    COLUMN_NAME_ASSIGNEE_NAME: ticket[COLUMN_NAME_ASSIGNEE_NAME],
                     'exceeding_stages': ', '.join(exceeding_stages),
-                    'StoryPoints': ticket['StoryPoints'],
-                    'Sprint': ticket['Sprint'],
+                    COLUMN_NAME_STORY_POINTS: ticket[COLUMN_NAME_STORY_POINTS],
+                    COLUMN_NAME_SPRINT: ticket[COLUMN_NAME_SPRINT],
                     '_threshold_ratio': max_threshold_ratio,
                     '_priority_order': PRIORITY_ORDER.get(priority, 8),
                     COLUMN_NAME_LINK: ticket[COLUMN_NAME_LINK]
@@ -87,7 +87,7 @@ def init_callbacks(app, jira_tickets):
 
         # Convert ID to markdown link in the ticket_data dictionary
         for ticket in tickets_exceeding_threshold:
-            ticket['ID'] = f"[{ticket['ID']}]({ticket['Link']})"
+            ticket[COLUMN_NAME_ID] = f"[{ticket[COLUMN_NAME_ID]}]({ticket[COLUMN_NAME_LINK]})"
 
         return tickets_exceeding_threshold
 
