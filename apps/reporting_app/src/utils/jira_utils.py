@@ -1,8 +1,5 @@
 import re
 
-def create_jira_link(key):
-        return f'https://mecca-brands.atlassian.net/browse/{key}'
-
 class JiraTicketHelpers:
     @staticmethod
     def get_components_from_summary(summary: str)->list[str]:

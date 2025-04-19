@@ -1,12 +1,12 @@
 from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
+from src.components.tabs.sprint_dashboard.callbacks \
+    import avg_cycletime_callbacks, defects_table_callbacks, filters_callbacks, \
+        sprint_goals_callbacks, sprint_tickets_callbacks, threshold_tickets_table_callbacks
 from src.data.loaders import JiraDataSingleton
 from src.components.tabs.sprint_dashboard.components.header import create_header
 from src.components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
 from src.components.tabs.teams_dashboard.teams_tab import create_teams_tab
-from src.components.tabs.sprint_dashboard.callbacks import filter_callbacks as sprint_filter_callbacks, \
-    chart_callbacks as sprint_chart_callbacks, table_callbacks as sprint_table_callbacks, \
-    header_callbacks as sprint_header_callbacks
 from src.components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 from flask import send_file
 import os
@@ -41,10 +41,12 @@ app.layout = html.Div([
 ], style={'minHeight': '100vh', 'padding': '20px', 'backgroundColor': '#f8f9fa'})
 
 # Register callbacks with app
-sprint_filter_callbacks.init_callbacks(app, jira_data.tickets)
-sprint_chart_callbacks.init_callbacks(app, jira_data.tickets)
-sprint_table_callbacks.init_callbacks(app, jira_data.tickets)
-sprint_header_callbacks.init_callbacks(app, jira_data.tickets)
+filters_callbacks.init_callbacks(app, jira_data.tickets)
+sprint_goals_callbacks.init_callbacks(app, jira_data.tickets)
+avg_cycletime_callbacks.init_callbacks(app, jira_data.tickets)
+threshold_tickets_table_callbacks.init_callbacks(app, jira_data.tickets)
+defects_table_callbacks.init_callbacks(app, jira_data.tickets)
+sprint_tickets_callbacks.init_callbacks(app, jira_data.tickets)
 teams_chart_callbacks.init_callbacks(app, jira_data.tickets)
 
 if __name__ == '__main__':

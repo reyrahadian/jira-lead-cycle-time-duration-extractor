@@ -5,9 +5,8 @@ import pandas as pd
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_SQUAD, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PRIORITY,
-    STAGE_NAME_GROUPINGS, STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS
+    STAGE_NAME_GROUPINGS, STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLUMN_NAME_LINK
 )
-from src.utils.jira_utils import create_jira_link
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
 
 def init_callbacks(app, jira_tickets):
@@ -224,7 +223,7 @@ def init_callbacks(app, jira_tickets):
         )
 
         # Convert ID column to markdown links
-        stage_tickets['ID'] = stage_tickets['ID'].apply(lambda x: f'[{x}]({create_jira_link(x)})')
+        stage_tickets[COLUMN_NAME_ID] = stage_tickets.apply(lambda x: f'[{x[COLUMN_NAME_ID]}]({x[COLUMN_NAME_LINK]})', axis=1)
 
         # Convert to records and drop the sorting column
         table_data = stage_tickets[available_columns].to_dict('records')

@@ -1,8 +1,8 @@
 from dash import html, dcc
 import dash_bootstrap_components as dbc
 from src.components.tabs.sprint_dashboard.components.filters import create_filters
-from src.components.tabs.sprint_dashboard.components.sprint_metrics import create_sprint_metrics
-from src.components.tabs.sprint_dashboard.components.charts import create_charts
+from src.components.tabs.sprint_dashboard.components.sprint_goals import create_sprint_metrics
+from src.components.tabs.sprint_dashboard.components.avg_cycletime import create_charts
 from src.components.tabs.sprint_dashboard.components.tables import create_tables
 from src.data.loaders import JiraDataSingleton
 

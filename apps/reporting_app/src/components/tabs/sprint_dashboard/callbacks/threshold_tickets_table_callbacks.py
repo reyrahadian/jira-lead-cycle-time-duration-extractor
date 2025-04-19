@@ -1,15 +1,12 @@
 from dash import Input, Output, callback
 import pandas as pd
 import numpy as np
-from src.config.constants import STAGE_THRESHOLDS
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
-    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_SPRINT, COLUMN_NAME_SQUAD, COLUMN_NAME_STAGE, COLUMN_NAME_TYPE,
-    COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_PROJECT, COLUMN_NAME_PRIORITY, COLUMN_NAME_ID, COLUMN_NAME_CREATED_DATE
+    ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE
 )
-from src.utils.jira_utils import create_jira_link
 from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
-from src.utils.sprint_utils import get_sprint_date_range
+from src.data.loaders import JiraDataFilter, JiraDataSingleton
 
 def init_callbacks(app, jira_tickets):
     @callback(
@@ -24,21 +21,14 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return []
 
+        filter = JiraDataFilter(sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, squad=selected_squad, components=selected_components)
+        jira_data_filter_result = JiraDataSingleton().get_jira_data().filter_tickets(filter)
+
         # Filter data
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_data_filter_result.tickets
         sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         # Exclude tickets in Done or Closed stages
         sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin(['Done', 'Closed', 'Rejected'])]
-        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
-        if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
-        if selected_components and len(selected_components) > 0:
-            sprint_data = sprint_data[sprint_data['CalculatedComponents'].apply(
-                lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
-            )]
-        if selected_ticket:
-            sprint_data = sprint_data[sprint_data['ID'] == selected_ticket]
 
         tickets_exceeding_threshold = []
         for _, ticket in sprint_data.iterrows():
@@ -95,7 +85,7 @@ def init_callbacks(app, jira_tickets):
 
         # Convert ID to markdown link in the ticket_data dictionary
         for ticket in tickets_exceeding_threshold:
-            ticket['ID'] = f"[{ticket['ID']}]({create_jira_link(ticket['ID'])})"
+            ticket['ID'] = f"[{ticket['ID']}]({ticket['Link']})"
 
         return tickets_exceeding_threshold
 
@@ -228,147 +218,3 @@ def init_callbacks(app, jira_tickets):
             style_conditional
         )
 
-    @callback(
-        Output('defects-table', 'data'),
-        [Input('project-dropdown', 'value'),
-        Input('squad-dropdown', 'value'),
-        Input('sprint-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
-    )
-    def update_defects_table(selected_project, selected_squad, selected_sprint, selected_components):
-        if not selected_project or not selected_sprint:
-            return []
-
-        # First filter by project
-        filtered_data = jira_tickets[jira_tickets[COLUMN_NAME_PROJECT] == selected_project]
-
-        # Then filter by squad if selected
-        if selected_squad and COLUMN_NAME_SQUAD in filtered_data.columns:
-            filtered_data = filtered_data[filtered_data[COLUMN_NAME_SQUAD] == selected_squad]
-
-        # Then filter by components if selected
-        if selected_components and len(selected_components) > 0:
-            filtered_data = filtered_data[filtered_data[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
-                lambda x: any(comp in str(x).split(',') for comp in selected_components) if pd.notna(x) else False
-            )]
-
-        # Then filter by sprint
-        sprint_data = filtered_data[filtered_data[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-        sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_data, selected_sprint)
-        # Filter tickets created during the sprint
-        if sprint_start_date is not None:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]
-        if sprint_end_date is not None:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_CREATED_DATE] <= sprint_end_date]
-        if sprint_data.empty:
-            return []
-
-        # Filter defects
-        defects = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(['Bug', 'Defect'])].copy()
-
-        # Add priority order for sorting
-        defects['priority_sort'] = defects[COLUMN_NAME_PRIORITY].map(lambda x: PRIORITY_ORDER.get(x, 8))
-
-        # Prepare table data with markdown links
-        table_data = defects[[
-            'ID', 'Name', 'Priority', 'Stage', 'StoryPoints',
-            'ParentType', 'ParentName'
-        ]].copy()
-
-        # Convert ID column to markdown links
-        table_data[COLUMN_NAME_ID] = table_data[COLUMN_NAME_ID].apply(lambda x: f'[{x}]({create_jira_link(x)})')
-
-        return table_data.to_dict('records')
-
-    def parse_components(components_str):
-        if pd.isna(components_str):
-            return set()
-
-        components = set()
-        if isinstance(components_str, str):
-            # Remove brackets and extra whitespace
-            cleaned_str = components_str.replace('[', '').replace(']', '').strip()
-
-            # First split by comma if present
-            for part in cleaned_str.split(','):
-                # Then split by hyphen if present
-                subparts = part.split('-')
-                components.update(comp.strip('"').strip("'").strip() for comp in subparts if comp.strip())
-        elif isinstance(components_str, (list, np.ndarray)):
-            for comp in components_str:
-                if pd.notna(comp):
-                    # Handle potential hyphenated values in array elements
-                    subparts = str(comp).split('-')
-                    components.update(part.strip('"').strip("'").strip() for part in subparts if part.strip())
-
-        return components
-
-    def filter_by_components(data, selected_components):
-        if not selected_components or len(selected_components) == 0:
-            return data
-
-        def check_components(components_str):
-            if pd.isna(components_str) or components_str == 'nan':
-                return False
-
-            components = parse_components(components_str)
-            return any(comp in components for comp in selected_components)
-
-        return data[data['CalculatedComponents'].apply(check_components)]
-
-    @callback(
-        Output('sprint-tickets-table', 'data'),
-        [Input('sprint-dropdown', 'value'),
-        Input('type-dropdown', 'value'),
-        Input('ticket-dropdown', 'value'),
-        Input('squad-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
-    )
-    def update_tickets_in_sprint_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
-        if not selected_sprint:
-            return []  # Return empty list instead of strings
-
-        # Filter data for selected sprint
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-
-        # Apply squad filter if selected
-        if selected_squad and COLUMN_NAME_SQUAD in sprint_data.columns:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_SQUAD] == selected_squad]
-
-        # Apply type filter if selected
-        if selected_types and len(selected_types) > 0:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_TYPE].isin(selected_types)]
-
-        # Apply components filter if selected
-        if selected_components and len(selected_components) > 0:
-            sprint_data = filter_by_components(sprint_data, selected_components)
-
-        # Apply ticket filter if selected
-        if selected_ticket:
-            sprint_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
-
-        # Define type order for sorting
-        type_order = {
-            'Epic': 0,
-            'Story': 1,
-            'User Story': 1,
-            'Task': 2,
-            'Sub-task': 2,
-            'Bug': 3,
-            'Defect': 3,
-        }
-
-        # Create a copy and add the type order column
-        sprint_data = sprint_data.copy()
-        sprint_data['type_sort'] = sprint_data['Type'].map(lambda x: type_order.get(x, 999))
-
-        # Sort the data using the temporary column
-        sprint_data = sprint_data.sort_values(['type_sort', 'ID'])
-
-        # Convert ID column to markdown links
-        sprint_data[COLUMN_NAME_ID] = sprint_data[COLUMN_NAME_ID].apply(lambda x: f'[{x}]({create_jira_link(x)})')
-
-        # Convert to records and remove the temporary sorting column
-        sprint_records = sprint_data.drop(columns=['type_sort']).to_dict('records')
-
-        return sprint_records
