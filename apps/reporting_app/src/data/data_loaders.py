@@ -10,7 +10,7 @@ from src.config.constants import (
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_ID
 )
-from src.utils.stage_utils import to_stage_start_date_column_name
+from src.utils.stage_utils import StageUtils
 from src.utils.jira_utils import JiraTicketHelpers
 from src.utils.string_utils import split_string_array
 
@@ -59,7 +59,7 @@ class JiraDataLoader:
 
         for days_col in ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS:
             # Handle start date columns
-            start_col = to_stage_start_date_column_name(days_col)
+            start_col = StageUtils.to_stage_start_date_column_name(days_col)
             if start_col in jira_tickets.columns:
                 jira_tickets[start_col] = pd.to_datetime(jira_tickets[start_col], utc=True, errors='coerce')
             else:

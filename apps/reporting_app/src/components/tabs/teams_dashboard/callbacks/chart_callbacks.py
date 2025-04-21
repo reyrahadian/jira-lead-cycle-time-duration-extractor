@@ -8,7 +8,7 @@ from src.config.constants import (
     COLUMN_NAME_CREATED_DATE,
     COLUMN_NAME_SPRINT
 )
-from src.utils.stage_utils import to_stage_name
+from src.utils.stage_utils import StageUtils
 
 stage_mappings = {
     'Blocked': ['Blocked', 'Pending', 'Waiting for support'],
@@ -29,7 +29,7 @@ def merged_stages_and_counts(jira_tickets):
     merged_stages = {}
     merged_counts = {}
     for stage_name in stage_sums.index:
-        stage = to_stage_name(stage_name)
+        stage = StageUtils.to_stage_name(stage_name)
         # Check if this stage should be merged
         merged_into = None
         for merged_name, related_stages in stage_mappings.items():

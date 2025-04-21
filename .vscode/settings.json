@@ -1,6 +1,7 @@
 {
     "python.testing.pytestArgs": [
-        "apps/reporting_app/tests"
+        "apps/reporting_app/tests",
+        "--capture=no"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true

@@ -6,7 +6,7 @@ from src.config.constants import (
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK, COLUMN_NAME_ID, COLUMN_NAME_NAME,
     COLUMN_NAME_TYPE, COLUMN_NAME_ASSIGNEE_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT, COLUMN_NAME_PRIORITY
 )
-from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name
+from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets):
@@ -27,7 +27,7 @@ def init_callbacks(app, jira_tickets):
 
         # Filter data
         sprint_data = jira_data_filter_result.tickets
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+        sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         # Exclude tickets in Done or Closed stages
         sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin(['Done', 'Closed', 'Rejected'])]
 
@@ -38,7 +38,7 @@ def init_callbacks(app, jira_tickets):
             max_threshold_ratio = 0
 
             for stage_col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
-                stage_name = to_stage_name(stage_col)
+                stage_name = StageUtils.to_stage_name(stage_col)
                 days_in_stage = ticket[stage_col]
                 thresholds = STAGE_THRESHOLDS.get(stage_name, STAGE_THRESHOLDS['default'])
 
@@ -126,7 +126,7 @@ def init_callbacks(app, jira_tickets):
 
         # Process data for selected ticket
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+        sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
         if ticket_data.empty:
             return (
@@ -140,14 +140,14 @@ def init_callbacks(app, jira_tickets):
         ticket_data = ticket_data.iloc[0]
 
         # Create a dictionary to map stages to their order in all_stage_columns
-        stage_order = {to_stage_name(stage): idx
+        stage_order = {StageUtils.to_stage_name(stage): idx
                     for idx, stage in enumerate(ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS)}
 
         # Prepare stage duration data using all_stage_columns
         stage_data = []
         total_days = 0
         for col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
-            stage_name = to_stage_name(col)
+            stage_name = StageUtils.to_stage_name(col)
             # Skip the Open and Done stages
             if stage_name in ['Open', 'Done']:
                 continue

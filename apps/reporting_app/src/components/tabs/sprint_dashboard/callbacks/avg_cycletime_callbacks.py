@@ -8,7 +8,7 @@ from src.config.constants import (
     STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLUMN_NAME_LINK, COLUMN_NAME_STORY_POINTS,
     COLUMN_NAME_NAME
 )
-from src.utils.stage_utils import calculate_tickets_duration_in_sprint, to_stage_name, to_stage_in_sprint_duration_days_column_name
+from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets):
@@ -20,7 +20,7 @@ def init_callbacks(app, jira_tickets):
         filter = JiraDataFilter(squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         sprint_data = jira_data_filter_result.tickets
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+        sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
 
         # Calculate stage mean using stage_mappings
         stage_sums = {}
@@ -28,7 +28,7 @@ def init_callbacks(app, jira_tickets):
 
         for merged_stage, related_stages in STAGE_NAME_GROUPINGS.items():
             # Calculate the mean for each group of related stages
-            related_stage_columns = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
+            related_stage_columns = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
 
             # Get tickets with non-zero days in any of the related stages
             tickets_in_stage = sprint_data[sprint_data[related_stage_columns].gt(0).any(axis=1)]
@@ -52,7 +52,7 @@ def init_callbacks(app, jira_tickets):
             if stage_column not in sprint_data.columns:
                 continue  # Skip this column if it doesn't exist
 
-            stage_name = to_stage_name(stage_column)
+            stage_name = StageUtils.to_stage_name(stage_column)
 
             # Skip if stage is already processed in STAGE_NAME_GROUPINGS
             if any(stage_name in related_stages for related_stages in STAGE_NAME_GROUPINGS.values()):
@@ -174,14 +174,14 @@ def init_callbacks(app, jira_tickets):
             return [], "No tickets found", {'display': 'none'}, [], []
 
         sprint_data = jira_data_filter_result.tickets
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+        sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
 
         # Use stage_mappings to get all related stages
         related_stages = STAGE_NAME_GROUPINGS.get(clicked_stage, [clicked_stage])
         if not related_stages:
             related_stages = [clicked_stage]
         print(f"Related stages: {related_stages}")
-        days_column_names = [to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
+        days_column_names = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
         thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Get tickets that spent time in any of the related stages
@@ -292,7 +292,7 @@ def init_callbacks(app, jira_tickets):
 
         # Process data for selected ticket
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
-        sprint_data = calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
+        sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
         if ticket_data.empty:
 
@@ -307,14 +307,14 @@ def init_callbacks(app, jira_tickets):
         ticket_data = ticket_data.iloc[0]
 
         # Create a dictionary to map stages to their order in all_stage_columns
-        stage_order = {to_stage_name(stage): idx
+        stage_order = {StageUtils.to_stage_name(stage): idx
                     for idx, stage in enumerate(THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS)}
 
         # Prepare stage duration data using all_stage_columns
         stage_data = []
         total_days = 0
         for col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
-            stage_name = to_stage_name(col)
+            stage_name = StageUtils.to_stage_name(col)
             days = ticket_data[col]
             if days > 0:  # Only include stages where time was spent
                 total_days += days

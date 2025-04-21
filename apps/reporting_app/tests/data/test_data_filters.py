@@ -1,65 +1,77 @@
 import pandas as pd
-from src.data.data_loaders import JiraDataLoader
+from src.data.data_loaders import JiraDataLoader, CsvDataLoader
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
-from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_NAME, COLUMN_NAME_PROJECT, \
-    COLUMN_NAME_COMPONENTS, COLUMN_NAME_SQUAD, COLUMN_NAME_CREATED_DATE, COLUMN_NAME_UPDATED_DATE,\
-    COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS, COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE
-
-def __get_jira_data():
-    return pd.DataFrame({
-        COLUMN_NAME_ID: ['COM-123', 'COM-124', 'DAS-125'],
-        COLUMN_NAME_NAME: ['[BFF|BFFWeb] - Update product catalog','[SFCC] - Update product catalog', '[FEApp] - Add new feature'],
-        COLUMN_NAME_PROJECT: ['Commerce', 'Commerce', 'Commerce'],
-        COLUMN_NAME_COMPONENTS: ['["BFF","BFFWeb"]', '["SFCC"]', '["FEApp"]'],
-        COLUMN_NAME_SQUAD: ['Team1', None, 'Team2'],
-        COLUMN_NAME_CREATED_DATE: ['2024-01-01', '2024-01-02', '2024-01-03'],
-        COLUMN_NAME_UPDATED_DATE: ['2024-01-15', '2024-01-16', '2024-01-17'],
-        COLUMN_NAME_STAGE_IN_DEVELOPMENT_DAYS: [10, 5, 7],
-        COLUMN_NAME_SPRINT: ['LFW 1.2.25', 'LFW 1.1.25', 'LFW 1.2.25'],
-        COLUMN_NAME_TYPE: ['Story', 'Task', 'Spike']
-    })
+from src.config.constants import COLUMN_NAME_ID
+from tests.test_helpers import TestHelpers
 
 def test_jiradataloader_filter_tickets(mocker):
-    csv_data_loader = mocker.Mock()
-    csv_data_loader.load_data.return_value = __get_jira_data()
-    jira_data_loader = JiraDataLoader(csv_data_loader)
-    jira_data = jira_data_loader.load_data("test_data/jira_metrics.csv")
+    mock_csv_loader = mocker.Mock(spec=CsvDataLoader)
+    mock_csv_loader.load_data.return_value = TestHelpers.get_jira_data()
+    jira_data_loader = JiraDataLoader(mock_csv_loader)
+    jira_data = jira_data_loader.load_data("jira_metrics.csv")
 
-    filter = JiraDataFilter(project='Commerce')
+    filter = JiraDataFilter(project='Digital MECCA App')
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1','Team2']
+    assert jira_data_filter_result.squads == ['LFApp','UFApp','Website Experience', 'eCommerce']
 
-    filter = JiraDataFilter(project='Commerce', squad='Team1')
+    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp')
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1']
-    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.squads == ['LFApp']
+    expected_sprints = [
+        'LFW 7.2.25',
+        'MOB - Sprint 1',
+        'LFA - Sprint 31',
+        'LFA - Sprint 30',
+        'LFA - Sprint 29',
+        'LFA - Sprint 28',
+        'LFA - Sprint 27',
+        'LFA - Sprint 26',
+        'LFA - Sprint 25',
+        'LFA - Sprint 24',
+        'LFA - Sprint 23',
+        'LFA - Sprint 22',
+        'LFA - Sprint 20',
+        'LFA - Sprint 17',
+        'Shaping',
+        'LFA - Sprint 7',
+        'Dandelion - Refined',
+        'Dandelion - Sprint 88',
+        'Mecca App - Sprint 62',
+        'MECCA App- Sprint 60',
+        'MECCA App - Sprint 59',
+        'MECCA App - Sprint 57',
+        'MOB - Sprint 2',
+        'LFA - Sprint 2',
+        'MOB - Sprint 3',
+        'MOB - Ready for Development'
+    ]
+    assert set(jira_data_filter_result.sprints) == set(expected_sprints)
 
-    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25')
+    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1')
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1']
-    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.squads == ['LFApp']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1','LFA - Sprint 31','LFA - Sprint 30']
+    assert jira_data_filter_result.ticket_types == ['Bug','Story','Task']
+
+    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'])
+    jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
+    assert jira_data_filter_result.squads == ['LFApp']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Story']
+    assert jira_data_filter_result.components == ['Frontend']
 
-    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'])
+    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'], components=['Frontend'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1']
-    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.squads == ['LFApp']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Story']
-    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
+    assert jira_data_filter_result.components == ['Frontend']
 
-    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'], components=['BFF'])
+    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'],  components=['Frontend'], ticketId='DMA-1462')
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1']
-    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
+    assert jira_data_filter_result.squads == ['LFApp']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Story']
-    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
-
-    filter = JiraDataFilter(project='Commerce', squad='Team1', sprint='LFW 1.2.25', ticket_types=['Story'], components=['BFF'], ticketId='COM-123')
-    jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
-    assert jira_data_filter_result.squads == ['Team1']
-    assert jira_data_filter_result.sprints == ['LFW 1.2.25']
-    assert jira_data_filter_result.ticket_types == ['Story']
-    assert jira_data_filter_result.components == ['BFF','BFFWeb','SFCC']
-    assert len(jira_data_filter_result.tickets) == 1
-
+    assert jira_data_filter_result.components == ['Frontend']
+    assert jira_data_filter_result.tickets[COLUMN_NAME_ID].iloc[0] == 'DMA-1462'
 
