@@ -1,4 +1,5 @@
 import pandas as pd
+from datetime import datetime
 from src.config.constants import (
     STAGE_NAME_BACKLOG,
     STAGE_NAME_DELIVERY_BACKLOG,
@@ -13,6 +14,8 @@ from src.config.constants import (
     STAGE_NAME_CLOSED,
     STAGE_NAME_BUG_FIXED,
     ALL_STAGE_NAMES,
+    COLUMN_NAME_PROJECT,
+    COLUMN_NAME_CREATED_DATE,
     COLUMN_NAME_FIX_VERSIONS,
     COLUMN_NAME_PRIORITY
 )
@@ -43,6 +46,28 @@ class JiraDataDoraMetricsResult:
 
     def format_percentage(self, percentage: float) -> str:
         return f"{percentage:.2f}%"
+
+class JiraDataDoraMetricsFilter:
+    _projects: list[str]
+    _start_date: datetime
+    _end_date: datetime
+
+    @property
+    def projects(self) -> list[str]:
+        return self._projects
+
+    @property
+    def start_date(self) -> datetime:
+        return self._start_date
+
+    @property
+    def end_date(self) -> datetime:
+        return self._end_date
+
+    def __init__(self, projects: list[str], start_date: datetime, end_date: datetime):
+        self._projects = projects
+        self._start_date = start_date
+        self._end_date = end_date
 
 class JiraDataDoraMetrics:
     _tickets: pd.DataFrame
@@ -87,33 +112,48 @@ class JiraDataDoraMetrics:
 
         return average_duration
 
-    def get_lead_time_for_changes(self) -> JiraDataDoraMetricsResult:
-        average_duration = self.__get_avg_duration_timespent_in_progress(self._tickets)
+    def __get_filtered_tickets(self, filter: JiraDataDoraMetricsFilter) -> pd.DataFrame:
+        if filter.projects:
+            self._tickets = self._tickets[self._tickets[COLUMN_NAME_PROJECT].isin(filter.projects)]
+
+        if filter.start_date:
+            self._tickets = self._tickets[self._tickets[COLUMN_NAME_CREATED_DATE] >= filter.start_date]
+
+        if filter.end_date:
+            self._tickets = self._tickets[self._tickets[COLUMN_NAME_CREATED_DATE] <= filter.end_date]
+
+        return self._tickets
+
+    def get_lead_time_for_changes(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
+        filtered_tickets = self.__get_filtered_tickets(filter)
+        average_duration = self.__get_avg_duration_timespent_in_progress(filtered_tickets)
 
         return JiraDataDoraMetricsResult(category='Lead Time for Changes', value=average_duration)
 
-    def get_deployment_frequency(self) -> JiraDataDoraMetricsResult:
-        # we need to capture exact day when a prod deployment was done as part of the JIRA metrics
+    def get_deployment_frequency(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
+        #TODO: we need to capture exact day when a prod deployment was done as part of the JIRA metrics
 
         return JiraDataDoraMetricsResult(category='Deployment Frequency', value=0)
 
-    def get_change_failure_rate(self) -> JiraDataDoraMetricsResult:
+    def get_change_failure_rate(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
+        filtered_tickets = self.__get_filtered_tickets(filter)
         # we assume that all tickets that has fix version has been deployed to prod
-        ticket_deployed_to_prod = self._tickets[self._tickets[COLUMN_NAME_FIX_VERSIONS].notna()]
+        ticket_deployed_to_prod = filtered_tickets[filtered_tickets[COLUMN_NAME_FIX_VERSIONS].notna()]
         # we assume tickets that are set with priority P1 or P2 are incident tickets
-        incident_tickets = self._tickets[
-            (self._tickets[COLUMN_NAME_FIX_VERSIONS].notna()) &
-            (self._tickets[COLUMN_NAME_PRIORITY].isin(['P1', 'P2']))
+        incident_tickets = filtered_tickets[
+            (filtered_tickets[COLUMN_NAME_FIX_VERSIONS].notna()) &
+            (filtered_tickets[COLUMN_NAME_PRIORITY].isin(['P1', 'P2']))
         ]
         change_failure_rate = (len(incident_tickets) / len(ticket_deployed_to_prod)) * 100 if len(ticket_deployed_to_prod) > 0 else 0
 
         return JiraDataDoraMetricsResult(category='Change Failure Rate', value=change_failure_rate)
 
-    def get_mean_time_to_recovery(self) -> JiraDataDoraMetricsResult:
+    def get_mean_time_to_recovery(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
+        filtered_tickets = self.__get_filtered_tickets(filter)
         # we assume tickets that are set with priority P1 or P2 are incident tickets
-        incident_tickets = self._tickets[
-            (self._tickets[COLUMN_NAME_FIX_VERSIONS].notna()) &
-            (self._tickets[COLUMN_NAME_PRIORITY].isin(['P1', 'P2']))
+        incident_tickets = filtered_tickets[
+            (filtered_tickets[COLUMN_NAME_FIX_VERSIONS].notna()) &
+            (filtered_tickets[COLUMN_NAME_PRIORITY].isin(['P1', 'P2']))
         ]
 
         # get average time spent to recover from an incident
