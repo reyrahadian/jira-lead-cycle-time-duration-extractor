@@ -1,9 +1,9 @@
 from dash import Input, Output, callback
 from src.data.data_dora import JiraDataDoraMetrics, JiraDataDoraMetricsFilter
-from src.data.data_filters import JiraDataFilterService, JiraDataFilter
 import pandas as pd
 from datetime import datetime, timedelta
 from pytz import UTC
+from dash.exceptions import PreventUpdate
 
 def init_callbacks(app, jira_tickets: pd.DataFrame):
     def _get_dates_from_time_range(time_range: str) -> tuple[datetime, datetime]:
@@ -45,7 +45,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('dora-tab-date-range', 'start_date'),
         Input('dora-tab-date-range', 'end_date')
     )
-    def update_lead_time_to_change_tile(projects, squads, time_range, start_date, end_date):
+    def update_lead_time_to_change_tile(projects: list[str], squads: list[str], time_range: str, start_date: str, end_date: str):
+        if time_range == 'custom_date_range' and (start_date is None or end_date is None):
+            raise PreventUpdate
+
         start_date, end_date = _get_dates(time_range, start_date, end_date)
 
         jira_data_dora_metrics = JiraDataDoraMetrics(jira_tickets)
@@ -76,7 +79,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('dora-tab-date-range', 'start_date'),
         Input('dora-tab-date-range', 'end_date')
     )
-    def update_deployment_frequency_tile(projects, squads, time_range, start_date, end_date):
+    def update_deployment_frequency_tile(projects: list[str], squads: list[str], time_range: str, start_date: str, end_date: str):
+        if time_range == 'custom_date_range' and (start_date is None or end_date is None):
+            raise PreventUpdate
+
         start_date, end_date = _get_dates(time_range, start_date, end_date)
 
         jira_data_dora_metrics = JiraDataDoraMetrics(jira_tickets)
@@ -108,7 +114,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('dora-tab-date-range', 'start_date'),
         Input('dora-tab-date-range', 'end_date')
     )
-    def update_change_failure_rate_tile(projects, squads, time_range, start_date, end_date):
+    def update_change_failure_rate_tile(projects: list[str], squads: list[str], time_range: str, start_date: str, end_date: str):
+        if time_range == 'custom_date_range' and (start_date is None or end_date is None):
+            raise PreventUpdate
+
         start_date, end_date = _get_dates(time_range, start_date, end_date)
 
         jira_data_dora_metrics = JiraDataDoraMetrics(jira_tickets)
@@ -139,7 +148,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('dora-tab-date-range', 'start_date'),
         Input('dora-tab-date-range', 'end_date')
     )
-    def update_time_to_restore_service_tile(projects, squads, time_range, start_date, end_date):
+    def update_time_to_restore_service_tile(projects: list[str], squads: list[str], time_range: str, start_date: str, end_date: str):
+        if time_range == 'custom_date_range' and (start_date is None or end_date is None):
+            raise PreventUpdate
+
         start_date, end_date = _get_dates(time_range, start_date, end_date)
 
         jira_data_dora_metrics = JiraDataDoraMetrics(jira_tickets)
@@ -159,12 +171,3 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             badge_color = 'danger'
 
         return badge_text, badge_color, time_to_restore_service.format_days_duration(time_to_restore_service.value)
-
-    @callback(
-        Output('dora-tab-date-range-container', 'style'),
-        Input('dora-tab-time-range-dropdown', 'value')
-    )
-    def update_date_range_visibility(time_range):
-        if time_range == 'custom_date_range':
-            return {'display': 'block'}
-        return {'display': 'none'}

@@ -78,15 +78,20 @@ class JiraDataFilterService:
         sprint_dates = {}
         for sprint in sprint_set:
             # Get one ticket from this sprint to get its dates
-            sprint_ticket = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)].iloc[0]
-            # Convert the Series to a DataFrame with a single row
-            sprint_ticket_df = sprint_ticket.to_frame().T
-            start_date, _ = get_sprint_date_range(sprint_ticket_df, sprint)
-            if start_date and not pd.isna(start_date):
-                # Ensure timezone-naive comparison by converting to UTC and removing timezone
-                sprint_dates[sprint] = start_date.tz_localize(None) if start_date.tz else start_date
+            sprint_tickets = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)]
+            if not sprint_tickets.empty:
+                sprint_ticket = sprint_tickets.iloc[0]
+                # Convert the Series to a DataFrame with a single row
+                sprint_ticket_df = sprint_ticket.to_frame().T
+                start_date, _ = get_sprint_date_range(sprint_ticket_df, sprint)
+                if start_date and not pd.isna(start_date):
+                    # Ensure timezone-naive comparison by converting to UTC and removing timezone
+                    sprint_dates[sprint] = start_date.tz_localize(None) if start_date.tz else start_date
+                else:
+                    # Use timezone-naive minimum timestamp
+                    sprint_dates[sprint] = pd.Timestamp.min.tz_localize(None)
             else:
-                # Use timezone-naive minimum timestamp
+                # If no tickets found for this sprint, use minimum timestamp
                 sprint_dates[sprint] = pd.Timestamp.min.tz_localize(None)
 
         # Sort sprints by start date descending

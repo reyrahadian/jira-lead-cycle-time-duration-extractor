@@ -28,4 +28,6 @@ services:
       start_period: 10s
     environment:
       - REPORTING_CSV_PATH=/data/jira_metrics.csv
+      - DORA_DASHBOARD_VALID_PROJECT_NAMES=${DORA_DASHBOARD_VALID_PROJECT_NAMES}
+      - SPRINT_DASHBOARD_VALID_PROJECT_NAMES=${SPRINT_DASHBOARD_VALID_PROJECT_NAMES}
       - HOST=0.0.0.0

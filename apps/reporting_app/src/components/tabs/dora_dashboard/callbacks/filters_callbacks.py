@@ -23,3 +23,11 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             {'label': squad, 'value': squad} for squad in squads
         ]
 
+    @callback(
+        Output('dora-tab-date-range-container', 'style'),
+        Input('dora-tab-time-range-dropdown', 'value')
+    )
+    def update_date_range_visibility(time_range):
+        if time_range == 'custom_date_range':
+            return {'display': 'block'}
+        return {'display': 'none'}
