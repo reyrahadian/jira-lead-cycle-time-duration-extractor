@@ -9,7 +9,14 @@ terraform {
 
 # Configure AWS Provider
 provider "aws" {
-  region = var.aws_region
+  region  = var.aws_region
+  profile = var.aws_profile
+  default_tags {
+    tags = {
+      Environment = var.environment
+      Application = var.application_name
+    }
+  }
 }
 
 # Add this at the top of your file with other data sources
@@ -29,6 +36,8 @@ resource "aws_ecs_cluster" "main" {
     Environment = var.environment
     Application = var.application_name
   }
+
+  depends_on = [data.aws_caller_identity.current]
 }
 
 # Create ECR Repository for Jira Metrics Extractor
@@ -128,6 +137,14 @@ resource "aws_ecs_task_definition" "reporting" {
         {
           name  = "HOST"
           value = "0.0.0.0"
+        },
+        {
+          name  = "DORA_DASHBOARD_VALID_PROJECT_NAMES"
+          value = var.dora_dashboard_valid_project_names
+        },
+        {
+          name  = "SPRINT_DASHBOARD_VALID_PROJECT_NAMES"
+          value = var.sprint_dashboard_valid_project_names
         }
       ]
 
@@ -559,6 +576,30 @@ resource "aws_ssm_parameter" "custom_jql" {
   description = "Custom JQL for metrics extractor"
   type        = "String"
   value       = var.custom_jql
+
+  tags = {
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+resource "aws_ssm_parameter" "dora_dashboard_valid_project_names" {
+  name        = "/${var.application_name}/${var.environment}/dora_dashboard_valid_project_names"
+  description = "Comma-separated list of valid project names for DORA dashboard"
+  type        = "String"
+  value       = var.dora_dashboard_valid_project_names
+
+  tags = {
+    Environment = var.environment
+    Application = var.application_name
+  }
+}
+
+resource "aws_ssm_parameter" "sprint_dashboard_valid_project_names" {
+  name        = "/${var.application_name}/${var.environment}/sprint_dashboard_valid_project_names"
+  description = "Comma-separated list of valid project names for Sprint dashboard"
+  type        = "String"
+  value       = var.sprint_dashboard_valid_project_names
 
   tags = {
     Environment = var.environment

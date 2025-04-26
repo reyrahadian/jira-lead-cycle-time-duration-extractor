@@ -4,6 +4,12 @@ variable "aws_region" {
   default     = "ap-southeast-2"
 }
 
+variable "aws_profile" {
+  description = "AWS profile to use for authentication"
+  type        = string
+  default     = "default"
+}
+
 variable "cluster_name" {
   description = "Name of the ECS cluster"
   type        = string
@@ -54,6 +60,18 @@ variable "jira_password" {
 
 variable "custom_jql" {
   description = "Custom JQL query for Jira metrics extraction"
+  type        = string
+  default     = ""
+}
+
+variable "dora_dashboard_valid_project_names" {
+  description = "Comma-separated list of valid project names for DORA dashboard"
+  type        = string
+  default     = ""
+}
+
+variable "sprint_dashboard_valid_project_names" {
+  description = "Comma-separated list of valid project names for Sprint dashboard"
   type        = string
   default     = ""
 }

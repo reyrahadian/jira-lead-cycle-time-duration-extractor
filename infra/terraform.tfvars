@@ -1,4 +1,5 @@
 aws_region   = "ap-southeast-2"
+aws_profile  = "mecca-sandbox"
 vpc_id       = "vpc-c38d7fa5"
 subnet_cidrs = ["172.31.7.0/24", "172.31.8.0/24"]
 application_name = "jira-metrics"
@@ -8,4 +9,6 @@ reporting_ecr_repository_name = "reporting-app"
 environment  = "dev"
 jira_username = "rey.rahadian@mecca.com.au"
 jira_password = ""
-custom_jql = "project in (LFW, MFW, DMA, COM, SIT, WEB) and updated >= -12w"
+custom_jql = "project in (LFW, MFW, DMA, COM, SIT, WEB, SA, DAS) and updated >= -16w"
+dora_dashboard_valid_project_names="Tieramisu,Digital MECCA App,Dory Squad"
+sprint_dashboard_valid_project_names="Tieramisu,Digital MECCA App,Dory Squad,Sitecore,Digital App Services,SuperHost App"
