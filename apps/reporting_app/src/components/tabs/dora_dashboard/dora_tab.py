@@ -8,7 +8,7 @@ from src.config.app_settings import AppSettings
 def create_dora_tab(jira_data: JiraData):
     all_projects = jira_data.get_projects()
     app_settings = AppSettings()
-    projects = [project for project in all_projects if project in app_settings.DORA_VALID_PROJECT_NAMES]
+    projects = [project for project in all_projects if project in app_settings.DORA_DASHBOARD_VALID_PROJECT_NAMES]
 
     components = html.Div([
         html.Div([

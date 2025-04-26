@@ -5,14 +5,18 @@ from src.components.tabs.sprint_dashboard.components.sprint_goals import create_
 from src.components.tabs.sprint_dashboard.components.avg_cycletime import create_charts
 from src.components.tabs.sprint_dashboard.components.tables import create_tables
 from src.data.data_loaders import JiraData
+from src.config.app_settings import AppSettings
 
 def create_sprint_tab(jira_data: JiraData):
+    app_settings = AppSettings()
+    projects = [project for project in jira_data.get_projects() if project in app_settings.SPRINT_DASHBOARD_VALID_PROJECT_NAMES]
+
     filters = html.Div([
         html.Div([
                 # Left column - Filters
                 html.Div([
                     dbc.Card([
-                        dbc.CardBody(create_filters(projects=jira_data.get_projects())),
+                        dbc.CardBody(create_filters(projects=projects)),
                     ]),
                     dbc.Card([
                         dbc.CardBody(create_sprint_metrics()),

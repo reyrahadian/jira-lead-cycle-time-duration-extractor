@@ -13,6 +13,10 @@ from src.components.tabs.dora_dashboard.callbacks import filters_callbacks as do
 from src.components.tabs.dora_dashboard.callbacks import dora_tiles_callbacks
 from flask import send_file
 import os
+from dotenv import load_dotenv
+
+# load environment variables
+load_dotenv()
 
 # Access jira data
 jira_data_singleton = JiraDataSingleton()
