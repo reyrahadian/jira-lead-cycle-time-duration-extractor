@@ -3,17 +3,17 @@ import pandas as pd
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_NAME
 
-def init_callbacks(app, jira_tickets):
+def init_callbacks(app, jira_tickets: pd.DataFrame):
     @callback(
     [Output('squad-dropdown', 'options'),
      Output('squad-dropdown', 'value')],
     [Input('project-dropdown', 'value')]
     )
-    def update_squad_dropdown_options(selected_project):
+    def update_squad_dropdown_options(selected_project: str) -> tuple[list[dict], None]:
         if not selected_project:
             return [], None
 
-        filter = JiraDataFilter(project=selected_project)
+        filter = JiraDataFilter(projects=[selected_project])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         squads = jira_data_filter_result.squads
         squad_options = [{'label': squad, 'value': squad} for squad in sorted(squads)]
@@ -30,11 +30,12 @@ def init_callbacks(app, jira_tickets):
         Input('squad-dropdown', 'value')],
         prevent_initial_call=True
     )
-    def update_sprint_dropdown_options(selected_project, selected_squad):
+    def update_sprint_dropdown_options(selected_project: str, selected_squad: str) -> tuple[list[dict], None, list[dict], list[dict], list[dict], None]:
         if not selected_project:
             return [], None, [], [], [], None
 
-        filter = JiraDataFilter(project=selected_project, squad=selected_squad)
+        filter = JiraDataFilter(projects=[selected_project],
+                                squads=[selected_squad])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         sprint_set = jira_data_filter_result.sprints
         sprint_options = [{'label': sprint, 'value': sprint} for sprint in list(sprint_set)]
@@ -54,11 +55,14 @@ def init_callbacks(app, jira_tickets):
         Input('type-dropdown', 'value')],
         prevent_initial_call=True
     )
-    def update_type_and_components_dropdown_options(selected_project, selected_squad, selected_sprint, selected_types):
+    def update_type_and_components_dropdown_options(selected_project: str, selected_squad: str, selected_sprint: str, selected_types: list[str]) -> tuple[list[dict], list[str], list[dict], None, list[dict], list[str]]:
         if not selected_project or not selected_sprint:
             return [], [], [], None, [], []
 
-        filter = JiraDataFilter(project=selected_project, squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types)
+        filter = JiraDataFilter(projects=[selected_project],
+                                squads=[selected_squad],
+                                sprints=[selected_sprint],
+                                ticket_types=selected_types)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         # Get ticket types options

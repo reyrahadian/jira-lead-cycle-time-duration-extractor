@@ -10,6 +10,7 @@ from src.components.tabs.teams_dashboard.teams_tab import create_teams_tab
 from src.components.tabs.teams_dashboard.callbacks import chart_callbacks as teams_chart_callbacks
 from src.components.tabs.dora_dashboard.dora_tab import create_dora_tab
 from src.components.tabs.dora_dashboard.callbacks import filters_callbacks as dora_filters_callbacks
+from src.components.tabs.dora_dashboard.callbacks import dora_tiles_callbacks
 from flask import send_file
 import os
 
@@ -51,6 +52,7 @@ threshold_tickets_table_callbacks.init_callbacks(app, jira_data.get_tickets())
 defects_table_callbacks.init_callbacks(app, jira_data.get_tickets())
 sprint_tickets_callbacks.init_callbacks(app, jira_data.get_tickets())
 dora_filters_callbacks.init_callbacks(app, jira_data.get_tickets())
+dora_tiles_callbacks.init_callbacks(app, jira_data.get_tickets())
 #teams_chart_callbacks.init_callbacks(app, jira_data.get_tickets())
 
 if __name__ == '__main__':

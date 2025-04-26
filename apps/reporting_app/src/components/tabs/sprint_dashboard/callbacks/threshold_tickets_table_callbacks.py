@@ -4,7 +4,8 @@ import numpy as np
 from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK, COLUMN_NAME_ID, COLUMN_NAME_NAME,
-    COLUMN_NAME_TYPE, COLUMN_NAME_ASSIGNEE_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT, COLUMN_NAME_PRIORITY
+    COLUMN_NAME_TYPE, COLUMN_NAME_ASSIGNEE_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT, COLUMN_NAME_PRIORITY,
+    STAGE_NAME_DONE, STAGE_NAME_CLOSED, STAGE_NAME_REJECTED
 )
 from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
@@ -18,18 +19,22 @@ def init_callbacks(app, jira_tickets):
         Input('squad-dropdown', 'value'),
         Input('components-dropdown', 'value')]
     )
-    def update_tickets_exceeding_threshold_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+    def update_tickets_exceeding_threshold_table(selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]) -> list[dict]:
         if not selected_sprint:
             return []
 
-        filter = JiraDataFilter(sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, squad=selected_squad, components=selected_components)
+        filter = JiraDataFilter(sprints=[selected_sprint],
+                                ticket_types=selected_types,
+                                ticketIds=[selected_ticket],
+                                squads=[selected_squad],
+                                components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         # Filter data
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         # Exclude tickets in Done or Closed stages
-        sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin(['Done', 'Closed', 'Rejected'])]
+        #sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin([STAGE_NAME_DONE, STAGE_NAME_CLOSED, STAGE_NAME_REJECTED])]
 
         tickets_exceeding_threshold = []
         for _, ticket in sprint_data.iterrows():

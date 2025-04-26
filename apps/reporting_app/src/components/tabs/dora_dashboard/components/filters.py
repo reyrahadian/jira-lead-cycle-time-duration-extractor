@@ -5,13 +5,22 @@ def create_filters(projects=[]):
     filters = html.Div([
         html.H2("Filters", style={'marginBottom': '20px'}),
         html.Div([
-            html.Label("Project:", style={'fontWeight': 'bold'}),
+            html.Label("Projects:", style={'fontWeight': 'bold'}),
             dcc.Dropdown(
                 id='dora-tab-project-dropdown',
                 options=[{'label': project, 'value': project} for project in projects],
                 value=None,
                 multi=True,
                 placeholder="All projects",
+                style={'marginBottom': '15px'}
+            ),
+            html.Label("Squads:", style={'fontWeight': 'bold', 'marginTop': '10px'}),
+            dcc.Dropdown(
+                id='dora-tab-squads-dropdown',
+                options=[],
+                value=None,
+                multi=True,
+                placeholder="All squads",
                 style={'marginBottom': '15px'}
             ),
             html.Label("Date Range:", style={'fontWeight': 'bold', 'marginTop': '10px'}),
@@ -25,9 +34,8 @@ def create_filters(projects=[]):
                     {'label': 'Today', 'value': 'today'},
                     {'label': 'Custom Date Range', 'value': 'custom_date_range'},
                 ],
-                value=None,
+                value='last_6_months',
                 multi=False,
-                placeholder="From Beginning",
                 style={'marginBottom': '15px'}
             ),
             html.Div(

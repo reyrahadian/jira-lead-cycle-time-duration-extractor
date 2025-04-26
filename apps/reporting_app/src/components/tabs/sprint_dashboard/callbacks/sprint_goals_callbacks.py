@@ -1,5 +1,4 @@
 from dash import Input, Output, callback, html
-from src.data.data_loaders import JiraDataSingleton
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.config.constants import COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_STAGE
 from src.utils.sprint_utils import get_sprint_date_range
@@ -12,7 +11,7 @@ def init_callbacks(app, jira_tickets):
          Output('sprint-stats', 'children')],
         [Input('sprint-dropdown', 'value')]
     )
-    def update_sprint_info(selected_sprint):
+    def update_sprint_info(selected_sprint: str) -> tuple[str, str, str]:
         def is_multiple_values(value):
             if isinstance(value, str) and '[' in value:
                 return True
@@ -33,7 +32,7 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return "No sprint selected", "", ""
 
-        filter = JiraDataFilter(sprint=selected_sprint)
+        filter = JiraDataFilter(sprints=[selected_sprint])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         jira_ticket = jira_data_filter_result.tickets.iloc[0]
 

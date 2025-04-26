@@ -10,11 +10,11 @@ def test_jiradataloader_filter_tickets(mocker):
     jira_data_loader = JiraDataLoader(mock_csv_loader)
     jira_data = jira_data_loader.load_data("jira_metrics.csv")
 
-    filter = JiraDataFilter(project='Digital MECCA App')
+    filter = JiraDataFilter(projects=['Digital MECCA App'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp','UFApp','Website Experience', 'eCommerce']
 
-    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp')
+    filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
     expected_sprints = [
@@ -47,27 +47,27 @@ def test_jiradataloader_filter_tickets(mocker):
     ]
     assert set(jira_data_filter_result.sprints) == set(expected_sprints)
 
-    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1')
+    filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
-    assert jira_data_filter_result.sprints == ['MOB - Sprint 1','LFA - Sprint 31','LFA - Sprint 30']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Bug','Story','Task']
 
-    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'])
+    filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'], ticket_types=['Story'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
     assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Story']
     assert jira_data_filter_result.components == ['Frontend']
 
-    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'], components=['Frontend'])
+    filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'], ticket_types=['Story'], components=['Frontend'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
     assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
     assert jira_data_filter_result.ticket_types == ['Story']
     assert jira_data_filter_result.components == ['Frontend']
 
-    filter = JiraDataFilter(project='Digital MECCA App', squad='LFApp', sprint='MOB - Sprint 1', ticket_types=['Story'],  components=['Frontend'], ticketId='DMA-1462')
+    filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'], ticket_types=['Story'],  components=['Frontend'], ticketIds=['DMA-1462'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
     assert jira_data_filter_result.sprints == ['MOB - Sprint 1']

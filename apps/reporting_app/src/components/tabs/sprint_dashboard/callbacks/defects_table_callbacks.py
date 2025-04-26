@@ -1,5 +1,4 @@
 from dash import callback, Input, Output
-from src.data.data_loaders import JiraDataSingleton
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_TYPE, COLUMN_NAME_PRIORITY, \
     COLUMN_NAME_STORY_POINTS, COLUMN_NAME_PARENT_TYPE, COLUMN_NAME_PARENT_NAME, COLUMN_NAME_CREATED_DATE, PRIORITY_ORDER, \
@@ -14,16 +13,19 @@ def init_callbacks(app, jira_tickets):
         Input('sprint-dropdown', 'value'),
         Input('components-dropdown', 'value')]
     )
-    def update_defects_table(selected_project, selected_squad, selected_sprint, selected_components):
+    def update_defects_table(selected_project: str, selected_squad: str, selected_sprint: str, selected_components: list[str]) -> list[dict]:
         if not selected_project or not selected_sprint:
             return []
 
-        filter = JiraDataFilter(project=selected_project, sprint=selected_sprint, squad=selected_squad, components=selected_components)
+        filter = JiraDataFilter(projects=[selected_project],
+                                sprints=[selected_sprint],
+                                squads=[selected_squad],
+                                components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         # Filter defects
         defects = jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_TYPE].isin(['Bug', 'Defect'])].copy()
-        sprint_start_date, sprint_end_date = get_sprint_date_range(defects, filter.sprint)
+        sprint_start_date, sprint_end_date = get_sprint_date_range(defects, selected_sprint)
         # Filter defects created during the sprint
         if sprint_start_date is not None:
             defects = defects[defects[COLUMN_NAME_CREATED_DATE] >= sprint_start_date]

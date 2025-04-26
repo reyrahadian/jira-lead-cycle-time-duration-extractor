@@ -21,7 +21,8 @@ from src.config.constants import (
     COLUMN_NAME_SPRINT,
     COLUMN_NAME_STAGE,
     STAGE_NAME_DEPLOYED_TO_PROD,
-    STAGE_NAME_IN_PRODUCTION
+    STAGE_NAME_IN_PRODUCTION,
+    COLUMN_NAME_SQUAD
 )
 from src.utils.stage_utils import StageUtils
 from src.utils.string_utils import split_string_array
@@ -54,12 +55,17 @@ class JiraDataDoraMetricsResult:
 
 class JiraDataDoraMetricsFilter:
     _projects: list[str]
+    _squads: list[str]
     _start_date: datetime
     _end_date: datetime
 
     @property
     def projects(self) -> list[str]:
         return self._projects
+
+    @property
+    def squads(self) -> list[str]:
+        return self._squads
 
     @property
     def start_date(self) -> datetime:
@@ -69,8 +75,9 @@ class JiraDataDoraMetricsFilter:
     def end_date(self) -> datetime:
         return self._end_date
 
-    def __init__(self, projects: list[str], start_date: datetime, end_date: datetime):
+    def __init__(self, projects: list[str], squads: list[str], start_date: datetime, end_date: datetime):
         self._projects = projects
+        self._squads = squads
         self._start_date = start_date
         self._end_date = end_date
 
@@ -120,6 +127,9 @@ class JiraDataDoraMetrics:
     def __get_filtered_tickets(self, filter: JiraDataDoraMetricsFilter) -> pd.DataFrame:
         if filter.projects:
             self._tickets = self._tickets[self._tickets[COLUMN_NAME_PROJECT].isin(filter.projects)]
+
+        if filter.squads:
+            self._tickets = self._tickets[self._tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
 
         if filter.start_date:
             self._tickets = self._tickets[self._tickets[COLUMN_NAME_CREATED_DATE] >= filter.start_date]

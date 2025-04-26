@@ -5,19 +5,19 @@ from src.utils.string_utils import split_string_array
 import pandas as pd
 
 class JiraDataFilter:
-    project: str
-    squad: str
-    sprint: str
+    projects: list[str]
+    squads: list[str]
+    sprints: list[str]
     ticket_types: list[str]
-    ticketId: str
+    ticketIds: list[str]
     components: list[str]
 
-    def __init__(self, project: str = None, squad: str = None, sprint: str = None, ticket_types: list[str] = None, ticketId: str = None, components: list[str] = None):
-        self.project = project
-        self.squad = squad
-        self.sprint = sprint
+    def __init__(self, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None):
+        self.projects = projects
+        self.squads = squads
+        self.sprints = sprints
         self.ticket_types = ticket_types
-        self.ticketId = ticketId
+        self.ticketIds = ticketIds
         self.components = components
 
 class JiraDataFilterResult:
@@ -111,29 +111,30 @@ class JiraDataFilterService:
 
     def filter_tickets(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> JiraDataFilterResult:
         # filter by project
-        if filter.project:
-            tickets = tickets[tickets[COLUMN_NAME_PROJECT] == filter.project]
+        if filter.projects and None not in filter.projects:
+            tickets = tickets[tickets[COLUMN_NAME_PROJECT].isin(filter.projects)]
 
         # filter by squad
-        if filter.squad:
-            tickets = tickets[tickets[COLUMN_NAME_SQUAD] == filter.squad]
+        if filter.squads and None not in filter.squads:
+            tickets = tickets[tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
 
         # filter by sprint
-        if filter.sprint:
-            tickets = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(filter.sprint, na=False)]
+        if filter.sprints and None not in filter.sprints:
+            tickets = tickets[tickets[COLUMN_NAME_SPRINT].isin(filter.sprints)]
 
         # filter by types
-        if filter.ticket_types:
+        if filter.ticket_types and None not in filter.ticket_types:
             tickets = tickets[tickets[COLUMN_NAME_TYPE].isin(filter.ticket_types)]
 
-        if filter.components:
+        # filter by components
+        if filter.components and None not in filter.components:
             tickets = tickets[tickets[COLUMN_NAME_CALCULATED_COMPONENTS].apply(
                 lambda x: any(comp in x for comp in filter.components) if isinstance(x, list) else False
             )]
 
         # filter by ticketId
-        if filter.ticketId:
-            tickets = tickets[tickets[COLUMN_NAME_ID] == filter.ticketId]
+        if filter.ticketIds and None not in filter.ticketIds:
+            tickets = tickets[tickets[COLUMN_NAME_ID].isin(filter.ticketIds)]
 
         squads = self.__get_squads(tickets)
         sprints = self.__get_sprints(tickets)

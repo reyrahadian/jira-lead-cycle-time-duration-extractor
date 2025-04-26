@@ -11,13 +11,18 @@ from src.config.constants import (
 from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
-def init_callbacks(app, jira_tickets):
-    def get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket):
+def init_callbacks(app, jira_tickets: pd.DataFrame):
+    def get_avg_days_dataframe(jira_tickets: pd.DataFrame, selected_sprint: str, selected_squad: str,
+                               selected_types: list[str], selected_components: list[str], selected_ticket: str) -> pd.DataFrame:
         if not selected_sprint:
             # Return empty DataFrame with expected columns instead of empty dict
             return pd.DataFrame(columns=['Stage', 'Days'])
 
-        filter = JiraDataFilter(squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, components=selected_components)
+        filter = JiraDataFilter(squads=[selected_squad],
+                                sprints=[selected_sprint],
+                                ticket_types=selected_types,
+                                ticketIds=[selected_ticket],
+                                components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
@@ -30,15 +35,23 @@ def init_callbacks(app, jira_tickets):
             # Calculate the mean for each group of related stages
             related_stage_columns = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
 
+            # Filter out columns that don't exist in the DataFrame
+            existing_columns = [col for col in related_stage_columns if col in sprint_data.columns]
+
+            if not existing_columns:
+                stage_sums[merged_stage] = 0
+                stage_ticket_ids[merged_stage] = []
+                continue
+
             # Get tickets with non-zero days in any of the related stages
-            tickets_in_stage = sprint_data[sprint_data[related_stage_columns].gt(0).any(axis=1)]
+            tickets_in_stage = sprint_data[sprint_data[existing_columns].gt(0).any(axis=1)]
 
             if not tickets_in_stage.empty:
                 for idx, ticket in tickets_in_stage.iterrows():
-                    days_in_stages = [ticket[col] for col in related_stage_columns if ticket[col] > 0]
+                    days_in_stages = [ticket[col] for col in existing_columns if ticket[col] > 0]
                     avg_days = sum(days_in_stages) / len(days_in_stages) if days_in_stages else 0
 
-                total_days = tickets_in_stage[related_stage_columns].sum().sum()
+                total_days = tickets_in_stage[existing_columns].sum().sum()
                 num_tickets = len(tickets_in_stage)
                 stage_avg = total_days / num_tickets if num_tickets > 0 else 0
                 stage_sums[merged_stage] = stage_avg
@@ -157,7 +170,7 @@ def init_callbacks(app, jira_tickets):
          Input('squad-dropdown', 'value'),
          Input('components-dropdown', 'value')]
     )
-    def update_stage_tickets(click_data, selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
+    def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]) -> tuple[list[dict], str, dict, list[dict], list[str]]:
         if not click_data or not selected_sprint:
             return [], "No stage selected", {'display': 'none'}, [], []
 
@@ -167,7 +180,11 @@ def init_callbacks(app, jira_tickets):
         # Filter by ticket IDs
         sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_ID].isin(ticket_ids)]
 
-        filter = JiraDataFilter(squad=selected_squad, sprint=selected_sprint, ticket_types=selected_types, ticketId=selected_ticket, components=selected_components)
+        filter = JiraDataFilter(squads=[selected_squad],
+                                sprints=[selected_sprint],
+                                ticket_types=selected_types,
+                                ticketIds=[selected_ticket],
+                                components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
 
         if jira_data_filter_result.tickets.empty:
