@@ -13,7 +13,7 @@ from src.config.constants import (
 from src.utils.stage_utils import StageUtils
 from src.utils.jira_utils import JiraTicketHelpers
 from src.utils.string_utils import split_string_array
-
+from src.config.app_settings import AppSettings
 class JiraData:
     __tickets: pd.DataFrame
 
@@ -130,7 +130,8 @@ class JiraDataSingleton:
         return cls._instance
 
     def get_csv_filepath(self):
-        return os.getenv('REPORTING_CSV_PATH', "/mnt/c/workspace/jira-lead-cycle-time-duration-extractor/docker/data/jira_metrics.csv")
+        app_settings = AppSettings()
+        return app_settings.REPORTING_CSV_PATH
 
     def get_jira_data(self) -> JiraData:
         # Check if file has been modified since last load
