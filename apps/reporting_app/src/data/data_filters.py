@@ -59,7 +59,7 @@ class JiraDataFilterResult:
         self._components = components
 
 class JiraDataFilterService:
-    def __get_squads_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+    def __get_squads(self, tickets: pd.DataFrame) -> list[str]:
         if COLUMN_NAME_SQUAD in tickets.columns:
             # Filter out NaN values and convert to list before sorting
             squads = [squad for squad in tickets[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)]
@@ -67,7 +67,7 @@ class JiraDataFilterService:
         else:
             return []
 
-    def __get_sprints_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+    def __get_sprints(self, tickets: pd.DataFrame) -> list[str]:
         # Get unique sprints
         sprint_set = set()
         for sprint_str in tickets[COLUMN_NAME_SPRINT].dropna().unique():
@@ -92,10 +92,10 @@ class JiraDataFilterService:
         # Sort sprints by start date descending
         return sorted(sprint_dates.keys(), key=lambda x: sprint_dates[x], reverse=True)
 
-    def __get_ticket_types_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+    def __get_ticket_types(self, tickets: pd.DataFrame) -> list[str]:
         return sorted(tickets[COLUMN_NAME_TYPE].unique())
 
-    def __get_components_by_filters(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> list[str]:
+    def __get_components(self, tickets: pd.DataFrame) -> list[str]:
         # Get all components from the calculated components column
         all_components = []
         for components_str in tickets[COLUMN_NAME_CALCULATED_COMPONENTS].dropna():
@@ -135,10 +135,10 @@ class JiraDataFilterService:
         if filter.ticketId:
             tickets = tickets[tickets[COLUMN_NAME_ID] == filter.ticketId]
 
-        squads = self.__get_squads_by_filters(tickets, filter)
-        sprints = self.__get_sprints_by_filters(tickets, filter)
-        ticket_types = self.__get_ticket_types_by_filters(tickets, filter)
-        components = self.__get_components_by_filters(tickets, filter)
+        squads = self.__get_squads(tickets)
+        sprints = self.__get_sprints(tickets)
+        ticket_types = self.__get_ticket_types(tickets)
+        components = self.__get_components(tickets)
 
         return JiraDataFilterResult(
             tickets=tickets,

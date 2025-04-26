@@ -17,10 +17,15 @@ from src.config.constants import (
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_CREATED_DATE,
     COLUMN_NAME_FIX_VERSIONS,
-    COLUMN_NAME_PRIORITY
+    COLUMN_NAME_PRIORITY,
+    COLUMN_NAME_SPRINT,
+    COLUMN_NAME_STAGE,
+    STAGE_NAME_DEPLOYED_TO_PROD,
+    STAGE_NAME_IN_PRODUCTION
 )
 from src.utils.stage_utils import StageUtils
-
+from src.utils.string_utils import split_string_array
+from src.utils.sprint_utils import get_sprint_date_range
 class JiraDataDoraMetricsResult:
     _category: str
     _value: str
@@ -131,9 +136,56 @@ class JiraDataDoraMetrics:
         return JiraDataDoraMetricsResult(category='Lead Time for Changes', value=average_duration)
 
     def get_deployment_frequency(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
-        #TODO: we need to capture exact day when a prod deployment was done as part of the JIRA metrics
+        filtered_tickets = self.__get_filtered_tickets(filter)
+        tickets_assigned_to_sprints = filtered_tickets[filtered_tickets[COLUMN_NAME_SPRINT].notna()]
+        # we assume that all tickets that has fix version and is set to done has been deployed to prod
+        done_stage_names = [
+            STAGE_NAME_DONE,
+            STAGE_NAME_CLOSED,
+            STAGE_NAME_BUG_FIXED,
+            STAGE_NAME_DEPLOYED_TO_PROD,
+            STAGE_NAME_IN_PRODUCTION
+        ]
+        tickets_deployed_to_prod = tickets_assigned_to_sprints[
+            (tickets_assigned_to_sprints[COLUMN_NAME_FIX_VERSIONS].notna()) &
+            (tickets_assigned_to_sprints[COLUMN_NAME_STAGE].isin(done_stage_names))
+        ]
+        total_tickets_deployed_to_prod = len(tickets_deployed_to_prod)
 
-        return JiraDataDoraMetricsResult(category='Deployment Frequency', value=0)
+        start_date = None
+        end_date = None
+        if filter.start_date is None or filter.end_date is None:
+            # Get unique sprints
+            sprint_set = set()
+            for sprint_str in tickets_assigned_to_sprints[COLUMN_NAME_SPRINT].dropna().unique():
+                sprints = split_string_array(sprint_str, '"-"')
+                sprint_set.update(sprint.strip() for sprint in sprints)
+
+            # Get the oldest sprint start date and most recent end date from the sprint set
+            for sprint in sprint_set:
+                # Get one ticket from this sprint to get its dates
+                sprint_ticket = tickets_assigned_to_sprints[tickets_assigned_to_sprints[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)].iloc[0]
+                # Convert the Series to a DataFrame with a single row
+                sprint_ticket_df = sprint_ticket.to_frame().T
+                sprint_start_date, sprint_end_date = get_sprint_date_range(sprint_ticket_df, sprint)
+
+                if sprint_start_date and not pd.isna(sprint_start_date):
+                    # Initialize start_date if not set, otherwise take the earlier date
+                    if start_date is None or sprint_start_date < start_date:
+                        start_date = sprint_start_date
+
+                if sprint_end_date and not pd.isna(sprint_end_date):
+                    # Initialize end_date if not set, otherwise take the later date
+                    if end_date is None or sprint_end_date > end_date:
+                        end_date = sprint_end_date
+        else:
+            start_date = filter.start_date
+            end_date = filter.end_date
+
+        total_working_days = len(pd.date_range(start=start_date, end=end_date, freq='B'))
+        deployment_frequency = total_tickets_deployed_to_prod / total_working_days if total_working_days > 0 else 0
+
+        return JiraDataDoraMetricsResult(category='Deployment Frequency', value=deployment_frequency)
 
     def get_change_failure_rate(self, filter: JiraDataDoraMetricsFilter) -> JiraDataDoraMetricsResult:
         filtered_tickets = self.__get_filtered_tickets(filter)

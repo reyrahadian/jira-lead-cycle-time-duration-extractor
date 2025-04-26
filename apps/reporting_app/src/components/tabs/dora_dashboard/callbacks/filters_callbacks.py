@@ -92,7 +92,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             badge_text = 'Low'
             badge_color = 'danger'
 
-        return badge_text, badge_color, deployment_frequency.format_days_duration(deployment_frequency.value)
+        deployment_frequency_value = f"{deployment_frequency.value:.2f} deployments per day"
+        return badge_text, badge_color, deployment_frequency_value
 
     @callback(
         Output('change-failure-rate-badge', 'children'),
