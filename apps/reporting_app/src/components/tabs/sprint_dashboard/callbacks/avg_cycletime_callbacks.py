@@ -197,7 +197,6 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         related_stages = STAGE_NAME_GROUPINGS.get(clicked_stage, [clicked_stage])
         if not related_stages:
             related_stages = [clicked_stage]
-        print(f"Related stages: {related_stages}")
         days_column_names = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
         thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
