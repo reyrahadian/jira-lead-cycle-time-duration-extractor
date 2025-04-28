@@ -43,7 +43,7 @@ Attributes:
     UpdatedDate: updated
     FixVersions: fixVersions.name
     Project: project.name
-    Squad: customfield_10756.value
+    Squad: customfield_11376.value
     #AggreagateTimeoriginalestimate: aggregatetimeoriginalestimate
     #AggreagateTimeestimate: aggregatetimeestimate
     #AggreagateTimespent: aggregatetimespent
