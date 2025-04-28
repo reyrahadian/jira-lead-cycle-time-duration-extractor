@@ -34,6 +34,10 @@ def init_callbacks(app, jira_tickets):
 
         filter = JiraDataFilter(sprints=[selected_sprint])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
+
+        if len(jira_data_filter_result.tickets) == 0:
+            return "No tickets found for this sprint", "Sprint dates not available", "No sprint statistics available"
+
         jira_ticket = jira_data_filter_result.tickets.iloc[0]
 
         if is_multiple_values(jira_ticket[COLUMN_NAME_SPRINT]):
