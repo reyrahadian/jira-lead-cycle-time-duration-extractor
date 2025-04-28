@@ -115,11 +115,20 @@ class JiraDataDoraMetrics:
         valid_stage_names = [stage for stage in ALL_STAGE_NAMES if stage not in invalid_stage_names]
         valid_stage_names = [StageUtils.to_stage_duration_days_column_name(stage) for stage in valid_stage_names]
 
+        # Filter out columns that don't exist in the DataFrame
+        existing_columns = [col for col in valid_stage_names if col in tickets.columns]
+
+        if not existing_columns:
+            return 0
+
         # Filter tickets that have at least one valid stage with duration > 0
-        valid_tickets = tickets[tickets[valid_stage_names].gt(0).any(axis=1)]
+        valid_tickets = tickets[tickets[existing_columns].gt(0).any(axis=1)]
+
+        if valid_tickets.empty:
+            return 0
 
         # Sum the values of all valid stage duration columns for valid tickets
-        total_duration = valid_tickets[valid_stage_names].sum().sum()
+        total_duration = valid_tickets[existing_columns].sum().sum()
         average_duration = total_duration / len(valid_tickets)
 
         return average_duration
