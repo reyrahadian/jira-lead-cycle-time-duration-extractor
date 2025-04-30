@@ -8,7 +8,7 @@ from src.utils.sprint_utils import get_sprint_date_range
 
 class StageUtils:
     @staticmethod
-    def calculate_tickets_duration_in_sprint(df, sprint_name):
+    def calculate_tickets_duration_in_sprint(df: pd.DataFrame, sprint_name: str) -> pd.DataFrame:
         """
         Calculate stage metrics for tickets within a sprint's date range.
 
