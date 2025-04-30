@@ -54,7 +54,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 total_days = tickets_in_stage[existing_columns].sum().sum()
                 num_tickets = len(tickets_in_stage)
                 stage_avg = total_days / num_tickets if num_tickets > 0 else 0
-                stage_sums[merged_stage] = stage_avg
+                stage_sums[merged_stage] = round(stage_avg, 2)
                 stage_ticket_ids[merged_stage] = tickets_in_stage[COLUMN_NAME_ID].tolist()  # Store ticket IDs
             else:
                 stage_sums[merged_stage] = 0
@@ -78,7 +78,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 total_days = tickets_in_stage[stage_column].sum()
                 num_tickets = len(tickets_in_stage)
                 stage_avg = total_days / num_tickets if num_tickets > 0 else 0
-                stage_sums[stage_name] = stage_avg
+                stage_sums[stage_name] = round(stage_avg, 2)
                 stage_ticket_ids[stage_name] = tickets_in_stage[COLUMN_NAME_ID].tolist()  # Store ticket IDs
             else:
                 stage_ticket_ids[stage_name] = []  # Empty list if no tickets
@@ -97,7 +97,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         result = pd.DataFrame({
             'Stage': list(stage_sums.keys()),
             'Days': list(stage_sums.values()),
-            'Ticket IDs': [', '.join(map(str, ids)) for ids in stage_ticket_ids.values()]  # Add ticket IDs to DataFrame
+            'Ticket IDs': [', '.join(map(str, ids)) for ids in stage_ticket_ids.values()],
+            'Grouped Stages': [', '.join(STAGE_NAME_GROUPINGS.get(stage, [stage])) for stage in stage_sums.keys()]
         })
 
         return result
@@ -131,7 +132,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             y='Days',
             labels={'Stage': 'Stage', 'Days': 'Avg Days'},
             title=f'Time Spent in Each Stage - {selected_sprint}',
-            custom_data=['Ticket IDs']  # Include ticket IDs as custom data
+            custom_data=['Ticket IDs', 'Grouped Stages']
         )
 
         fig.update_layout(
@@ -139,6 +140,12 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             height=500,
             margin=dict(b=150),
             clickmode='event'
+        )
+
+        fig.update_traces(
+            hovertemplate="<b>%{x}</b><br>" +
+                         "Avg Days: %{y:.2f}<br>" +
+                         "Grouped Stages: %{customdata[1]}<br><extra></extra>"
         )
 
         return fig
@@ -336,13 +343,13 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 total_days += days
                 stage_data.append({
                     'stage': stage_name,
-                    'days': round(days, 1)
+                    'days': round(days, 2)
                 })
 
         # Add total row
         stage_data.append({
             'stage': 'TOTAL',
-            'days': round(total_days, 1)
+            'days': round(total_days, 2)
         })
 
         # Filter out ignored stages
