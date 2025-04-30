@@ -1,15 +1,7 @@
 import pandas as pd
 from datetime import datetime
 from src.config.constants import (
-    STAGE_NAME_BACKLOG,
-    STAGE_NAME_DELIVERY_BACKLOG,
-    STAGE_NAME_REJECTED,
-    STAGE_NAME_ON_HOLD,
-    STAGE_NAME_OPEN,
-    STAGE_NAME_FAILED_TEST,
-    STAGE_NAME_IDEAS_INTAKE,
-    STAGE_NAME_DISCOVERY,
-    STAGE_NAME_READY_FOR_DEVELOPMENT,
+    STAGE_NAME_IGNORE,
     STAGE_NAME_DONE,
     STAGE_NAME_CLOSED,
     STAGE_NAME_BUG_FIXED,
@@ -22,7 +14,9 @@ from src.config.constants import (
     COLUMN_NAME_STAGE,
     STAGE_NAME_DEPLOYED_TO_PROD,
     STAGE_NAME_IN_PRODUCTION,
-    COLUMN_NAME_SQUAD
+    COLUMN_NAME_SQUAD,
+    STAGE_NAME_FINAL_STAGES,
+    COLUMN_NAME_ID
 )
 from src.utils.stage_utils import StageUtils
 from src.utils.string_utils import split_string_array
@@ -91,28 +85,8 @@ class JiraDataDoraMetrics:
         if(tickets.empty):
             return 0
 
-        invalid_stage_names = [
-            STAGE_NAME_BACKLOG,
-            STAGE_NAME_DELIVERY_BACKLOG,
-            STAGE_NAME_REJECTED,
-            STAGE_NAME_ON_HOLD,
-            STAGE_NAME_OPEN,
-            STAGE_NAME_FAILED_TEST,
-            STAGE_NAME_IDEAS_INTAKE,
-            STAGE_NAME_DISCOVERY,
-            STAGE_NAME_READY_FOR_DEVELOPMENT,
-            #STAGE_NAME_READY_FOR_RELEASE,
-            #STAGE_NAME_PRE_PRODUCTION,
-            #STAGE_NAME_AWAITING_PROD_DEPLOYMENT,
-            #STAGE_NAME_PROD_PRE_CHECK_DEPLOYMENT,
-            #STAGE_NAME_IN_PRODUCTION,
-            #STAGE_NAME_DEPLOYED_TO_PROD,
-            #STAGE_NAME_IN_PROD_TEST,
-            STAGE_NAME_DONE,
-            STAGE_NAME_CLOSED,
-            STAGE_NAME_BUG_FIXED
-        ]
-        valid_stage_names = [stage for stage in ALL_STAGE_NAMES if stage not in invalid_stage_names]
+        tickets = tickets[tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)]
+        valid_stage_names = [stage for stage in ALL_STAGE_NAMES if stage not in STAGE_NAME_IGNORE]
         valid_stage_names = [StageUtils.to_stage_duration_days_column_name(stage) for stage in valid_stage_names]
 
         # Filter out columns that don't exist in the DataFrame

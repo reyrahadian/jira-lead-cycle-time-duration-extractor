@@ -1,10 +1,51 @@
 from dash import Input, Output, callback, html
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
-from src.config.constants import COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_STAGE
+from src.utils.stage_utils import StageUtils
+from src.config.constants import (
+    COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_STAGE, STAGE_NAME_FINAL_STAGES,
+    COLUMN_NAME_ID,
+    ALL_STAGE_NAMES,
+    STAGE_NAME_IGNORE
+)
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
+from src.data.data_dora import JiraDataDoraMetrics, JiraDataDoraMetricsFilter
+from src.data.data_filters import JiraDataFilterResult
 
 def init_callbacks(app, jira_tickets):
+    def calculate_lead_time_for_changes(jira_data_filter_result: JiraDataFilterResult, sprint_name: str) -> float:
+        tickets = jira_data_filter_result.tickets
+        tickets = StageUtils.calculate_tickets_duration_in_sprint(tickets, sprint_name)
+        tickets = tickets[tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)]
+        valid_stage_names = [stage for stage in ALL_STAGE_NAMES if stage not in STAGE_NAME_IGNORE]
+        valid_stage_names = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in valid_stage_names]
+
+        # Filter out columns that don't exist in the DataFrame
+        existing_columns = [col for col in valid_stage_names if col in tickets.columns]
+
+        if not existing_columns:
+            return 0
+
+        # Filter tickets that have at least one valid stage with duration > 0
+        valid_tickets = tickets[tickets[existing_columns].gt(0).any(axis=1)]
+
+        if valid_tickets.empty:
+            return 0
+
+        # Sum the values of all valid stage duration columns for valid tickets
+        total_duration = valid_tickets[existing_columns].sum().sum()
+        average_duration = total_duration / len(valid_tickets)
+
+        return average_duration
+
+
+    def format_days_duration(duration: float) -> str:
+        weeks = duration // 5
+        days = duration % 5
+        if weeks == 0:
+            return f"{days:.0f}d"
+        return f"{weeks:.0f}w {days:.0f}d"
+
     @callback(
         [Output('sprint-goals', 'children'),
          Output('sprint-dates', 'children'),
@@ -64,16 +105,19 @@ def init_callbacks(app, jira_tickets):
         total_points = int(jira_data_filter_result.tickets[COLUMN_NAME_STORY_POINTS].sum())
         ticket_count = len(jira_data_filter_result.tickets)
         # Calculate tickets in terminal states
-        terminal_states = ['Closed', 'Done', 'Resolved', 'Rejected']
-        completed_tickets = len(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(terminal_states)])
-        total_points_completed = int(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(terminal_states)][COLUMN_NAME_STORY_POINTS].sum())
+        completed_tickets = jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)]
+        total_completed_tickets = len(completed_tickets)
+        total_points_completed = int(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)][COLUMN_NAME_STORY_POINTS].sum())
+        lead_time_for_changes = calculate_lead_time_for_changes(jira_data_filter_result, selected_sprint)
+
         sprint_stats_component = html.Div([
             html.H4("Sprint Planned:"),
             html.P(f"Total Points: {total_points}"),
             html.P(f"Total Tickets: {ticket_count}"),
             html.H4("Sprint Outcomes:"),
             html.P(f"Completed Points: {total_points_completed}"),
-            html.P(f"Completed Tickets: {completed_tickets}"),
+            html.P(f"Completed Tickets: {total_completed_tickets}"),
+            html.P(f"Lead Time for Changes: {format_days_duration(lead_time_for_changes)}")
         ])
 
         return goals_component, sprint_dates_component, sprint_stats_component
