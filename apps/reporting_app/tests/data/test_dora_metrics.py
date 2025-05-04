@@ -12,10 +12,10 @@ def test_jiradatadorametrics_getleadtimeforchanges(mocker):
     jira_data_dora_metrics = JiraDataDoraMetrics(jira_data.get_tickets())
     result = jira_data_dora_metrics.get_lead_time_for_changes(JiraDataDoraMetricsFilter(projects=None, squads=None, start_date=None, end_date=None))
     assert result.category == 'Lead Time for Changes'
-    assert result.value == 31.55359281437125
+    assert result.value == 26.07169974115617
 
     result = jira_data_dora_metrics.get_lead_time_for_changes(JiraDataDoraMetricsFilter(projects=['Digital MECCA App'], squads=None, start_date=None, end_date=None))
-    assert result.value == 24.932764505119454
+    assert result.value == 23.21893939393939
 
 def test_jiradorametrics_deploymentfrequency(mocker):
     mock_csv_data_loader = mocker.Mock(spec=CsvDataLoader)

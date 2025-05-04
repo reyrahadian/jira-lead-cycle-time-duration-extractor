@@ -15,6 +15,7 @@ from src.config.constants import (
     STAGE_NAME_DEPLOYED_TO_PROD,
     STAGE_NAME_IN_PRODUCTION,
     COLUMN_NAME_SQUAD,
+    COLUMN_NAME_SQUAD2,
     STAGE_NAME_FINAL_STAGES,
     COLUMN_NAME_ID
 )
@@ -115,7 +116,12 @@ class JiraDataDoraMetrics:
             self._tickets = self._tickets[self._tickets[COLUMN_NAME_PROJECT].isin(filter.projects)]
 
         if filter.squads:
-            self._tickets = self._tickets[self._tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
+            if COLUMN_NAME_SQUAD in self._tickets.columns and COLUMN_NAME_SQUAD2 in self._tickets.columns:
+                self._tickets = self._tickets[self._tickets[COLUMN_NAME_SQUAD].isin(filter.squads) | self._tickets[COLUMN_NAME_SQUAD2].isin(filter.squads)]
+            elif COLUMN_NAME_SQUAD in self._tickets.columns:
+                self._tickets = self._tickets[self._tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
+            elif COLUMN_NAME_SQUAD2 in self._tickets.columns:
+                self._tickets = self._tickets[self._tickets[COLUMN_NAME_SQUAD2].isin(filter.squads)]
 
         if filter.start_date:
             self._tickets = self._tickets[self._tickets[COLUMN_NAME_CREATED_DATE] >= filter.start_date]

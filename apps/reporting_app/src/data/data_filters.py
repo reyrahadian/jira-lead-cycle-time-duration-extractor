@@ -1,5 +1,5 @@
-from src.config.constants import COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SPRINT,\
-    COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS
+from src.config.constants import (COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SQUAD2,
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS)
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
 import pandas as pd
@@ -60,12 +60,15 @@ class JiraDataFilterResult:
 
 class JiraDataFilterService:
     def __get_squads(self, tickets: pd.DataFrame) -> list[str]:
+        squads = []
         if COLUMN_NAME_SQUAD in tickets.columns:
             # Filter out NaN values and convert to list before sorting
-            squads = [squad for squad in tickets[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)]
-            return sorted(squads)
-        else:
-            return []
+            squads.extend([squad for squad in tickets[COLUMN_NAME_SQUAD].unique() if pd.notna(squad)])
+
+        if COLUMN_NAME_SQUAD2 in tickets.columns:
+            squads.extend([squad for squad in tickets[COLUMN_NAME_SQUAD2].unique() if pd.notna(squad)])
+
+        return sorted(squads)
 
     def __get_sprints(self, tickets: pd.DataFrame) -> list[str]:
         # Get unique sprints
@@ -121,7 +124,12 @@ class JiraDataFilterService:
 
         # filter by squad
         if filter.squads and None not in filter.squads:
-            tickets = tickets[tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
+            if COLUMN_NAME_SQUAD in tickets.columns and COLUMN_NAME_SQUAD2 in tickets.columns:
+                tickets = tickets[tickets[COLUMN_NAME_SQUAD].isin(filter.squads) | tickets[COLUMN_NAME_SQUAD2].isin(filter.squads)]
+            elif COLUMN_NAME_SQUAD in tickets.columns:
+                tickets = tickets[tickets[COLUMN_NAME_SQUAD].isin(filter.squads)]
+            elif COLUMN_NAME_SQUAD2 in tickets.columns:
+                tickets = tickets[tickets[COLUMN_NAME_SQUAD2].isin(filter.squads)]
 
         # filter by sprint
         if filter.sprints and None not in filter.sprints:
