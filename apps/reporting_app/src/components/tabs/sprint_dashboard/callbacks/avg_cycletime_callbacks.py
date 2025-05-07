@@ -6,7 +6,7 @@ from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_PRIORITY, STAGE_NAME_GROUPINGS,
     STAGE_NAME_IGNORE, ALL_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS, COLUMN_NAME_LINK, COLUMN_NAME_STORY_POINTS,
-    COLUMN_NAME_NAME
+    COLUMN_NAME_NAME, COLUMN_NAME_STAGE
 )
 from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
@@ -224,6 +224,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             COLUMN_NAME_TYPE,
             COLUMN_NAME_PRIORITY,
             COLUMN_NAME_SPRINT,
+            COLUMN_NAME_STAGE,
             'days_in_stage',
             COLUMN_NAME_STORY_POINTS
             ]
