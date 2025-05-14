@@ -88,15 +88,19 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         jira_data_dora_metrics = JiraDataDoraMetrics(jira_tickets)
         deployment_frequency = jira_data_dora_metrics.get_deployment_frequency(JiraDataDoraMetricsFilter(projects=projects, squads=squads, start_date=start_date, end_date=end_date))
 
+        # more than once a day
         if deployment_frequency.value > 1:
             badge_text = 'Elite'
             badge_color = 'primary'
+        # between once a day and once a week
         elif deployment_frequency.value <= 1 and deployment_frequency.value < (1/5):
             badge_text = 'High'
             badge_color = 'success'
+        # between once a week and once a month
         elif deployment_frequency.value <= (1/5) and deployment_frequency.value <= (1/20):
             badge_text = 'Medium'
             badge_color = 'warning'
+        # less than once a month
         else:
             badge_text = 'Low'
             badge_color = 'danger'
