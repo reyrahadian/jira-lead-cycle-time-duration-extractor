@@ -91,10 +91,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         if deployment_frequency.value > 1:
             badge_text = 'Elite'
             badge_color = 'primary'
-        elif deployment_frequency.value >= 1 and deployment_frequency.value <= 5:
+        elif deployment_frequency.value <= 1 and deployment_frequency.value < (1/5):
             badge_text = 'High'
             badge_color = 'success'
-        elif deployment_frequency.value >=5 and deployment_frequency.value <= 20:
+        elif deployment_frequency.value <= (1/5) and deployment_frequency.value <= (1/20):
             badge_text = 'Medium'
             badge_color = 'warning'
         else:
