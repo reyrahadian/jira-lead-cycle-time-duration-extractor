@@ -34,3 +34,4 @@ zipp==3.21.0
 pytest==8.3.4
 pytest-mock==3.14.0
 python-dotenv==1.1.0
+dash-ag-grid==31.3.1

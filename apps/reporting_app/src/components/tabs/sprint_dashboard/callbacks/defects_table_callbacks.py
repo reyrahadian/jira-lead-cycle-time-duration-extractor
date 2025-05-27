@@ -7,7 +7,7 @@ from src.utils.sprint_utils import get_sprint_date_range
 
 def init_callbacks(app, jira_tickets):
     @callback(
-        Output('defects-table', 'data'),
+        Output('defects-table', 'rowData'),
         [Input('project-dropdown', 'value'),
         Input('squad-dropdown', 'value'),
         Input('sprint-dropdown', 'value'),

@@ -12,7 +12,7 @@ from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets):
     @callback(
-        Output('tickets-exceeding-threshold-table', 'data'),
+        Output('tickets-exceeding-threshold-table', 'rowData'),
         [Input('sprint-dropdown', 'value'),
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),
@@ -99,12 +99,11 @@ def init_callbacks(app, jira_tickets):
     @callback(
         [Output('tickets-exceeding-threshold-details-container', 'style'),
         Output('tickets-exceeding-threshold-details-title', 'style'),
-        Output('tickets-exceeding-threshold-details-table', 'data'),
-        Output('tickets-exceeding-threshold-details-title', 'children'),
-        Output('tickets-exceeding-threshold-details-table', 'style_data_conditional')],
+        Output('tickets-exceeding-threshold-details-table', 'rowData'),
+        Output('tickets-exceeding-threshold-details-title', 'children')],
         [Input('sprint-dropdown', 'value'),
-        Input('tickets-exceeding-threshold-table', 'selected_rows'),
-        Input('tickets-exceeding-threshold-table', 'data')]
+        Input('tickets-exceeding-threshold-table', 'selectedRows'),
+        Input('tickets-exceeding-threshold-table', 'rowData')]
     )
     def update_ticket_exceeding_threshold_details_table(selected_sprint, selected_rows, table_data):
         if not selected_rows or not table_data or len(selected_rows) == 0:
@@ -112,21 +111,19 @@ def init_callbacks(app, jira_tickets):
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         try:
             # Extract the ID from the markdown link format
-            selected_ticket_link = table_data[selected_rows[0]]['ID']
+            selected_ticket_link = selected_rows[0]['ID']
             selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
         except (IndexError, KeyError):
             return (
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         # Process data for selected ticket
@@ -138,8 +135,7 @@ def init_callbacks(app, jira_tickets):
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         ticket_data = ticket_data.iloc[0]
@@ -221,7 +217,6 @@ def init_callbacks(app, jira_tickets):
             {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
             {'marginBottom': '20px', 'display': 'block'},
             stage_data,
-            f"Stage Duration Details for {selected_ticket}",
-            style_conditional
+            f"Stage Duration Details for {selected_ticket}"
         )
 

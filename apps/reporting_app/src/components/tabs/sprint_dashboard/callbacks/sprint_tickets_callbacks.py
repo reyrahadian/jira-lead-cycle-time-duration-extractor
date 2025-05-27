@@ -6,7 +6,7 @@ from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_T
 
 def init_callbacks(app, jira_tickets):
     @callback(
-        Output('sprint-tickets-table', 'data'),
+        Output('sprint-tickets-table', 'rowData'),
         [Input('sprint-dropdown', 'value'),
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),

@@ -151,7 +151,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         return fig
 
     @callback(
-        Output('avg-days-table', 'data'),
+        Output('avg-days-table', 'rowData'),
         [Input('sprint-dropdown', 'value'),
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),
@@ -165,10 +165,9 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         return table_data.to_dict('records')
 
     @callback(
-        [Output('tickets-in-stage-table', 'data'),
+        [Output('tickets-in-stage-table', 'rowData'),
          Output('tickets-in-stage-title', 'children'),
          Output('tickets-in-stage-title', 'style'),
-         Output('tickets-in-stage-table', 'style_data_conditional'),
          Output('tickets-in-stage-ticket-ids', 'data')],
         [Input('tickets-in-stage-bar-chart', 'clickData'),
          Input('sprint-dropdown', 'value'),
@@ -179,7 +178,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
     )
     def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]) -> tuple[list[dict], str, dict, list[dict], list[str]]:
         if not click_data or not selected_sprint:
-            return [], "No stage selected", {'display': 'none'}, [], []
+            return [], "No stage selected", {'display': 'none'}, []
 
         clicked_stage = click_data['points'][0]['x']
         ticket_ids = click_data['points'][0]['customdata'][0].split(', ')
@@ -195,7 +194,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
 
         if jira_data_filter_result.tickets.empty:
-            return [], "No tickets found", {'display': 'none'}, [], []
+            return [], "No tickets found", {'display': 'none'}, []
 
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
@@ -277,19 +276,18 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             table_data,
             f"Tickets in {clicked_stage} Stage",
             {'display': 'block', 'marginTop': '20px'},
-            style_conditional,
             ticket_ids  # Return the extracted ticket IDs
         )
 
     @callback(
         [Output('tickets-in-stage-ticket-details-container', 'style'),
         Output('tickets-in-stage-ticket-details-title', 'style'),
-        Output('tickets-in-stage-ticket-details-table', 'data'),
-        Output('tickets-in-stage-ticket-details-title', 'children'),
-        Output('tickets-in-stage-ticket-details-table', 'style_data_conditional')],
+        Output('tickets-in-stage-ticket-details-table', 'rowData'),
+        Output('tickets-in-stage-ticket-details-title', 'children')
+        ],
         [Input('sprint-dropdown', 'value'),
-        Input('tickets-in-stage-table', 'selected_rows'),
-        Input('tickets-in-stage-table', 'data')]
+        Input('tickets-in-stage-table', 'selectedRows'),
+        Input('tickets-in-stage-table', 'rowData')]
     )
     def update_stage_ticket_details(selected_sprint, selected_rows, table_data):
         if not selected_rows or not table_data or len(selected_rows) == 0 or len(table_data) == 0:
@@ -297,21 +295,19 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         try:
             # Extract the ID from the markdown link format
-            selected_ticket_link = table_data[selected_rows[0]][COLUMN_NAME_ID]
+            selected_ticket_link = selected_rows[0][COLUMN_NAME_ID]
             selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
         except (IndexError, KeyError):
             return (
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         # Process data for selected ticket
@@ -324,8 +320,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
                 {'display': 'none'},
                 [],
-                "",
-                []
+                ""
             )
 
         ticket_data = ticket_data.iloc[0]
@@ -407,6 +402,5 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
             {'marginBottom': '20px', 'display': 'block'},
             stage_data,
-            f"Stage Duration Details for {selected_ticket}",
-            style_conditional
+            f"Stage Duration Details for {selected_ticket}"
         )

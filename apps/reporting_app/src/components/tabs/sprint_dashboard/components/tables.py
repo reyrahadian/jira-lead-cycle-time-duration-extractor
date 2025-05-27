@@ -1,4 +1,5 @@
 from dash import html, dash_table
+import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from src.config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
 
@@ -13,42 +14,22 @@ def create_tables():
                     html.Div([
                     html.H2("Tickets Exceeding Stage Thresholds",
                             style={'marginBottom': '20px'}),
-                    dash_table.DataTable(
+                    dag.AgGrid(
                         id='tickets-exceeding-threshold-table',
-                        columns=[
-                            {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
-                            {'name': 'Summary', 'id': 'Name'},
-                            {'name': 'Type', 'id': 'Type'},
-                            {'name': 'Priority', 'id': 'Priority'},
-                            {'name': 'Current Stage', 'id': 'Stage'},
-                            {'name': 'Stages Exceeding Threshold', 'id': 'exceeding_stages'},
-                            {'name': 'Story Points', 'id': 'StoryPoints'},
-                            {'name': 'Assignee', 'id': 'AssigneeName'},
-                            {'name': 'Sprint', 'id': 'Sprint'},
+                        columnDefs=[
+                            {"headerName": "Key", "field": "ID", "resizable": True, "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
+                            {"headerName": "Summary", "field": "Name", "resizable": True},
+                            {"headerName": "Type", "field": "Type", "resizable": True},
+                            {"headerName": "Priority", "field": "Priority", "resizable": True},
+                            {"headerName": "Current Stage", "field": "Stage", "resizable": True},
+                            {"headerName": "Stages Exceeding Threshold", "field": "exceeding_stages", "resizable": True},
+                            {"headerName": "Story Points", "field": "StoryPoints", "resizable": True},
+                            {"headerName": "Assignee", "field": "AssigneeName", "resizable": True},
+                            {"headerName": "Sprint", "field": "Sprint", "resizable": True},
                         ],
-                        markdown_options={'link_target': '_blank'},
-                        sort_action='native',  # Enable native sorting
-                        sort_mode='multi',     # Allow sorting by multiple columns
-                        style_data_conditional=[
-                            {
-                                'if': {
-                                    'column_id': 'Stage',
-                                    'filter_query': '{Stage} != "Done" && {Stage} != "Closed" && {Stage} != "Rejected"'
-                                },
-                                'backgroundColor': '#ffeb9c',  # Light yellow background
-                                'color': '#9c6500'  # Dark amber text
-                            }
-                        ],
-                        css=[{
-                            'selector': 'p',
-                            'rule': 'margin: 0; padding: 0; display: inline;'
-                        }],
-                        style_table={'overflowX': 'auto'},
-                        page_size=10,
-                        row_selectable='single',
-                        selected_rows=[],
-                        style_header=TABLE_HEADER_STYLE,
-                        style_cell=TABLE_CELL_STYLE
+                        columnSize="sizeToFit",
+                        className="ag-theme-quartz",
+                        dashGridOptions={"rowSelection": "single"}
                     )
                 ], style={'width': '65%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -57,15 +38,14 @@ def create_tables():
                         html.H2("Stage Duration Details",
                                 id='tickets-exceeding-threshold-details-title',
                                 style={'marginBottom': '20px', 'display': 'none'}),
-                        dash_table.DataTable(
+                        dag.AgGrid(
                             id='tickets-exceeding-threshold-details-table',
-                            columns=[
-                                {'name': 'Stage', 'id': 'stage'},
-                                {'name': 'Days', 'id': 'days'}
+                            columnDefs=[
+                                {"headerName": "Stage", "field": "stage", "resizable": True},
+                                {"headerName": "Days", "field": "days", "resizable": True}
                             ],
-                            style_table={'overflowX': 'auto'},
-                            style_header=TABLE_HEADER_STYLE,
-                            style_cell=TABLE_CELL_STYLE
+                            columnSize="sizeToFit",
+                            className="ag-theme-quartz"
                         )
                     ], id='tickets-exceeding-threshold-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
                 ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})
@@ -76,28 +56,19 @@ def create_tables():
             dbc.CardBody([
                 html.H2("Defects Created During Sprint",
                         style={'marginBottom': '20px'}),
-                dash_table.DataTable(
+                dag.AgGrid(
                 id='defects-table',
-                columns=[
-                    {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
-                    {'name': 'Summary', 'id': 'Name'},
-                    {'name': 'Priority', 'id': 'Priority'},
-                    {'name': 'Stage', 'id': 'Stage'},
-                    {'name': 'Story Points', 'id': 'StoryPoints', 'type': 'numeric'},
-                    {'name': 'Parent Type', 'id': 'ParentType'},
-                    {'name': 'Parent Name', 'id': 'ParentName'}
+                columnDefs=[
+                    {"headerName": "Key", "field": "ID", "resizable": True, "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
+                    {"headerName": "Summary", "field": "Name", "resizable": True},
+                    {"headerName": "Priority", "field": "Priority", "resizable": True},
+                    {"headerName": "Stage", "field": "Stage", "resizable": True},
+                    {"headerName": "Story Points", "field": "StoryPoints", "type": "numeric", "resizable": True},
+                    {"headerName": "Parent Type", "field": "ParentType", "resizable": True},
+                    {"headerName": "Parent Name", "field": "ParentName", "resizable": True}
                 ],
-                markdown_options={'link_target': '_blank', 'html': False},
-                sort_action='native',  # Enable native sorting
-                sort_mode='multi',     # Allow sorting by multiple columns
-                css=[{
-                    'selector': 'p',
-                    'rule': 'margin: 0; padding: 0; display: inline;'
-                }],
-                style_table={'overflowX': 'auto'},
-                page_size=10,
-                style_header=TABLE_HEADER_STYLE,
-                style_cell=TABLE_CELL_STYLE
+                columnSize="sizeToFit",
+                className="ag-theme-quartz"
                 )
             ]),
         ], style={'marginTop': '20px'}),
@@ -107,32 +78,23 @@ def create_tables():
             dbc.CardBody([
                 html.H2("Sprint Tickets",
                         style={'marginBottom': '20px'}),
-                dash_table.DataTable(
+                dag.AgGrid(
                 id='sprint-tickets-table',
-                columns=[
-                    {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
-                    {'name': 'Summary', 'id': 'Name'},
-                    {'name': 'Type', 'id': 'Type'},
-                    {'name': 'Parent Type', 'id': 'ParentType'},
-                    {'name': 'Parent Name', 'id': 'ParentName'},
-                    {'name': 'Stage', 'id': 'Stage'},
-                    {'name': 'Story Points', 'id': 'StoryPoints', 'type': 'numeric'},
-                    {'name': 'Fix Versions', 'id': 'FixVersions'},
-                    {'name': 'Created', 'id': 'CreatedDate'},
-                    {'name': 'Updated', 'id': 'UpdatedDate'},
-                    {'name': 'Sprint', 'id': 'Sprint'}
+                columnDefs=[
+                    {"headerName": "Key", "field": "ID", "resizable": True, "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
+                    {"headerName": "Summary", "field": "Name", "resizable": True},
+                    {"headerName": "Type", "field": "Type", "resizable": True},
+                    {"headerName": "Parent Type", "field": "ParentType", "resizable": True},
+                    {"headerName": "Parent Name", "field": "ParentName", "resizable": True},
+                    {"headerName": "Stage", "field": "Stage", "resizable": True},
+                    {"headerName": "Story Points", "field": "StoryPoints", "type": "numeric", "resizable": True},
+                    {"headerName": "Fix Versions", "field": "FixVersions", "resizable": True},
+                    {"headerName": "Created", "field": "CreatedDate", "resizable": True},
+                    {"headerName": "Updated", "field": "UpdatedDate", "resizable": True},
+                    {"headerName": "Sprint", "field": "Sprint", "resizable": True},
                 ],
-                markdown_options={'link_target': '_blank', 'html': False},
-                sort_action='native',  # Enable native sorting
-                sort_mode='multi',     # Allow sorting by multiple columns
-                css=[{
-                    'selector': 'p',
-                    'rule': 'margin: 0; padding: 0; display: inline;'
-                }],
-                style_table={'overflowX': 'auto'},
-                page_size=10,
-                style_header=TABLE_HEADER_STYLE,
-                style_cell=TABLE_CELL_STYLE
+                columnSize="sizeToFit",
+                className="ag-theme-quartz"
                 )
             ]),
         ], style={'marginTop': '20px'}),

@@ -1,4 +1,5 @@
 from dash import html, dcc, dash_table
+import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from src.config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
 def create_charts():
@@ -19,14 +20,14 @@ def create_charts():
                 html.Div([
                     html.H3("Average Days per Stage",
                             style={'marginBottom': '10px'}),
-                    dash_table.DataTable(
+                    dag.AgGrid(
                         id='avg-days-table',
-                        columns=[
-                            {'name': 'Stage', 'id': 'Stage'},
-                            {'name': 'Average Days', 'id': 'Days'}
+                        columnDefs=[
+                            {'headerName': 'Stage', 'field': 'Stage'},
+                            {'headerName': 'Average Days', 'field': 'Days'}
                         ],
-                        style_header=TABLE_HEADER_STYLE,
-                        style_cell=TABLE_CELL_STYLE
+                        columnSize="sizeToFit",
+                        className="ag-theme-quartz"
                     )
                 ], style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginBottom': '20px'}),
@@ -37,29 +38,21 @@ def create_charts():
                     html.H3("Tickets in Selected Stage",
                             id='tickets-in-stage-title',
                             style={'display': 'none'}),
-                    dash_table.DataTable(
+                    dag.AgGrid(
                         id='tickets-in-stage-table',
-                        columns=[
-                            {'name': 'Key', 'id': 'ID', 'type': 'text', 'presentation': 'markdown'},
-                            {'name': 'Summary', 'id': 'Name'},
-                            {'name': 'Type', 'id': 'Type'},
-                            {'name': 'Priority', 'id': 'Priority'},
-                            {'name': 'Current Stage', 'id': 'Stage'},
-                            {'name': 'Days in Stage', 'id': 'days_in_stage'},
-                            {'name': 'Story Points', 'id': 'StoryPoints'},
-                            {'name': 'Sprint', 'id': 'Sprint'}
+                        columnDefs=[
+                            {'headerName': 'Key', 'field': 'ID', 'type': 'text', 'cellRenderer': 'markdown', 'linkTarget': '_blank', 'pinned': 'left', 'resizable': True},
+                            {'headerName': 'Summary', 'field': 'Name', 'resizable': True},
+                            {'headerName': 'Type', 'field': 'Type', 'resizable': True},
+                            {'headerName': 'Priority', 'field': 'Priority', 'resizable': True},
+                            {'headerName': 'Current Stage', 'field': 'Stage', 'resizable': True},
+                            {'headerName': 'Days in Stage', 'field': 'days_in_stage', 'resizable': True},
+                            {'headerName': 'Story Points', 'field': 'StoryPoints', 'resizable': True},
+                            {'headerName': 'Sprint', 'field': 'Sprint', 'resizable': True}
                         ],
-                        markdown_options={'link_target': '_blank'},
-                        row_selectable='single',
-                        selected_rows=[],
-                        style_table={'overflowX': 'auto'},
-                        page_size=10,
-                        css=[{
-                            'selector': 'p',
-                            'rule': 'margin: 0; padding: 0; display: inline;'
-                        }],
-                        style_header=TABLE_HEADER_STYLE,
-                        style_cell=TABLE_CELL_STYLE
+                        columnSize="sizeToFit",
+                        className="ag-theme-quartz",
+                        dashGridOptions={"rowSelection": "single"}
                     )
                 ], style={'width': '65%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
@@ -68,15 +61,14 @@ def create_charts():
                     html.H3("Stage Duration Details",
                             id='tickets-in-stage-ticket-details-title',
                             style={'marginBottom': '20px', 'display': 'none'}),
-                    dash_table.DataTable(
+                    dag.AgGrid(
                         id='tickets-in-stage-ticket-details-table',
-                        columns=[
-                            {'name': 'Stage', 'id': 'stage'},
-                            {'name': 'Days', 'id': 'days'}
+                        columnDefs=[
+                            {'headerName': 'Stage', 'field': 'stage'},
+                            {'headerName': 'Days', 'field': 'days'}
                         ],
-                        style_table={'overflowX': 'auto'},
-                        style_header=TABLE_HEADER_STYLE,
-                        style_cell=TABLE_CELL_STYLE
+                        columnSize="sizeToFit",
+                        className="ag-theme-quartz"
                     )
                 ], id='tickets-in-stage-ticket-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
