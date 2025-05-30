@@ -3,13 +3,10 @@ from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.utils.stage_utils import StageUtils
 from src.config.constants import (
     COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_STAGE, STAGE_NAME_FINAL_STAGES,
-    COLUMN_NAME_ID,
-    ALL_STAGE_NAMES,
-    STAGE_NAME_IGNORE
+    ALL_STAGE_NAMES, STAGE_NAME_IGNORE
 )
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
-from src.data.data_dora import JiraDataDoraMetrics, JiraDataDoraMetricsFilter
 from src.data.data_filters import JiraDataFilterResult
 
 def init_callbacks(app, jira_tickets):

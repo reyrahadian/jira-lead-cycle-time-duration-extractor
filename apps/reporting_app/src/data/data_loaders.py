@@ -6,6 +6,8 @@ from src.config.constants import (
     COLUMN_NAME_UPDATED_DATE,
     COLUMN_NAME_COMPONENTS,
     COLUMN_NAME_CALCULATED_COMPONENTS,
+    COLUMN_NAME_SPRINT,
+    COLUMN_NAME_CALCULATED_SPRINT,
     COLUMN_NAME_NAME,
     COLUMN_NAME_PROJECT,
     COLUMN_NAME_ID
@@ -102,10 +104,16 @@ class JiraDataLoader:
 
         return jira_tickets
 
+    def __process_jiratickets_sprint(self, jira_tickets: pd.DataFrame)->pd.DataFrame:
+        jira_tickets[COLUMN_NAME_CALCULATED_SPRINT] = jira_tickets[COLUMN_NAME_SPRINT].apply(lambda x: list(split_string_array(x, '-')))
+
+        return jira_tickets
+
     def load_data(self, csv_filepath: str) -> JiraData:
         jira_tickets = self.csv_data_loader.load_data(csv_filepath)
         jira_tickets = self.__process_jiratickets_dates(jira_tickets)
         jira_tickets = self.__process_jiratickets_components(jira_tickets)
+        jira_tickets = self.__process_jiratickets_sprint(jira_tickets)
         jira_data = JiraData(jira_tickets)
 
         return jira_data
