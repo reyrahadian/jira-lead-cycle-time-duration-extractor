@@ -35,7 +35,7 @@ def create_tables():
 
                     # Right side - Stage Duration Details (moved from left)
                     html.Div([
-                        html.H2("Stage Duration Details",
+                        html.H3("Stage Duration Details",
                                 id='tickets-exceeding-threshold-details-title',
                                 style={'marginBottom': '20px', 'display': 'none'}),
                         dag.AgGrid(

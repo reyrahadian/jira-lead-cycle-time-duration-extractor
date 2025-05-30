@@ -58,7 +58,7 @@ def create_charts():
 
                 # Right side - Stage Duration Details for Stage Tickets
                 html.Div([
-                    html.H3("Stage Duration Details",
+                    html.H4("Stage Duration Details",
                             id='tickets-in-stage-ticket-details-title',
                             style={'marginBottom': '20px', 'display': 'none'}),
                     dag.AgGrid(
