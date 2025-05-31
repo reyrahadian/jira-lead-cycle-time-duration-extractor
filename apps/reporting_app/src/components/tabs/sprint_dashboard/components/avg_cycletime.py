@@ -14,11 +14,11 @@ def create_charts():
                 # Left column - Graph
                 html.Div([
                     dcc.Graph(id='tickets-in-stage-bar-chart')
-                ], style={'width': '60%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '75%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
                 # Right column - Average Days Table
                 html.Div([
-                    html.H3("Average Days per Stage",
+                    html.H4("Average Days per Stage",
                             style={'marginBottom': '10px'}),
                     dag.AgGrid(
                         id='avg-days-table',
@@ -27,40 +27,39 @@ def create_charts():
                             {'headerName': 'Average Days', 'field': 'Days'}
                         ],
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz"
+                        className="ag-theme-quartz",
                     )
-                ], style={'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '25%', 'display': 'inline-block', 'verticalAlign': 'top'}),
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginBottom': '20px'}),
             # Stage Tickets Panel
             html.Div([
                 # Left side - Stage Tickets Table
                 html.Div([
                     html.H3("Tickets in Selected Stage",
-                            id='tickets-in-stage-title',
-                            style={'display': 'none'}),
+                            id='tickets-in-stage-title'),
                     dag.AgGrid(
                         id='tickets-in-stage-table',
                         columnDefs=[
                             {'headerName': 'Key', 'field': 'ID', 'type': 'text', 'cellRenderer': 'markdown', 'linkTarget': '_blank', 'pinned': 'left', 'resizable': True},
-                            {'headerName': 'Summary', 'field': 'Name', 'resizable': True},
+                            {'headerName': 'Summary', 'field': 'Name', 'resizable': True, 'width': 400, 'tooltipField': 'Name'},
                             {'headerName': 'Type', 'field': 'Type', 'resizable': True},
                             {'headerName': 'Priority', 'field': 'Priority', 'resizable': True},
                             {'headerName': 'Current Stage', 'field': 'Stage', 'resizable': True},
                             {'headerName': 'Days in Stage', 'field': 'days_in_stage', 'resizable': True},
                             {'headerName': 'Story Points', 'field': 'StoryPoints', 'resizable': True},
-                            {'headerName': 'Sprint', 'field': 'Sprint', 'resizable': True}
+                            {'headerName': 'Sprint', 'field': 'Sprint', 'resizable': True, 'tooltipField': 'Sprint'}
                         ],
                         columnSize="sizeToFit",
                         className="ag-theme-quartz",
                         dashGridOptions={"rowSelection": "single"}
                     )
-                ], style={'width': '65%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '75%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
-                # Right side - Stage Duration Details for Stage Tickets
+                # Right side - Ticket's Cycle Time Details for Stage Tickets
                 html.Div([
-                    html.H4("Stage Duration Details",
+                    html.H4("Ticket's Cycle Time",
                             id='tickets-in-stage-ticket-details-title',
-                            style={'marginBottom': '20px', 'display': 'none'}),
+                            style={'marginBottom': '20px'}),
                     dag.AgGrid(
                         id='tickets-in-stage-ticket-details-table',
                         columnDefs=[
@@ -68,7 +67,7 @@ def create_charts():
                             {'headerName': 'Days', 'field': 'days'}
                         ],
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz"
+                        className="ag-theme-quartz",
                     )
                 ], id='tickets-in-stage-ticket-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})

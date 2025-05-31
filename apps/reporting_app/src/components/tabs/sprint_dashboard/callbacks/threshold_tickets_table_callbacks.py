@@ -97,46 +97,33 @@ def init_callbacks(app, jira_tickets):
         return tickets_exceeding_threshold
 
     @callback(
-        [Output('tickets-exceeding-threshold-details-container', 'style'),
-        Output('tickets-exceeding-threshold-details-title', 'style'),
-        Output('tickets-exceeding-threshold-details-table', 'rowData'),
+        [Output('tickets-exceeding-threshold-details-table', 'rowData'),
         Output('tickets-exceeding-threshold-details-title', 'children')],
         [Input('sprint-dropdown', 'value'),
         Input('tickets-exceeding-threshold-table', 'selectedRows'),
         Input('tickets-exceeding-threshold-table', 'rowData')]
     )
     def update_ticket_exceeding_threshold_details_table(selected_sprint, selected_rows, table_data):
+        result = (
+            [],
+            "Ticket's Cycle Time"
+        )
         if not selected_rows or not table_data or len(selected_rows) == 0:
-            return (
-                {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
-                {'display': 'none'},
-                [],
-                ""
-            )
+            return result
 
         try:
             # Extract the ID from the markdown link format
             selected_ticket_link = selected_rows[0]['ID']
             selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
         except (IndexError, KeyError):
-            return (
-                {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
-                {'display': 'none'},
-                [],
-                ""
-            )
+            return result
 
         # Process data for selected ticket
         sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
         if ticket_data.empty:
-            return (
-                {'width': '40%', 'display': 'none', 'verticalAlign': 'top'},
-                {'display': 'none'},
-                [],
-                ""
-            )
+            return result
 
         ticket_data = ticket_data.iloc[0]
 
@@ -214,9 +201,7 @@ def init_callbacks(app, jira_tickets):
                 })
 
         return (
-            {'width': '40%', 'display': 'inline-block', 'verticalAlign': 'top'},
-            {'marginBottom': '20px', 'display': 'block'},
             stage_data,
-            f"Stage Duration Details for {selected_ticket}"
+            f"{selected_ticket} Cycle Time"
         )
 
