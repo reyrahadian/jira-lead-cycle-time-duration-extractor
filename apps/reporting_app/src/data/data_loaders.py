@@ -93,7 +93,7 @@ class JiraDataLoader:
 
     def __process_jiratickets_components(self, jira_tickets: pd.DataFrame)->pd.DataFrame:
         # Convert components to lists instead of sets
-        components = jira_tickets[COLUMN_NAME_COMPONENTS].apply(lambda x: list(split_string_array(x, '-')))
+        components = jira_tickets[COLUMN_NAME_COMPONENTS].apply(lambda x: list(split_string_array(x, '"-"')))
         components_from_title = jira_tickets[COLUMN_NAME_NAME].apply(lambda x: list(self.__extract_components_from_title(x)))
         components_sfcc = jira_tickets[COLUMN_NAME_ID].apply(lambda x: list(self.__extract_sfcc_component(x)))
 
@@ -105,7 +105,7 @@ class JiraDataLoader:
         return jira_tickets
 
     def __process_jiratickets_sprint(self, jira_tickets: pd.DataFrame)->pd.DataFrame:
-        jira_tickets[COLUMN_NAME_CALCULATED_SPRINT] = jira_tickets[COLUMN_NAME_SPRINT].apply(lambda x: list(split_string_array(x, '-')))
+        jira_tickets[COLUMN_NAME_CALCULATED_SPRINT] = jira_tickets[COLUMN_NAME_SPRINT].apply(lambda x: list(split_string_array(x, '"-"')))
 
         return jira_tickets
 
