@@ -50,7 +50,7 @@ def test_jiradataloader_filter_tickets(mocker):
     filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'])
     jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_data.get_tickets(), filter)
     assert jira_data_filter_result.squads == ['LFApp']
-    assert jira_data_filter_result.sprints == ['MOB - Sprint 1']
+    assert jira_data_filter_result.sprints == ['MOB - Sprint 1','LFA - Sprint 31','LFA - Sprint 30']
     assert jira_data_filter_result.ticket_types == ['Bug','Story','Task']
 
     filter = JiraDataFilter(projects=['Digital MECCA App'], squads=['LFApp'], sprints=['MOB - Sprint 1'], ticket_types=['Story'])
@@ -74,4 +74,3 @@ def test_jiradataloader_filter_tickets(mocker):
     assert jira_data_filter_result.ticket_types == ['Story']
     assert jira_data_filter_result.components == ['Frontend']
     assert jira_data_filter_result.tickets[COLUMN_NAME_ID].iloc[0] == 'DMA-1462'
-

@@ -1,5 +1,5 @@
 from src.config.constants import (COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SQUAD2,
-    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS)
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_CALCULATED_SPRINT)
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
 import pandas as pd
@@ -133,7 +133,9 @@ class JiraDataFilterService:
 
         # filter by sprint
         if filter.sprints and None not in filter.sprints:
-            tickets = tickets[tickets[COLUMN_NAME_SPRINT].isin(filter.sprints)]
+            tickets = tickets[tickets[COLUMN_NAME_CALCULATED_SPRINT].apply(
+                lambda x: any(sprint in x for sprint in filter.sprints) if isinstance(x, list) else False
+            )]
 
         # filter by types
         if filter.ticket_types and None not in filter.ticket_types:
