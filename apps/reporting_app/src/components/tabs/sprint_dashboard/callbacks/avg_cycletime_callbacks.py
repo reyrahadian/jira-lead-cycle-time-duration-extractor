@@ -203,11 +203,14 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         if not related_stages:
             related_stages = [clicked_stage]
         days_column_names = [StageUtils.to_stage_in_sprint_duration_days_column_name(stage) for stage in related_stages]
-        thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
 
         # Get tickets that spent time in any of the related stages
         stage_tickets = sprint_data[sprint_data[days_column_names].sum(axis=1) > 0].copy()
         stage_tickets['days_in_stage'] = stage_tickets[days_column_names].sum(axis=1)
+
+        # Add thresholds column
+        thresholds = STAGE_THRESHOLDS.get(clicked_stage, STAGE_THRESHOLDS['default'])
+        stage_tickets['thresholds'] = [thresholds for _ in range(len(stage_tickets))]
 
         # Add priority order column for sorting
         if COLUMN_NAME_PRIORITY in stage_tickets.columns:
@@ -224,7 +227,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
             COLUMN_NAME_SPRINT,
             COLUMN_NAME_STAGE,
             'days_in_stage',
-            COLUMN_NAME_STORY_POINTS
+            COLUMN_NAME_STORY_POINTS,
+            'thresholds'
             ]
 
         # Sort by priority first, then days in stage
@@ -238,38 +242,6 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
 
         # Convert to records and drop the sorting column
         table_data = stage_tickets[available_columns].to_dict('records')
-
-        # Define conditional styling
-        style_conditional = [
-            {
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgb(248, 248, 248)'
-            },
-            {
-                'if': {
-                    'filter_query': f'{{days_in_stage}} >= {thresholds["critical"]}',
-                    'column_id': 'days_in_stage'
-                },
-                'backgroundColor': '#ffcdd2',
-                'color': '#c62828'
-            },
-            {
-                'if': {
-                    'filter_query': f'{{days_in_stage}} >= {thresholds["warning"]} && {{days_in_stage}} < {thresholds["critical"]}',
-                    'column_id': 'days_in_stage'
-                },
-                'backgroundColor': '#fff9c4',
-                'color': '#f9a825'
-            },
-            {
-                'if': {
-                    'filter_query': f'{{days_in_stage}} < {thresholds["warning"]}',
-                    'column_id': 'days_in_stage'
-                },
-                'backgroundColor': '#c8e6c9',
-                'color': '#2e7d32'
-            }
-        ]
 
         return (
             table_data,
@@ -317,12 +289,14 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         total_days = 0
         for col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
             stage_name = StageUtils.to_stage_name(col)
+            thresholds = STAGE_THRESHOLDS.get(stage_name, STAGE_THRESHOLDS['default'])
             days = ticket_data[col]
             if days > 0:  # Only include stages where time was spent
                 total_days += days
                 stage_data.append({
                     'stage': stage_name,
-                    'days': round(days, 2)
+                    'days': round(days, 2),
+                    'thresholds': thresholds
                 })
 
         # Add total row
@@ -336,50 +310,6 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
 
         # Sort stage_data by the original order in all_stage_columns (excluding total row)
         stage_data[:-1] = sorted(stage_data[:-1], key=lambda x: stage_order[x['stage']])
-
-        # Prepare conditional styling based on thresholds
-        style_conditional = [
-            {
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgb(248, 248, 248)'
-            },
-            {
-                'if': {'filter_query': '{stage} = "TOTAL"'},
-                'backgroundColor': '#e3f2fd',
-                'fontWeight': 'bold'
-            }
-        ]
-
-        # Add threshold-based styling for each stage
-        for stage_entry in stage_data[:-1]:  # Exclude total row from threshold styling
-            stage = stage_entry['stage']
-            days = stage_entry['days']
-            thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
-
-            if days >= thresholds['critical']:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["critical"]}'
-                    },
-                    'backgroundColor': '#ffcdd2',
-                    'color': '#c62828'
-                })
-            elif days >= thresholds['warning']:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["warning"]} && {{days}} < {thresholds["critical"]}'
-                    },
-                    'backgroundColor': '#fff9c4',
-                    'color': '#f9a825'
-                })
-            else:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} < {thresholds["warning"]}'
-                    },
-                    'backgroundColor': '#c8e6c9',
-                    'color': '#2e7d32'
-                })
 
         return (
             stage_data,

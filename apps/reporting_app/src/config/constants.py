@@ -259,7 +259,7 @@ STAGE_NAME_BEGINNING_STAGES = [
     STAGE_NAME_READY_FOR_DEVELOPMENT
 ]
 
-# stage names that represent final  stages
+# stage names that represent final stages
 STAGE_NAME_FINAL_STAGES = [
     STAGE_NAME_DONE,
     STAGE_NAME_CLOSED,

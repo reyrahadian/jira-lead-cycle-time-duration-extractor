@@ -42,11 +42,30 @@ def create_tables():
                             id='tickets-exceeding-threshold-details-table',
                             columnDefs=[
                                 {"headerName": "Stage", "field": "stage", "resizable": True},
-                                {"headerName": "Days", "field": "days", "resizable": True}
+                                {
+                                    "headerName": "Days",
+                                    "field": "days",
+                                    "resizable": True,
+                                    "cellStyle": {
+                                        "styleConditions": [
+                                            {
+                                                "condition": "params.data.thresholds && params.value >= params.data.thresholds.critical",
+                                                "style": {"backgroundColor": "#ffcdd2", "color": "#c62828"}
+                                            },
+                                            {
+                                                "condition": "params.data.thresholds && params.value >= params.data.thresholds.warning",
+                                                "style": {"backgroundColor": "#fff9c4", "color": "#f9a825"}
+                                            },
+                                            {
+                                                "condition": "params.data.thresholds && params.value < params.data.thresholds.warning",
+                                                "style": {"backgroundColor": "#c8e6c9", "color": "#2e7d32"}
+                                            }
+                                        ]
+                                    }
+                                }
                             ],
                             columnSize="sizeToFit",
-                            className="ag-theme-quartz",
-                            rowData=[]
+                            className="ag-theme-quartz"
                         )
                     ], id='tickets-exceeding-threshold-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
                 ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px'})

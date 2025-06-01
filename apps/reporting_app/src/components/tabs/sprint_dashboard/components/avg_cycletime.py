@@ -45,7 +45,31 @@ def create_charts():
                             {'headerName': 'Type', 'field': 'Type', 'resizable': True},
                             {'headerName': 'Priority', 'field': 'Priority', 'resizable': True},
                             {'headerName': 'Current Stage', 'field': 'Stage', 'resizable': True},
-                            {'headerName': 'Days in Stage', 'field': 'days_in_stage', 'resizable': True},
+                            {
+                                'headerName': 'Days in Stage',
+                                'field': 'days_in_stage',
+                                'resizable': True,
+                                "cellStyle": {
+                                    "styleConditions": [
+                                        {
+                                            "condition": "params.data.thresholds && params.value >= params.data.thresholds.critical",
+                                            "style": {"backgroundColor": "#ffcdd2", "color": "#c62828"}
+                                        },
+                                        {
+                                            "condition": "params.data.thresholds && params.value >= params.data.thresholds.warning",
+                                            "style": {"backgroundColor": "#fff9c4", "color": "#f9a825"}
+                                        },
+                                        {
+                                            "condition": "params.data.thresholds && params.value < params.data.thresholds.warning",
+                                            "style": {"backgroundColor": "#c8e6c9", "color": "#2e7d32"}
+                                        }
+                                    ],
+                                    "defaultStyle": {
+                                        "backgroundColor": "#f8f9fa",
+                                        "color": "#000000"
+                                    }
+                                }
+                            },
                             {'headerName': 'Story Points', 'field': 'StoryPoints', 'resizable': True},
                             {'headerName': 'Sprint', 'field': 'Sprint', 'resizable': True, 'tooltipField': 'Sprint'}
                         ],
@@ -64,7 +88,26 @@ def create_charts():
                         id='tickets-in-stage-ticket-details-table',
                         columnDefs=[
                             {'headerName': 'Stage', 'field': 'stage'},
-                            {'headerName': 'Days', 'field': 'days'}
+                            {
+                                'headerName': 'Days',
+                                'field': 'days',
+                                "cellStyle": {
+                                    "styleConditions": [
+                                        {
+                                            "condition": "params.data.thresholds && params.value >= params.data.thresholds.critical",
+                                            "style": {"backgroundColor": "#ffcdd2", "color": "#c62828"}
+                                        },
+                                        {
+                                            "condition": "params.data.thresholds && params.value >= params.data.thresholds.warning",
+                                            "style": {"backgroundColor": "#fff9c4", "color": "#f9a825"}
+                                        },
+                                        {
+                                            "condition": "params.data.thresholds && params.value < params.data.thresholds.warning",
+                                            "style": {"backgroundColor": "#c8e6c9", "color": "#2e7d32"}
+                                        }
+                                    ]
+                                }
+                             }
                         ],
                         columnSize="sizeToFit",
                         className="ag-theme-quartz",

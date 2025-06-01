@@ -5,7 +5,7 @@ from src.config.constants import (
     STAGE_THRESHOLDS, PRIORITY_ORDER, THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS,
     ALL_STAGE_COLUMNS_DURATIONS_IN_DAYS, COLUMN_NAME_STAGE, COLUMN_NAME_LINK, COLUMN_NAME_ID, COLUMN_NAME_NAME,
     COLUMN_NAME_TYPE, COLUMN_NAME_ASSIGNEE_NAME, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_SPRINT, COLUMN_NAME_PRIORITY,
-    STAGE_NAME_DONE, STAGE_NAME_CLOSED, STAGE_NAME_REJECTED
+    STAGE_NAME_IN_PROGRESS_GROUPINGS
 )
 from src.utils.stage_utils import StageUtils
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
@@ -33,8 +33,6 @@ def init_callbacks(app, jira_tickets):
         # Filter data
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        # Exclude tickets in Done or Closed stages
-        #sprint_data = sprint_data[~sprint_data[COLUMN_NAME_STAGE].isin([STAGE_NAME_DONE, STAGE_NAME_CLOSED, STAGE_NAME_REJECTED])]
 
         tickets_exceeding_threshold = []
         for _, ticket in sprint_data.iterrows():
@@ -113,15 +111,15 @@ def init_callbacks(app, jira_tickets):
 
         try:
             # Extract the ID from the markdown link format
-            selected_ticket_link = selected_rows[0]['ID']
+            selected_ticket_link = selected_rows[0][COLUMN_NAME_ID]
             selected_ticket = selected_ticket_link.split('[')[1].split(']')[0]
         except (IndexError, KeyError):
             return result
 
         # Process data for selected ticket
-        sprint_data = jira_tickets[jira_tickets['Sprint'].str.contains(selected_sprint, na=False)]
+        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
-        ticket_data = sprint_data[sprint_data['ID'] == selected_ticket]
+        ticket_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
         if ticket_data.empty:
             return result
 
@@ -136,15 +134,17 @@ def init_callbacks(app, jira_tickets):
         total_days = 0
         for col in THRESHOLD_STAGE_COLUMNS_IN_SPRINT_DURATION_IN_DAYS:
             stage_name = StageUtils.to_stage_name(col)
-            # Skip the Open and Done stages
-            if stage_name in ['Open', 'Done']:
+            thresholds = STAGE_THRESHOLDS.get(stage_name, STAGE_THRESHOLDS['default'])
+            # only include in progress stages
+            if stage_name not in STAGE_NAME_IN_PROGRESS_GROUPINGS:
                 continue
             days = ticket_data[col]
             if days > 0:  # Only include stages where time was spent
                 total_days += days
                 stage_data.append({
                     'stage': stage_name,
-                    'days': round(days, 1)
+                    'days': round(days, 1),
+                    'thresholds': thresholds
                 })
 
         # Add total row
@@ -155,50 +155,6 @@ def init_callbacks(app, jira_tickets):
 
         # Sort stage_data by the original order in all_stage_columns (excluding total row)
         stage_data[:-1] = sorted(stage_data[:-1], key=lambda x: stage_order[x['stage']])
-
-        # Prepare conditional styling based on thresholds
-        style_conditional = [
-            {
-                'if': {'row_index': 'odd'},
-                'backgroundColor': 'rgb(248, 248, 248)'
-            },
-            {
-                'if': {'filter_query': '{stage} = "TOTAL"'},
-                'backgroundColor': '#e3f2fd',
-                'fontWeight': 'bold'
-            }
-        ]
-
-        # Add threshold-based styling for each stage
-        for stage_entry in stage_data[:-1]:  # Exclude total row from threshold styling
-            stage = stage_entry['stage']
-            days = stage_entry['days']
-            thresholds = STAGE_THRESHOLDS.get(stage, STAGE_THRESHOLDS['default'])
-
-            if days >= thresholds['critical']:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["critical"]}'
-                    },
-                    'backgroundColor': '#ffcdd2',
-                    'color': '#c62828'
-                })
-            elif days >= thresholds['warning']:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} >= {thresholds["warning"]} && {{days}} < {thresholds["critical"]}'
-                    },
-                    'backgroundColor': '#fff9c4',
-                    'color': '#f9a825'
-                })
-            else:
-                style_conditional.append({
-                    'if': {
-                        'filter_query': f'{{stage}} = "{stage}" && {{days}} < {thresholds["warning"]}'
-                    },
-                    'backgroundColor': '#c8e6c9',
-                    'color': '#2e7d32'
-                })
 
         return (
             stage_data,
