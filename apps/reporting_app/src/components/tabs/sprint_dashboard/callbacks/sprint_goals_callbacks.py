@@ -3,7 +3,7 @@ from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.utils.stage_utils import StageUtils
 from src.config.constants import (
     COLUMN_NAME_SPRINT, COLUMN_NAME_SPRINT_GOALS, COLUMN_NAME_STORY_POINTS, COLUMN_NAME_STAGE, STAGE_NAME_FINAL_STAGES,
-    ALL_STAGE_NAMES, STAGE_NAME_IGNORE
+    ALL_STAGE_NAMES, STAGE_NAME_IGNORE, COLUMN_NAME_TYPE
 )
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
@@ -99,12 +99,14 @@ def init_callbacks(app, jira_tickets):
         ])
 
        # Calculate total story points and ticket count
-        total_points = int(jira_data_filter_result.tickets[COLUMN_NAME_STORY_POINTS].sum())
+        non_subtask_tickets = jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_TYPE] != 'Sub-task']
+        total_points = int(non_subtask_tickets[COLUMN_NAME_STORY_POINTS].sum())
         ticket_count = len(jira_data_filter_result.tickets)
         # Calculate tickets in terminal states
         completed_tickets = jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)]
+        non_subtask_completed_tickets = completed_tickets[completed_tickets[COLUMN_NAME_TYPE] != 'Sub-task']
         total_completed_tickets = len(completed_tickets)
-        total_points_completed = int(jira_data_filter_result.tickets[jira_data_filter_result.tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)][COLUMN_NAME_STORY_POINTS].sum())
+        total_points_completed = int(non_subtask_completed_tickets[non_subtask_completed_tickets[COLUMN_NAME_STAGE].isin(STAGE_NAME_FINAL_STAGES)][COLUMN_NAME_STORY_POINTS].sum())
         lead_time_for_changes = calculate_lead_time_for_changes(jira_data_filter_result, selected_sprint)
 
         sprint_stats_component = html.Div([
