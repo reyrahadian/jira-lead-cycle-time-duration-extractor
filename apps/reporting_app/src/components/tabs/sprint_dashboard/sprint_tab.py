@@ -2,8 +2,8 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 from src.components.tabs.sprint_dashboard.components.filters import create_filters
 from src.components.tabs.sprint_dashboard.components.sprint_goals import create_sprint_metrics
-from src.components.tabs.sprint_dashboard.components.avg_cycletime import create_charts
-from src.components.tabs.sprint_dashboard.components.tables import create_tables
+from src.components.tabs.sprint_dashboard.components.avg_cycletime import create_avg_cycletime_report
+from src.components.tabs.sprint_dashboard.components.sprint_tickets import create_sprint_tickets
 from src.data.data_loaders import JiraData
 from src.config.app_settings import AppSettings
 
@@ -25,8 +25,8 @@ def create_sprint_tab(jira_data: JiraData):
 
                 # Right column - Charts and Tables
                 html.Div([
-                    create_charts(),
-                    create_tables(),
+                    create_avg_cycletime_report(),
+                    create_sprint_tickets(),
                 ], style={'width': '75%'}),
             ], style={'display': 'flex', 'flexDirection': 'row'})
     ])

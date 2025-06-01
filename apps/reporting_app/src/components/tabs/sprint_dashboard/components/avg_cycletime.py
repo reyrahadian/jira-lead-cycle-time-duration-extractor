@@ -2,7 +2,7 @@ from dash import html, dcc, dash_table
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from src.config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
-def create_charts():
+def create_avg_cycletime_report():
     """Create the charts section of the dashboard."""
     return html.Div([  # Return a single Div containing all elements
         dbc.Card([
