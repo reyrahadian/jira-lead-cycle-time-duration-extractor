@@ -36,11 +36,10 @@ def create_sprint_tickets():
                     dag.AgGrid(
                         id='sprint-tickets-with-options-details-table',
                         columnDefs=[
-                            {"headerName": "Stage", "field": "stage", "resizable": True},
+                            {"headerName": "Stage", "field": "stage", "tooltipField": "stage"},
                             {
                                 "headerName": "Days",
                                 "field": "days",
-                                "resizable": True,
                                 "cellStyle": {
                                     "styleConditions": [
                                         {
@@ -61,6 +60,7 @@ def create_sprint_tickets():
                         ],
                         columnSize="sizeToFit",
                         className="ag-theme-quartz compact",
+                        dashGridOptions={"tooltipShowDelay": 0},
                     )
                 ], id="sprint-tickets-with-options-container-right", style={'width': '20%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '10px'})

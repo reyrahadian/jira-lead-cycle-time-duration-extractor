@@ -86,7 +86,7 @@ def create_avg_cycletime_report():
                     dag.AgGrid(
                         id='tickets-in-stage-ticket-details-table',
                         columnDefs=[
-                            {'headerName': 'Stage', 'field': 'stage'},
+                            {'headerName': 'Stage', 'field': 'stage', 'tooltipField': 'stage'},
                             {
                                 'headerName': 'Days',
                                 'field': 'days',
@@ -110,6 +110,7 @@ def create_avg_cycletime_report():
                         ],
                         columnSize="sizeToFit",
                         className="ag-theme-quartz compact",
+                        dashGridOptions={"tooltipShowDelay": 0},
                     )
                 ], id='tickets-in-stage-ticket-details-container', style={'width': '20%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '10px', 'marginTop': '20px'})
