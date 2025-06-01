@@ -2,7 +2,8 @@ from dash import Dash, html, dcc
 import dash_bootstrap_components as dbc
 from src.components.tabs.sprint_dashboard.callbacks \
     import avg_cycletime_callbacks, defects_table_callbacks, filters_callbacks, \
-        sprint_goals_callbacks, sprint_tickets_callbacks, threshold_tickets_table_callbacks
+        sprint_goals_callbacks, sprint_tickets_callbacks, threshold_tickets_table_callbacks, \
+        sprint_tickets_with_options_callbacks
 from src.data.data_loaders import JiraDataSingleton
 from src.components.tabs.sprint_dashboard.components.header import create_header
 from src.components.tabs.sprint_dashboard.sprint_tab import create_sprint_tab
@@ -38,7 +39,7 @@ app.layout = html.Div([
     dbc.Tabs([
         create_sprint_tab(jira_data),
         create_dora_tab(jira_data)
-    ], id='tabs-component',style={'margin-top': '10px'}),
+    ], id='tabs-component',style={'marginTop': '10px'}),
 
     # Add a placeholder for the notification
     html.Div(id='notification', style={"position": "fixed", "top": 10, "right": 10, "zIndex": 9999}),
@@ -52,6 +53,7 @@ avg_cycletime_callbacks.init_callbacks(app, jira_data.get_tickets())
 threshold_tickets_table_callbacks.init_callbacks(app, jira_data.get_tickets())
 defects_table_callbacks.init_callbacks(app, jira_data.get_tickets())
 sprint_tickets_callbacks.init_callbacks(app, jira_data.get_tickets())
+sprint_tickets_with_options_callbacks.init_callbacks(app, jira_data.get_tickets())
 dora_filters_callbacks.init_callbacks(app, jira_data.get_tickets())
 dora_tiles_callbacks.init_callbacks(app, jira_data.get_tickets())
 

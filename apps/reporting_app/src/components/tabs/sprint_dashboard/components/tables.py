@@ -2,10 +2,12 @@ from dash import html, dash_table
 import dash_ag_grid as dag
 import dash_bootstrap_components as dbc
 from src.config.styles import TABLE_HEADER_STYLE, TABLE_CELL_STYLE
+from src.components.tabs.sprint_dashboard.components.sprint_tickets import create_sprint_tickets
 
 def create_tables():
     """Create the tables section of the dashboard."""
     return html.Div([
+        create_sprint_tickets(),
         dbc.Card([
         # Combined Details Panel
             dbc.CardBody([

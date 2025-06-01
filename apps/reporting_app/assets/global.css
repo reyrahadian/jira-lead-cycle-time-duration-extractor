@@ -7,6 +7,6 @@
     background-color: rgb(44, 62, 80);
 }
 
-.ag-theme-quartz .ag-header-row {
+.ag-theme-quartz .ag-header-row, .ag-theme-quartz .ag-header-row-column {
     color: white;
 }
