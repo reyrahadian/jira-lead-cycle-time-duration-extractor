@@ -4,9 +4,9 @@
 }
 
 .ag-theme-quartz .ag-header {
-    background-color: rgb(44, 62, 80);
+    background-color: rgb(44, 62, 80) !important;
 }
 
 .ag-theme-quartz .ag-header-row, .ag-theme-quartz .ag-header-row-column {
-    color: white;
+    color: white !important;
 }
