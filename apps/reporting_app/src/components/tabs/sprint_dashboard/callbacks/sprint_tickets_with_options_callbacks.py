@@ -9,6 +9,35 @@ from src.config.constants import COLUMN_NAME_ID, COLUMN_NAME_LINK, COLUMN_NAME_T
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.stage_utils import StageUtils
 
+def get_column_defs(hide_exceeding_stages: bool = True)->list[dict]:
+    return [
+            {"headerName": "Key", "field": "ID", "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
+            {"headerName": "Summary", "field": "Name", "width": 400, "tooltipField": "Name"},
+            {
+                "headerName": "Stages Exceeding Threshold",
+                "field": "exceeding_stages",
+                "width": 200,
+                "suppressColumnsToolPanel": True,
+                "hide": hide_exceeding_stages,
+                "suppressMenu": True
+            },
+            {"headerName": "Type", "field": "Type"},
+            {"headerName": "Priority", "field": "Priority"},
+            {"headerName": "CurrentStage", "field": "Stage"},
+            {"headerName": "Story Points", "field": "StoryPoints", "filter": "agNumberColumnFilter"},
+            {
+                "headerName": "More Details",
+                "children": [
+                    {"field": "ParentName", "tooltipField": "ParentName"},
+                    {"field": "ParentType", "columnGroupShow": "open"},
+                    {"field": "FixVersions", "tooltipField": "FixVersions", "columnGroupShow": "open"},
+                    {"field": "Sprint", "tooltipField": "Sprint", "columnGroupShow": "open"},
+                    {"field": "CreatedDate", "columnGroupShow": "open"},
+                    {"field": "UpdatedDate", "columnGroupShow": "open"},
+                ]
+            }
+        ];
+
 def init_callbacks(app, jira_tickets):
     def get_defects(jira_tickets: pd.DataFrame, selected_sprint: str) -> list[dict]:
         defects = jira_tickets[jira_tickets[COLUMN_NAME_TYPE].isin(['Bug', 'Defect'])].copy()
@@ -148,7 +177,8 @@ def init_callbacks(app, jira_tickets):
         return sprint_records
 
     @callback(
-        Output('sprint-tickets-with-options-table', 'rowData'),
+        [Output('sprint-tickets-with-options-table', 'rowData'),
+        Output('sprint-tickets-with-options-table', 'columnDefs')],
         [Input('sprint-dropdown', 'value'),
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),
@@ -165,7 +195,7 @@ def init_callbacks(app, jira_tickets):
         selected_view: str) -> list[dict]:
 
         if not selected_sprint:
-            return []
+            return [], get_column_defs()
 
         filter = JiraDataFilter(sprints=[selected_sprint],
                                 ticket_types=selected_types,
@@ -175,12 +205,12 @@ def init_callbacks(app, jira_tickets):
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         if selected_view == 'defects':
-            return get_defects(jira_data_filter_result.tickets, selected_sprint)
+            return get_defects(jira_data_filter_result.tickets, selected_sprint), get_column_defs()
         elif selected_view == 'threshold':
-            return get_threshold_violations(jira_data_filter_result.tickets, selected_sprint)
+            return get_threshold_violations(jira_data_filter_result.tickets, selected_sprint), get_column_defs(hide_exceeding_stages=False)
 
         all_tickets = get_all_tickets(jira_data_filter_result.tickets, selected_sprint)
-        return all_tickets
+        return all_tickets, get_column_defs()
 
     @callback(
         [Output('sprint-tickets-with-options-details-table', 'rowData'),

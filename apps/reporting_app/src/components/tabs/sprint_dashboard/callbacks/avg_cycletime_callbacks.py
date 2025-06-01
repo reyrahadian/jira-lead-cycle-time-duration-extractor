@@ -167,7 +167,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
     @callback(
         [Output('tickets-in-stage-table', 'rowData'),
          Output('tickets-in-stage-title', 'children'),
-         Output('tickets-in-stage-ticket-ids', 'data')],
+         Output('tickets-in-stage-ticket-ids', 'data'),
+         Output('tickets-in-stage-table', 'columnDefs')],
         [Input('tickets-in-stage-bar-chart', 'clickData'),
          Input('sprint-dropdown', 'value'),
          Input('type-dropdown', 'value'),
@@ -175,9 +176,26 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
          Input('squad-dropdown', 'value'),
          Input('components-dropdown', 'value')]
     )
-    def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]) -> tuple[list[dict], str, dict, list[dict], list[str]]:
+    def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]):
+        default_cols = [
+            {"headerName": "Key", "field": "ID", "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
+            {"headerName": "Summary", "field": "Name", "width": 400, "tooltipField": "Name"},
+            {"headerName": "Type", "field": "Type"},
+            {"headerName": "Priority", "field": "Priority"},
+            {"headerName": "CurrentStage", "field": "Stage"},
+            {"headerName": "Story Points", "field": "StoryPoints", "filter": "agNumberColumnFilter"},
+            {
+                "headerName": "Stages Exceeding Threshold",
+                "field": "exceeding_stages",
+                "width": 400,
+                "hide": True,
+                "suppressColumnsToolPanel": True,
+                "suppressMenu": True
+            }
+        ]
+
         if not click_data or not selected_sprint:
-            return [], "No stage selected", []
+            return [], "No stage selected", [], default_cols
 
         clicked_stage = click_data['points'][0]['x']
         ticket_ids = click_data['points'][0]['customdata'][0].split(', ')
@@ -193,7 +211,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
 
         if jira_data_filter_result.tickets.empty:
-            return [], "No tickets found", []
+            return [], "No tickets found", [], default_cols
 
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
@@ -243,10 +261,18 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         # Convert to records and drop the sorting column
         table_data = stage_tickets[available_columns].to_dict('records')
 
+        # Check if any tickets have exceeding stages and update column visibility
+        has_exceeding_stages = any(ticket.get('exceeding_stages') for ticket in table_data)
+        updated_cols = default_cols.copy()
+        for col in updated_cols:
+            if col.get('field') == 'exceeding_stages':
+                col['hide'] = not has_exceeding_stages
+
         return (
             table_data,
             f"Tickets in {clicked_stage} Stage",
-            ticket_ids  # Return the extracted ticket IDs
+            ticket_ids,
+            updated_cols
         )
 
     @callback(

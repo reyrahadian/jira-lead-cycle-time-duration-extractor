@@ -35,8 +35,7 @@ def create_avg_cycletime_report():
             html.Div([
                 # Left side - Stage Tickets Table
                 html.Div([
-                    html.H3("Tickets in Selected Stage",
-                            id='tickets-in-stage-title'),
+                    html.H3("Tickets in Selected Stage", id='tickets-in-stage-title', style={'marginBottom': '20px'}),
                     dag.AgGrid(
                         id='tickets-in-stage-table',
                         columnDefs=[
@@ -74,10 +73,10 @@ def create_avg_cycletime_report():
                             {'headerName': 'Sprint', 'field': 'Sprint', 'resizable': True, 'tooltipField': 'Sprint'}
                         ],
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz",
-                        dashGridOptions={"rowSelection": "single"}
+                        className="ag-theme-quartz compact",
+                        dashGridOptions={"rowSelection": "single", "tooltipShowDelay": 0},
                     )
-                ], style={'width': '75%', 'display': 'inline-block', 'verticalAlign': 'top'}),
+                ], style={'width': '80%', 'display': 'inline-block', 'verticalAlign': 'top'}),
 
                 # Right side - Ticket's Cycle Time Details for Stage Tickets
                 html.Div([
@@ -110,10 +109,10 @@ def create_avg_cycletime_report():
                              }
                         ],
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz",
+                        className="ag-theme-quartz compact",
                     )
-                ], id='tickets-in-stage-ticket-details-container', style={'width': '30%', 'display': 'inline-block', 'verticalAlign': 'top'})
-            ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '20px', 'marginTop': '20px'})
+                ], id='tickets-in-stage-ticket-details-container', style={'width': '20%', 'display': 'inline-block', 'verticalAlign': 'top'})
+            ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '10px', 'marginTop': '20px'})
             ])
         ])
     ])

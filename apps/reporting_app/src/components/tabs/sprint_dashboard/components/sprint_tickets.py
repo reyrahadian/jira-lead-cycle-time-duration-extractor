@@ -1,7 +1,7 @@
 from dash import html
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
-
+from src.components.tabs.sprint_dashboard.callbacks.sprint_tickets_with_options_callbacks import get_column_defs
 def create_sprint_tickets():
     return dbc.Card([
         dbc.CardBody([
@@ -22,30 +22,11 @@ def create_sprint_tickets():
                     ),
                     dag.AgGrid(
                         id='sprint-tickets-with-options-table',
-                        columnDefs=[
-                            {"headerName": "Key", "field": "ID", "cellRenderer": "markdown", "linkTarget": "_blank", "pinned": "left"},
-                            {"headerName": "Summary", "field": "Name", "width": 400, "tooltipField": "Name"},
-                            {"headerName": "Type", "field": "Type"},
-                            {"headerName": "Priority", "field": "Priority"},
-                            {"headerName": "CurrentStage", "field": "Stage"},
-                            {"headerName": "Story Points", "field": "StoryPoints", "type": "numeric"},
-                            {"headerName": "Stages Exceeding Threshold", "field": "exceeding_stages"},
-                            {
-                                "headerName": "More Details",
-                                "children": [
-                                    {"field": "ParentName", "tooltipField": "ParentName"},
-                                    {"field": "ParentType", "columnGroupShow": "open"},
-                                    {"field": "FixVersions", "tooltipField": "FixVersions", "columnGroupShow": "open"},
-                                    {"field": "Sprint", "tooltipField": "Sprint", "columnGroupShow": "open"},
-                                    {"field": "CreatedDate", "columnGroupShow": "open"},
-                                    {"field": "UpdatedDate", "columnGroupShow": "open"},
-                                ]
-                            }
-                        ],
+                        columnDefs=get_column_defs(),
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz",
-                        dashGridOptions={"rowSelection": "single"},
-                        defaultColDef={"resizable": True, "filter": True}
+                        className="ag-theme-quartz compact",
+                        dashGridOptions={"rowSelection": "single", "tooltipShowDelay": 0},
+                        defaultColDef={"resizable": True, "filter": "agTextColumnFilter", "floatingFilter": True}
                     )
                 ], id="sprint-tickets-with-options-container-left", style={'width': '80%', 'display': 'inline-block', 'verticalAlign': 'top'}),
                 html.Div([
@@ -79,9 +60,9 @@ def create_sprint_tickets():
                             }
                         ],
                         columnSize="sizeToFit",
-                        className="ag-theme-quartz"
+                        className="ag-theme-quartz compact",
                     )
                 ], id="sprint-tickets-with-options-container-right", style={'width': '20%', 'display': 'inline-block', 'verticalAlign': 'top'})
             ], style={'display': 'flex', 'justifyContent': 'space-between', 'gap': '10px'})
         ])
-    ])
+    ], style={'marginTop': '20px'})
