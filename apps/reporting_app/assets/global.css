@@ -1,0 +1,12 @@
+/* Dash AG Grid QuartzTheme */
+.ag-theme-quartz {
+    --ag-grid-size: 5px;
+}
+
+.ag-theme-quartz .ag-header {
+    background-color: rgb(44, 62, 80);
+}
+
+.ag-theme-quartz .ag-header-row {
+    color: white;
+}
