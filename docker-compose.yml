@@ -1,18 +1,20 @@
 services:
-  jira_metrics_extractor:
-    image: ${ECR_REPOSITORY_NAME}/jira-metrics-extractor:latest
+  extractor:
+    image: ${ECR_REPOSITORY_NAME}/extractor:${ECR_IMAGE_VERSION}
     build:
       context: .
       dockerfile: ./docker/apps/jira_metrics_extractor/Dockerfile
     volumes:
       - ./docker/data:/data
+      - ${USER_PROFILE_PATH}/.aws/credentials:/root/.aws/credentials
     environment:
       - JIRA_USERNAME=${JIRA_USERNAME}
       - JIRA_PASSWORD=${JIRA_PASSWORD}
       - OUTPUT_PATH=/data/jira_metrics.csv
       - CUSTOM_JQL=${CUSTOM_JQL}
-  reporting_app:
-    image: ${ECR_REPOSITORY_NAME}/reporting-app:latest
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+  reporter:
+    image: ${ECR_REPOSITORY_NAME}/reporter:${ECR_IMAGE_VERSION}
     build:
       context: .
       dockerfile: ./docker/apps/reporting_app/Dockerfile
@@ -20,6 +22,7 @@ services:
       - "8050:8050"
     volumes:
       - ./docker/data:/data
+      - ${USER_PROFILE_PATH}/.aws/credentials:/root/.aws/credentials
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8050/ || exit 1"]
       interval: 30s
@@ -27,6 +30,7 @@ services:
       retries: 3
       start_period: 10s
     environment:
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - REPORTING_CSV_PATH=/data/jira_metrics.csv
       - DORA_DASHBOARD_VALID_PROJECT_NAMES=${DORA_DASHBOARD_VALID_PROJECT_NAMES}
       - SPRINT_DASHBOARD_VALID_PROJECT_NAMES=${SPRINT_DASHBOARD_VALID_PROJECT_NAMES}
