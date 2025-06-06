@@ -12,3 +12,7 @@ class AppSettings:
     @property
     def SPRINT_DASHBOARD_VALID_PROJECT_NAMES(self) -> list[str]:
         return os.getenv('SPRINT_DASHBOARD_VALID_PROJECT_NAMES', '').split(',') or []
+
+    @property
+    def S3_BUCKET_NAME(self) -> str:
+        return os.getenv('S3_BUCKET_NAME', '')

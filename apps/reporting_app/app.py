@@ -12,9 +12,13 @@ from src.components.tabs.dora_dashboard.callbacks import dora_tiles_callbacks
 from flask import send_file
 import os
 from dotenv import load_dotenv
+from src.utils.s3_utils import download_csv_from_s3
 
 # load environment variables
 load_dotenv()
+
+# Download CSV from S3 if configured
+download_csv_from_s3()
 
 # Access jira data
 jira_data_singleton = JiraDataSingleton()
