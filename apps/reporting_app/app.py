@@ -37,7 +37,7 @@ app.layout = html.Div([
     create_header(),
     dbc.Tabs([
         create_sprint_tab(jira_data),
-        create_dora_tab(jira_data)
+        #create_dora_tab(jira_data)
     ], id='tabs-component',style={'marginTop': '10px'}),
 
     # Add a placeholder for the notification
@@ -50,8 +50,8 @@ filters_callbacks.init_callbacks(app, jira_data.get_tickets())
 sprint_goals_callbacks.init_callbacks(app, jira_data.get_tickets())
 avg_cycletime_callbacks.init_callbacks(app, jira_data.get_tickets())
 sprint_tickets_with_options_callbacks.init_callbacks(app, jira_data.get_tickets())
-dora_filters_callbacks.init_callbacks(app, jira_data.get_tickets())
-dora_tiles_callbacks.init_callbacks(app, jira_data.get_tickets())
+#dora_filters_callbacks.init_callbacks(app, jira_data.get_tickets())
+#dora_tiles_callbacks.init_callbacks(app, jira_data.get_tickets())
 
 if __name__ == '__main__':
     app.run(debug=True, use_reloader=False, port=8050)
