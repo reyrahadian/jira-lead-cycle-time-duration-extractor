@@ -35,14 +35,21 @@ ENV OUTPUT_PATH=""
 ENV JIRA_USERNAME=""
 ENV JIRA_PASSWORD=""
 ENV CUSTOM_JQL=""
+ENV S3_BUCKET_NAME=""
 
 # Command to run the application
 CMD if [ -n "$JIRA_USERNAME" ] && [ -n "$JIRA_PASSWORD" ]; then \
     if [ -n "$OUTPUT_PATH" ]; then \
         if [ -n "$CUSTOM_JQL" ]; then \
-            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d; \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d && \
+            if [ -n "$S3_BUCKET_NAME" ]; then \
+                node upload.js "$OUTPUT_PATH" "$S3_BUCKET_NAME"; \
+            fi; \
         else \
-            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --d; \
+            node --insecure-http-parser dist/cli --u="$JIRA_USERNAME" --p="$JIRA_PASSWORD" --o="$OUTPUT_PATH" --d && \
+            if [ -n "$S3_BUCKET_NAME" ]; then \
+                node upload.js "$OUTPUT_PATH" "$S3_BUCKET_NAME"; \
+            fi; \
         fi; \
     else \
         if [ -n "$CUSTOM_JQL" ]; then \
@@ -54,9 +61,15 @@ CMD if [ -n "$JIRA_USERNAME" ] && [ -n "$JIRA_PASSWORD" ]; then \
     else \
     if [ -n "$OUTPUT_PATH" ]; then \
         if [ -n "$CUSTOM_JQL" ]; then \
-            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d; \
+            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --jql="$CUSTOM_JQL" --d && \
+            if [ -n "$S3_BUCKET_NAME" ]; then \
+                node upload.js "$OUTPUT_PATH" "$S3_BUCKET_NAME"; \
+            fi; \
         else \
-            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --d; \
+            node --insecure-http-parser dist/cli --o="$OUTPUT_PATH" --d && \
+            if [ -n "$S3_BUCKET_NAME" ]; then \
+                node upload.js "$OUTPUT_PATH" "$S3_BUCKET_NAME"; \
+            fi; \
         fi; \
     else \
         if [ -n "$CUSTOM_JQL" ]; then \
