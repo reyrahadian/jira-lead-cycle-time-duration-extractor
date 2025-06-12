@@ -4,12 +4,6 @@ FROM python:3.9-slim
 # Set working directory in the container
 WORKDIR /app
 
-# Install system dependencies required for Python packages
-RUN apt-get update && apt-get install -y \
-    python3-dev \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
 # Copy requirements first to leverage Docker cache
 COPY apps/reporting_app/requirements.txt .
 
