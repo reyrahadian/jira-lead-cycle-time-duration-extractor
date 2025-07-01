@@ -295,14 +295,14 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                 total_days += days
                 stage_data.append({
                     'stage': stage_name,
-                    'days': round(days, 2),
+                    'days': days,
                     'thresholds': thresholds
                 })
 
         # Add total row
         stage_data.append({
             'stage': 'TOTAL',
-            'days': round(total_days, 2)
+            'days': total_days
         })
 
         # Filter out ignored stages

@@ -219,7 +219,7 @@ def init_callbacks(app, jira_tickets):
         Input('sprint-tickets-with-options-table', 'selectedRows'),
         Input('sprint-tickets-with-options-table', 'rowData')]
     )
-    def update_ticket_exceeding_threshold_details_table(selected_sprint, selected_rows, table_data):
+    def update_ticket_stage_details_table(selected_sprint, selected_rows, table_data):
         result = (
             [],
             "Ticket's Cycle Time"
@@ -235,7 +235,12 @@ def init_callbacks(app, jira_tickets):
             return result
 
         # Process data for selected ticket
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_SPRINT].str.contains(selected_sprint, na=False)]
+        filter = JiraDataFilter(sprints=[selected_sprint],
+                                ticket_types=[],
+                                ticketIds=[selected_ticket],
+                                squads=[],
+                                components=[])
+        sprint_data = JiraDataFilterService().filter_tickets(jira_tickets, filter).tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
         ticket_data = sprint_data[sprint_data[COLUMN_NAME_ID] == selected_ticket]
         if ticket_data.empty:
@@ -261,14 +266,14 @@ def init_callbacks(app, jira_tickets):
                 total_days += days
                 stage_data.append({
                     'stage': stage_name,
-                    'days': round(days, 1),
+                    'days': days,
                     'thresholds': thresholds
                 })
 
         # Add total row
         stage_data.append({
             'stage': 'TOTAL',
-            'days': round(total_days, 1)
+            'days': total_days
         })
 
         # Sort stage_data by the original order in all_stage_columns (excluding total row)
