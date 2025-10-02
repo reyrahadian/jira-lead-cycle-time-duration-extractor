@@ -1,5 +1,5 @@
 from src.config.constants import (COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN_NAME_SQUAD2,
-    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_CALCULATED_SPRINT)
+    COLUMN_NAME_SPRINT, COLUMN_NAME_TYPE, COLUMN_NAME_ID, COLUMN_NAME_CALCULATED_COMPONENTS, COLUMN_NAME_CALCULATED_SPRINT, COLUMN_NAME_ASSIGNEE_NAME)
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
 import pandas as pd
@@ -11,14 +11,16 @@ class JiraDataFilter:
     ticket_types: list[str]
     ticketIds: list[str]
     components: list[str]
+    assignees: list[str]
 
-    def __init__(self, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None):
+    def __init__(self, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None, assignees: list[str] = None):
         self.projects = projects
         self.squads = squads
         self.sprints = sprints
         self.ticket_types = ticket_types
         self.ticketIds = ticketIds
         self.components = components
+        self.assignees = assignees
 
 class JiraDataFilterResult:
     @property
@@ -49,7 +51,11 @@ class JiraDataFilterResult:
     def ticketIds(self) -> list[str]:
         return self._ticketIds
 
-    def __init__(self, tickets: pd.DataFrame = None, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None):
+    @property
+    def assignees(self) -> list[str]:
+        return self._assignees
+
+    def __init__(self, tickets: pd.DataFrame = None, projects: list[str] = None, squads: list[str] = None, sprints: list[str] = None, ticket_types: list[str] = None, ticketIds: list[str] = None, components: list[str] = None, assignees: list[str] = None):
         self._tickets = tickets
         self._projects = projects
         self._squads = squads
@@ -57,6 +63,7 @@ class JiraDataFilterResult:
         self._ticket_types = ticket_types
         self._ticketIds = ticketIds
         self._components = components
+        self._assignees = assignees
 
 class JiraDataFilterService:
     def __get_squads(self, tickets: pd.DataFrame) -> list[str]:
@@ -117,6 +124,11 @@ class JiraDataFilterService:
         # Remove duplicates and sort
         return sorted(list(set(all_components)))
 
+    def __get_assignees(self, tickets: pd.DataFrame) -> list[str]:
+        # Filter out NaN values and convert to list before sorting
+        assignees = [assignee for assignee in tickets[COLUMN_NAME_ASSIGNEE_NAME].unique() if pd.notna(assignee)]
+        return sorted(assignees)
+
     def filter_tickets(self, tickets: pd.DataFrame, filter: JiraDataFilter) -> JiraDataFilterResult:
         # filter by project
         if filter.projects and None not in filter.projects:
@@ -151,15 +163,21 @@ class JiraDataFilterService:
         if filter.ticketIds and None not in filter.ticketIds:
             tickets = tickets[tickets[COLUMN_NAME_ID].isin(filter.ticketIds)]
 
+        # filter by assignee
+        if filter.assignees and None not in filter.assignees:
+            tickets = tickets[tickets[COLUMN_NAME_ASSIGNEE_NAME].isin(filter.assignees)]
+
         squads = self.__get_squads(tickets)
         sprints = self.__get_sprints(tickets)
         ticket_types = self.__get_ticket_types(tickets)
         components = self.__get_components(tickets)
+        assignees = self.__get_assignees(tickets)
 
         return JiraDataFilterResult(
             tickets=tickets,
             squads=squads,
             sprints=sprints,
             ticket_types=ticket_types,
-            components=components
+            components=components,
+            assignees=assignees
         )

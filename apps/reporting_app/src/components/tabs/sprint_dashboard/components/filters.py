@@ -69,6 +69,17 @@ def create_filters(projects=[]):
                 style={'marginBottom': '15px'}
             ),
         ]),
+        html.Div([
+            html.Label("Specific Assignee:", style={'fontWeight': 'bold'}),
+            dcc.Dropdown(
+                id='assignee-dropdown',
+                options=[],
+                value=None,
+                multi=False,
+                placeholder="Select a specific assignee",
+                style={'marginBottom': '15px'}
+            ),
+        ]),
     ])
 
     return filters

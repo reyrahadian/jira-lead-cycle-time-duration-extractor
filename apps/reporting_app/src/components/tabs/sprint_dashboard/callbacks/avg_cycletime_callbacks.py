@@ -13,7 +13,8 @@ from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 
 def init_callbacks(app, jira_tickets: pd.DataFrame):
     def get_avg_days_dataframe(jira_tickets: pd.DataFrame, selected_sprint: str, selected_squad: str,
-                               selected_types: list[str], selected_components: list[str], selected_ticket: str) -> pd.DataFrame:
+                               selected_types: list[str], selected_components: list[str], selected_ticket: str,
+                               selected_assignee: str) -> pd.DataFrame:
         if not selected_sprint:
             # Return empty DataFrame with expected columns instead of empty dict
             return pd.DataFrame(columns=['Stage', 'Days'])
@@ -22,7 +23,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                                 sprints=[selected_sprint],
                                 ticket_types=selected_types,
                                 ticketIds=[selected_ticket],
-                                components=selected_components)
+                                components=selected_components,
+                                assignees=[selected_assignee])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
         sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
@@ -109,10 +111,11 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),
         Input('squad-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
+        Input('components-dropdown', 'value'),
+        Input('assignee-dropdown', 'value')]
     )
-    def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
-        chart_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
+    def update_bar_chart(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components, selected_assignee):
+        chart_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket, selected_assignee)
         # Create empty figure if no data
         if chart_data.empty:
             fig = go.Figure()
@@ -156,10 +159,11 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Input('type-dropdown', 'value'),
         Input('ticket-dropdown', 'value'),
         Input('squad-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
+        Input('components-dropdown', 'value'),
+        Input('assignee-dropdown', 'value')]
     )
-    def update_avg_days_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components):
-        table_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket)
+    def update_avg_days_table(selected_sprint, selected_types, selected_ticket, selected_squad, selected_components, selected_assignee):
+        table_data = get_avg_days_dataframe(jira_tickets, selected_sprint, selected_squad, selected_types, selected_components, selected_ticket, selected_assignee)
 
         # Convert DataFrame to list of dictionaries for Dash table
         return table_data.to_dict('records')
@@ -173,9 +177,10 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
          Input('type-dropdown', 'value'),
          Input('ticket-dropdown', 'value'),
          Input('squad-dropdown', 'value'),
-         Input('components-dropdown', 'value')]
+         Input('components-dropdown', 'value'),
+         Input('assignee-dropdown', 'value')]
     )
-    def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str]) -> tuple[list[dict], str, list[str], dict]:
+    def update_stage_tickets(click_data, selected_sprint: str, selected_types: list[str], selected_ticket: str, selected_squad: str, selected_components: list[str], selected_assignee: str) -> tuple[list[dict], str, list[str], dict]:
         if not click_data or not selected_sprint:
             return [], "No stage selected", []
 
@@ -189,7 +194,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                                 sprints=[selected_sprint],
                                 ticket_types=selected_types,
                                 ticketIds=[selected_ticket],
-                                components=selected_components)
+                                components=selected_components,
+                                assignees=[selected_assignee])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
 
         if jira_data_filter_result.tickets.empty:

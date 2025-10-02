@@ -49,6 +49,8 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         Output('ticket-dropdown', 'value', allow_duplicate=True),
         Output('components-dropdown', 'options'),
         Output('components-dropdown', 'value')],
+        Output('assignee-dropdown', 'options'),
+        Output('assignee-dropdown', 'value'),
         [Input('project-dropdown', 'value'),
         Input('squad-dropdown', 'value'),
         Input('sprint-dropdown', 'value'),
@@ -57,7 +59,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
     )
     def update_type_and_components_dropdown_options(selected_project: str, selected_squad: str, selected_sprint: str, selected_types: list[str]) -> tuple[list[dict], list[str], list[dict], None, list[dict], list[str]]:
         if not selected_project or not selected_sprint:
-            return [], [], [], None, [], []
+            return [], [], [], None, [], [], [], None
 
         filter = JiraDataFilter(projects=[selected_project],
                                 squads=[selected_squad],
@@ -79,5 +81,9 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         components = jira_data_filter_result.components
         component_options = [{'label': comp, 'value': comp} for comp in sorted(list(components))]
 
-        return type_options, selected_types, ticket_options, None, component_options, []
+        # Get assignees options
+        assignees = jira_data_filter_result.assignees
+        assignee_options = [{'label': assignee, 'value': assignee} for assignee in sorted(list(assignees))]
+
+        return type_options, selected_types, ticket_options, None, component_options, [], assignee_options, None
 
