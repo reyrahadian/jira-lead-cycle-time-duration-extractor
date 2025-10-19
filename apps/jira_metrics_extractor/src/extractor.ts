@@ -16,7 +16,6 @@ class JiraExtractor {
 
   constructor(config: JiraExtractorConfig) {
     this.config = config;
-    this.config.batchSize = 5;
   }
 
   async validate(): Promise<boolean> {
@@ -26,28 +25,25 @@ class JiraExtractor {
     }
     const jql = this.getJQL();
     const queryUrl: string = this.getJiraIssuesQueryUrl(jql);
-
     const testResponse: JiraApiIssueQueryResponse = await getJson(queryUrl, this.config.connection.auth);
     if (testResponse.errorMessages) {
       throw new Error(testResponse.errorMessages.join('\n'));
     }
 
-    if (testResponse.total === 0) {
+    if (testResponse.issues.length === 0 && testResponse.isLast === true) {
       throw new Error(`No JIRA Issues found with the generated JQL:\n${jql}\nPlease modify your configuration.`);
     }
-
-    if (!testResponse.total) {
+``
+    if (!testResponse.issues) {
       throw new Error(`Error calling JIRA API at the following url:\n${queryUrl}\n using JQL: ${jql}`);
     }
     return true;
   }
 
-  async extractAll(statusHook = ((n: number):any => null), debug: boolean = false): Promise<JiraWorkItem[]> {
+  async extractAll(debug: boolean = false): Promise<JiraWorkItem[]> {
     await this.validate();
 
     const config: JiraExtractorConfig = this.config;
-    const hook = statusHook;
-    const apiRootUrl: string = config.connection.url;
     const auth: Auth = config.connection.auth;
     const batchSize: number = config.batchSize || 10;
     const jql: string = this.getJQL();
@@ -56,32 +52,33 @@ class JiraExtractor {
       console.log(`Using the following JQL for extracting:\n${jql}\n`);
     }
 
-    const metadataQueryUrl: string = this.getJiraIssuesQueryUrl(jql);
+    const metadataQueryUrl: string = this.getJiraIssuesQueryUrl(jql, '', 1);
     const metadata: JiraApiIssueQueryResponse = await getJson(metadataQueryUrl, auth);
-    const totalJiraCount: number = metadata.total;
-    if (totalJiraCount === 0) {
+    const totalJiraCount: number = metadata.issues? metadata.issues.length : 0;
+    const hasIssuesResult = totalJiraCount > 0 || metadata.isLast === false;
+    if (!hasIssuesResult) {
       throw new Error(`No stories found under search conditions using the following JQL:
         ${jql}
         Please check your configuration.`);
     }
-    const actualBatchSize: number = batchSize === 0 ? totalJiraCount : batchSize;
-    const totalBatches: number = Math.ceil(totalJiraCount / batchSize);
-    let jiraWorkItemsAccumulator: JiraWorkItem[] = [];
 
-    hook(0);
-    for (let i = 0; i < totalBatches; i++) {
-      const start: number = i * actualBatchSize;
-      const issues: JiraApiIssue[] = await this.getIssuesFromJira(jql, start, actualBatchSize);
-      if (issues){
-        if(i === 0){
-          console.debug("First sample: " + JSON.stringify(issues[0].fields));
+    let jiraWorkItemsAccumulator: JiraWorkItem[] = [];
+    let nextPageToken: string = '';
+    do {
+      const apiResponse: JiraApiIssueQueryResponse = await this.getIssuesFromJira(jql, nextPageToken, batchSize);
+      if (apiResponse.issues){
+        if(nextPageToken === ''){
+          console.debug("First sample: " + JSON.stringify(apiResponse.issues[0].fields));
         }
-        const workItemBatch = issues.map(this.convertIssueToWorkItem);
+
+        const workItemBatch = apiResponse.issues.map(this.convertIssueToWorkItem);
         jiraWorkItemsAccumulator.push(...workItemBatch);
-        hook(Math.max(actualBatchSize / totalJiraCount) * 100);
+
+        console.debug(`Extracted ${workItemBatch.length} issues of page token: ${nextPageToken}`);
       }
-    }
-    hook(150);
+
+      nextPageToken = apiResponse.nextPageToken;
+    } while(nextPageToken && nextPageToken !== '');
 
     return jiraWorkItemsAccumulator;
   };
@@ -131,26 +128,28 @@ class JiraExtractor {
     return csv;
   };
 
-  private async getIssuesFromJira(jql:string, startIndex:number, batchSize:number): Promise<JiraApiIssue[]> {
-    const queryUrl = this.getJiraIssuesQueryUrl(jql, startIndex, batchSize);
+  private async getIssuesFromJira(jql:string, nextPageToken:string, batchSize:number): Promise<JiraApiIssueQueryResponse> {
+    const queryUrl = this.getJiraIssuesQueryUrl(jql, nextPageToken, batchSize);
     const auth = this.config.connection.auth;
     const json: JiraApiIssueQueryResponse = await getJson(queryUrl, auth);
-    console.error(` Parsing issues ${startIndex} .. ${(startIndex+batchSize) }`);
+
+    console.error(`Parsing issues with page token: ${nextPageToken}`);
     if (!json.issues) {
-      console.error("Issue sequence not parsed due to a timeout", JSON.stringify(json), jql, "startIndexstartIndex: "+startIndex, "batchSize: "+batchSize);
+      console.error("Issue sequence not parsed due to a timeout", JSON.stringify(json), jql, "nextPageToken: "+nextPageToken, "batchSize: "+batchSize);
       //throw new Error('Could not retrieve issues from object');
       return null;
     }
-    return json.issues;
+
+    return json;
   }
 
-  private getJiraIssuesQueryUrl(jql: string, startIndex: number = 0, batchSize: number = 1): string {
+  private getJiraIssuesQueryUrl(jql: string, nextPageToken: string = '', batchSize: number = 1): string {
     const apiRootUrl = this.config.connection.url;
     const queryUrl: string = buildJiraSearchQueryUrl(
       {
         apiRootUrl,
         jql,
-        startIndex: startIndex,
+        nextPageToken: nextPageToken,
         batchSize: batchSize,
       });
     return queryUrl;

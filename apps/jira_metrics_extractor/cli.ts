@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as ProgressBar from 'progress';
 import * as chalk from 'chalk';
 import { safeLoad } from 'js-yaml';
 import * as argsParser from 'args-parser';
@@ -10,13 +9,6 @@ import { convertYamlToJiraSettings } from './src/components/yaml-converter';
 const defaultYamlPath = 'config.yaml';
 //const defaultOutputPath = `output${new Date().getTime()}.csv`;
 const defaultOutputPath = `jira_metrics.csv`;
-
-const bar = new ProgressBar(chalk.cyan('  Extracting: [:bar] :percent | :eta seconds remaining'), {
-  complete: '=',
-  incomplete: ' ',
-  width: 20,
-  total: 100,
-});
 
 const getArgs = () => argsParser(process.argv);
 
@@ -97,18 +89,9 @@ const run = async function (cliArgs: any): Promise<void> {
   const jiraExtractor = new JiraExtractor(jiraExtractorConfig);
 
   console.log('Beginning extraction process');
-  // Progress bar setup
-  const updateProgressHook = (bar => {
-    bar.tick();
-    return (percentDone: number) => {
-      if (percentDone <= 100) {
-        bar.tick(percentDone);
-      }
-    };
-  })(bar);
 
   try {
-    const workItems = await jiraExtractor.extractAll(updateProgressHook, debugMode);
+    const workItems = await jiraExtractor.extractAll(debugMode);
     // Export data
     let data: string = '';
     data = await jiraExtractor.toCSV(workItems);

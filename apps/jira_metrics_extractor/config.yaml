@@ -6,6 +6,7 @@ Connection:
     Password: xxx
     # is your Jira API Token. The token can be generated at https://id.atlassian.com/manage-profile/security/api-tokens
 
+BatchSize: 50
 
 JQL:
     #Query: project in ("LFW", "COM", "SIT") and updated >= -12w

@@ -22,10 +22,9 @@ export interface JiraApiIssue {
 };
 
 export interface JiraApiIssueQueryResponse {
+  isLast: boolean;
+  nextPageToken: string;
   issues: Array<JiraApiIssue>;
-  startAt: number;
-  maxResult: number;
-  total: number;
   errorMessages?: Array<string>;
 };
 
