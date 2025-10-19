@@ -133,7 +133,6 @@ class JiraExtractor {
     const auth = this.config.connection.auth;
     const json: JiraApiIssueQueryResponse = await getJson(queryUrl, auth);
 
-    console.error(`Parsing issues with page token: ${nextPageToken}`);
     if (!json.issues) {
       console.error("Issue sequence not parsed due to a timeout", JSON.stringify(json), jql, "nextPageToken: "+nextPageToken, "batchSize: "+batchSize);
       //throw new Error('Could not retrieve issues from object');

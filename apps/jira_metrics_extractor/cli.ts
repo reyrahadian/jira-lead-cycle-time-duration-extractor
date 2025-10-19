@@ -50,7 +50,7 @@ const run = async function (cliArgs: any): Promise<void> {
   const cliJql: string = cliArgs.jql;
 
   if(debugMode) {
-    console.log(`Debug mode: ${cliArgs}`);
+    console.log(`CLI arguments: ${JSON.stringify(cliArgs, null, 2)}`);
   }
 
   // Parse YAML settings

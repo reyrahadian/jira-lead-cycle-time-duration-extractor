@@ -13,6 +13,7 @@ services:
       - OUTPUT_PATH=/data/jira_metrics.csv
       - CUSTOM_JQL=${CUSTOM_JQL}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - DEBUG_MODE=${DEBUG_MODE}
   reporter:
     image: ${ECR_REPOSITORY_NAME}/reporter:${ECR_IMAGE_VERSION}
     build:
