@@ -1,4 +1,5 @@
 from dash import Input, Output, callback, html
+from datetime import datetime
 from src.data.data_filters import JiraDataFilter, JiraDataFilterService
 from src.utils.stage_utils import StageUtils
 from src.config.constants import (
@@ -37,19 +38,16 @@ def init_callbacks(app, jira_tickets):
 
 
     def format_days_duration(duration: float) -> str:
-        weeks = duration // 5
-        days = duration % 5
-        if weeks == 0:
-            return f"{days:.0f}d"
-        return f"{weeks:.0f}w {days:.0f}d"
+        return f"{duration:.0f}d"
 
     @callback(
         [Output('sprint-goals', 'children'),
          Output('sprint-dates', 'children'),
          Output('sprint-stats', 'children')],
-        [Input('sprint-dropdown', 'value')]
+        [Input('sprint-dropdown', 'value'),
+        Input('components-dropdown', 'value')]
     )
-    def update_sprint_info(selected_sprint: str) -> tuple[str, str, str]:
+    def update_sprint_info(selected_sprint: str, selected_components: list[str]) -> tuple[str, str, str]:
         def is_multiple_values(value):
             if isinstance(value, str) and '[' in value:
                 return True
@@ -70,7 +68,7 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return "No sprint selected", "", ""
 
-        filter = JiraDataFilter(sprints=[selected_sprint])
+        filter = JiraDataFilter(sprints=[selected_sprint], components=selected_components)
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         if len(jira_data_filter_result.tickets) == 0:
