@@ -188,7 +188,7 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
         ticket_ids = click_data['points'][0]['customdata'][0].split(', ')
 
         # Filter by ticket IDs
-        sprint_data = jira_tickets[jira_tickets[COLUMN_NAME_ID].isin(ticket_ids)]
+        ticket_ids_filter = jira_tickets[COLUMN_NAME_ID].isin(ticket_ids)
 
         filter = JiraDataFilter(squads=[selected_squad],
                                 sprints=[selected_sprint],
@@ -196,12 +196,14 @@ def init_callbacks(app, jira_tickets: pd.DataFrame):
                                 ticketIds=[selected_ticket],
                                 components=selected_components,
                                 assignees=[selected_assignee])
-        jira_data_filter_result = JiraDataFilterService().filter_tickets(sprint_data, filter)
+        jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
-        if jira_data_filter_result.tickets.empty:
+        # Apply ticket ID filter after the main filtering
+        sprint_data = jira_data_filter_result.tickets[ticket_ids_filter]
+
+        if sprint_data.empty:
             return [], "No tickets found", []
 
-        sprint_data = jira_data_filter_result.tickets
         sprint_data = StageUtils.calculate_tickets_duration_in_sprint(sprint_data, selected_sprint)
 
         # Use stage_mappings to get all related stages
