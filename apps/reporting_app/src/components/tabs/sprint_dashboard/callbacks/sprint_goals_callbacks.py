@@ -45,9 +45,12 @@ def init_callbacks(app, jira_tickets):
          Output('sprint-dates', 'children'),
          Output('sprint-stats', 'children')],
         [Input('sprint-dropdown', 'value'),
-        Input('components-dropdown', 'value')]
+        Input('type-dropdown', 'value'),
+        Input('components-dropdown', 'value'),
+        Input('ticket-dropdown', 'value'),
+        Input('assignee-dropdown', 'value')]
     )
-    def update_sprint_info(selected_sprint: str, selected_components: list[str]) -> tuple[str, str, str]:
+    def update_sprint_info(selected_sprint: str, selected_types: list[str], selected_components: list[str], selected_ticket: str, selected_assignee: str) -> tuple[str, str, str]:
         def is_multiple_values(value):
             if isinstance(value, str) and '[' in value:
                 return True
@@ -68,7 +71,7 @@ def init_callbacks(app, jira_tickets):
         if not selected_sprint:
             return "No sprint selected", "", ""
 
-        filter = JiraDataFilter(sprints=[selected_sprint], components=selected_components)
+        filter = JiraDataFilter(sprints=[selected_sprint], ticket_types=selected_types, components=selected_components, ticketIds=[selected_ticket], assignees=[selected_assignee])
         jira_data_filter_result = JiraDataFilterService().filter_tickets(jira_tickets, filter)
 
         if len(jira_data_filter_result.tickets) == 0:
