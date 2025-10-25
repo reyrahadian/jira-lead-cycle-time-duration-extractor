@@ -1,13 +1,13 @@
-# Create EventBridge scheduler for scaling up reporting app at 8am AEST
-resource "aws_scheduler_schedule" "reporting_scale_up_8am" {
-  name       = "${var.application_name}-reporting-scale-up-8am-${var.environment}"
+# Create EventBridge scheduler for scaling up reporting app at 8:30am AEDT
+resource "aws_scheduler_schedule" "reporting_scale_up" {
+  name       = "${var.application_name}-reporting-scale-up-${var.environment}"
   group_name = "default"
 
   flexible_time_window {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 22 ? * SUN-THU *)"  # 8 AM AEST on weekdays (22:00 UTC previous day)
+  schedule_expression = "cron(30 20 ? * SUN-THU *)"  # 8:30 AM AEDT on weekdays
 
   target {
     arn      = aws_lambda_function.update_ecs_task_count.arn
@@ -20,16 +20,16 @@ resource "aws_scheduler_schedule" "reporting_scale_up_8am" {
   }
 }
 
-# Create EventBridge scheduler for scaling down reporting app at 6pm AEST
-resource "aws_scheduler_schedule" "reporting_scale_down_6pm" {
-  name       = "${var.application_name}-reporting-scale-down-6pm-${var.environment}"
+# Create EventBridge scheduler for scaling down reporting app at 6pm AEDT
+resource "aws_scheduler_schedule" "reporting_scale_down" {
+  name       = "${var.application_name}-reporting-scale-down-${var.environment}"
   group_name = "default"
 
   flexible_time_window {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 8 ? * MON-FRI *)"  # 6 PM AEST on weekdays (08:00 UTC)
+  schedule_expression = "cron(0 7 ? * MON-FRI *)"  # 6 PM AEDT on weekdays
 
   target {
     arn      = aws_lambda_function.update_ecs_task_count.arn
@@ -42,16 +42,16 @@ resource "aws_scheduler_schedule" "reporting_scale_down_6pm" {
   }
 }
 
-# Create EventBridge scheduler for running extractor task at 8am AEST
-resource "aws_scheduler_schedule" "extractor_run_8am" {
-  name       = "${var.application_name}-extractor-run-8am-${var.environment}"
+# Create EventBridge scheduler for running extractor task at 8am AEDT
+resource "aws_scheduler_schedule" "extractor_run" {
+  name       = "${var.application_name}-extractor-run-${var.environment}"
   group_name = "default"
 
   flexible_time_window {
     mode = "OFF"
   }
 
-  schedule_expression = "cron(0 22 ? * SUN-THU *)"  # 8 AM AEST on weekdays (22:00 UTC previous day)
+  schedule_expression = "cron(0 21 ? * SUN-THU *)"  # 8 AM AEDT on weekdays
 
   target {
     arn      = "arn:aws:scheduler:::aws-sdk:ecs:runTask"
