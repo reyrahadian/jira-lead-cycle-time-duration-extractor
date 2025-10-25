@@ -3,6 +3,7 @@ from src.config.constants import (COLUMN_NAME_PROJECT, COLUMN_NAME_SQUAD, COLUMN
 from src.utils.sprint_utils import get_sprint_date_range
 from src.utils.string_utils import split_string_array
 import pandas as pd
+import warnings
 
 class JiraDataFilter:
     projects: list[str]
@@ -88,7 +89,9 @@ class JiraDataFilterService:
         sprint_dates = {}
         for sprint in sprint_set:
             # Get one ticket from this sprint to get its dates
-            sprint_tickets = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                sprint_tickets = tickets[tickets[COLUMN_NAME_SPRINT].str.contains(sprint, na=False)]
             if not sprint_tickets.empty:
                 sprint_ticket = sprint_tickets.iloc[0]
                 # Convert the Series to a DataFrame with a single row
